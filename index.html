@@ -750,21 +750,11 @@ const SOURCES = [
   {id:"tg_IT",name:"IT섹터 채널",type:"텔레그램",total:29,confirmed:12,recent:[0,0,1,0,0,1,0,0,0,1,0,1,0,0,0],rumorsToday:4},
 ];
 
-/* ══ 뉴스 초기 데이터 ══ */
-let NEWS = [
-  {id:1,code:"005930",time:"09:32",type:"rumor",title:"삼성전자 HBM4 퀄 테스트 통과 임박설",body:"엔비디아 HBM4 공급사 최종 선정 앞두고 삼성전자 통과 유력하다는 업계 소문.",sources:3,speed:"빠름",sent:"긍정",score:null,verdict:null,detail:null,dartResult:null,judgment:null,spreadHistory:[1,2,3,3,3],urgency:2,impactScore:68,themes:["반도체","AI"],relStocks:[{code:"000660",dir:"neg",strength:"보통"},{code:"042700",dir:"pos",strength:"약함"}],aiSummary:null,aiKeywords:null,priceReaction:null,scoreBreakdown:null},
-  {id:12,code:"000660",time:"09:10",type:"rumor",title:"SK하이닉스 HBM4 단독 공급 낙점설",body:"엔비디아 GB300 HBM4 물량 SK하이닉스 단독 공급으로 사실상 확정됐다는 소식.",sources:6,speed:"매우 빠름",sent:"긍정",score:null,verdict:null,detail:null,dartResult:null,judgment:null,spreadHistory:[1,3,5,6,6],urgency:1,impactScore:88,themes:["반도체","AI","HBM"],relStocks:[{code:"005930",dir:"neg",strength:"보통"},{code:"042700",dir:"pos",strength:"강함"}],aiSummary:null,aiKeywords:null,priceReaction:null,scoreBreakdown:null},
-  {id:2,code:"000660",time:"09:45",type:"news",title:"SK하이닉스, HBM3E 16단 양산 본격화",body:"SK하이닉스가 2분기 중 HBM3E 16단 제품 양산을 시작할 예정이라고 밝혔다.",sources:7,speed:"중간",sent:"긍정",score:88,verdict:"confirmed",detail:{key_points:["공식 발표로 신뢰도 높음","다수 언론 교차 확인","공시 내용과 일치"],risk_level:"낮음",official_check:"DART 분기보고서 내용과 부합",action_note:"신뢰할 수 있는 정보"},dartResult:null,judgment:null,spreadHistory:[1,2,4,6,7],urgency:3,impactScore:85,themes:["반도체","AI"],relStocks:[{code:"005930",dir:"pos",strength:"보통"},{code:"042700",dir:"pos",strength:"강함"}],aiSummary:"SK하이닉스 HBM3E 16단 양산 공식화. 엔비디아 AI 가속기 공급 확대 기대.",aiKeywords:["HBM3E","엔비디아","양산"],priceReaction:{priceChg:"+1.8%",volChg:"+42%",instFlow:"순매수 +280억",desc:"발표 이후 거래량 폭증, 기관 적극 매수"},scoreBreakdown:{news:28,supply:24,theme:18,tech:18}},
-  {id:3,code:"068270",time:"10:01",type:"rumor",title:"셀트리온 CT-P43 FDA 패스트트랙 거절 루머",body:"FDA 패스트트랙 지정 신청 거절됐다는 루머가 바이오 커뮤니티에 확산 중.",sources:2,speed:"빠름",sent:"부정",score:null,verdict:null,detail:null,dartResult:null,judgment:null,spreadHistory:[1,2,2,2,2],urgency:1,impactScore:76,themes:["바이오"],relStocks:[{code:"207940",dir:"neg",strength:"약함"}],aiSummary:null,aiKeywords:null,priceReaction:null,scoreBreakdown:null},
-  {id:4,code:"051910",time:"10:15",type:"official",title:"LG화학 양극재 사업 분할 공시",body:"LG화학이 양극재 사업부를 별도 법인으로 분리하는 방안을 검토 중이라는 공시를 제출.",sources:12,speed:"느림",sent:"중립",score:95,verdict:"confirmed",detail:{key_points:["DART 공시 원문 확인됨","공식 IR 발표와 일치","시장 영향 중립~긍정"],risk_level:"낮음",official_check:"DART 주요사항보고서 일치",action_note:"공시 원문 직접 확인 권장"},dartResult:null,judgment:null,spreadHistory:[1,3,7,10,12],urgency:3,impactScore:91,themes:["2차전지","소재"],relStocks:[{code:"006400",dir:"pos",strength:"보통"},{code:"247540",dir:"pos",strength:"강함"}],aiSummary:"LG화학 양극재 분할로 사업 구조 정리. 2차전지 소재 섹터 전반 영향.",aiKeywords:["양극재","분할","공시"],priceReaction:{priceChg:"+0.4%",volChg:"+18%",instFlow:"순매수 +95억",desc:"공시 직후 단기 매수세, 변동성 제한적"},scoreBreakdown:{news:30,supply:22,theme:25,tech:18}},
-  {id:5,code:"035420",time:"10:33",type:"analyst",title:"NAVER 하이퍼클로바X B2B 수주 가속화",body:"대신증권 리포트: NAVER AI 플랫폼 기업 고객 수 전분기 대비 40% 증가 추산.",sources:5,speed:"중간",sent:"긍정",score:78,verdict:"partial",detail:{key_points:["애널리스트 추산치","목표주가 참고용","실적 발표 시 재검증 필요"],risk_level:"중간",official_check:"공시에서 직접 수치 미확인",action_note:"단독 근거로 투자 결정 주의"},dartResult:null,judgment:null,spreadHistory:[1,2,3,4,5],urgency:3,impactScore:63,themes:["AI","IT플랫폼"],relStocks:[{code:"035720",dir:"pos",strength:"약함"}],aiSummary:"NAVER AI B2B 고객 40% 증가 추산. 하이퍼클로바X 수익화 가속 기대.",aiKeywords:["하이퍼클로바","B2B","AI플랫폼"],priceReaction:null,scoreBreakdown:{news:22,supply:18,theme:20,tech:18}},
-  {id:6,code:"005930",time:"11:00",type:"rumor",title:"삼성 파운드리 TSMC 고객 수주 추진설",body:"애플 A시리즈 일부 물량 삼성 파운드리로 이관 논의 중이라는 찌라시 유포.",sources:4,speed:"매우 빠름",sent:"긍정",score:null,verdict:null,detail:null,dartResult:null,judgment:null,spreadHistory:[1,3,4,4,4],urgency:1,impactScore:79,themes:["반도체"],relStocks:[{code:"000660",dir:"neg",strength:"약함"}],aiSummary:null,aiKeywords:null,priceReaction:null,scoreBreakdown:null},
-  {id:7,code:"034020",time:"11:20",type:"news",title:"두산에너빌리티 SMR 수출 MOU 체결",body:"두산에너빌리티가 체코 원전 기업과 소형모듈원전(SMR) 관련 협력 MOU를 체결했다고 발표.",sources:9,speed:"중간",sent:"긍정",score:91,verdict:"confirmed",detail:{key_points:["양사 공동 보도자료","협력 사실 확인","SMR 섹터 모멘텀 강화"],risk_level:"낮음",official_check:"DART MOU 관련 공시 확인됨",action_note:"MOU 단계, 실질 계약 추이 모니터링"},dartResult:null,judgment:null,spreadHistory:[1,3,5,7,9],urgency:3,impactScore:87,themes:["원전","SMR"],relStocks:[{code:"012450",dir:"pos",strength:"강함"}],aiSummary:"체코 SMR 협력 MOU 체결. 유럽 원전 르네상스 흐름 타고 수주 확대 기대.",aiKeywords:["SMR","체코","원전수출"],priceReaction:{priceChg:"+4.2%",volChg:"+156%",instFlow:"순매수 +420억",desc:"MOU 발표 직후 급등, 외국인·기관 동반 매수"},scoreBreakdown:{news:28,supply:26,theme:22,tech:15}},
-  {id:8,code:"035720",time:"11:45",type:"rumor",title:"카카오 창업자 지분 추가 매각설",body:"김범수 창업자 측이 카카오 지분 추가 매각을 검토 중이라는 내부 제보가 나돌고 있음.",sources:2,speed:"빠름",sent:"부정",score:null,verdict:null,detail:null,dartResult:null,judgment:null,spreadHistory:[1,2,2,2,2],urgency:1,impactScore:74,themes:["IT플랫폼"],relStocks:[],aiSummary:null,aiKeywords:null,priceReaction:null,scoreBreakdown:null},
-  {id:9,code:"207940",time:"12:10",type:"analyst",title:"삼성바이오 5공장 수주 가시화",body:"키움증권: 5공장 수주 잔고 2025년 말 기준 8조원 돌파 예상. 목표주가 120만원 유지.",sources:6,speed:"느림",sent:"긍정",score:82,verdict:"partial",detail:{key_points:["증권사 추산치","공식 수주잔고 미공개","실적 발표 전 확인 필요"],risk_level:"중간",official_check:"DART 공시에서 수주 규모 미확인",action_note:"복수 증권사 컨센서스와 비교 권장"},dartResult:null,judgment:null,spreadHistory:[1,2,3,5,6],urgency:3,impactScore:69,themes:["바이오","CMO"],relStocks:[{code:"068270",dir:"pos",strength:"약함"}],aiSummary:"삼성바이오 5공장 수주잔고 8조원 예상. CMO 섹터 성장세 지속.",aiKeywords:["수주잔고","CMO","5공장"],priceReaction:null,scoreBreakdown:{news:24,supply:20,theme:20,tech:18}},
-  {id:10,code:"000270",time:"13:05",type:"news",title:"기아 EV3 유럽 사전예약 1만대 돌파",body:"기아 EV3의 유럽 사전예약이 출시 3일 만에 1만대를 돌파했다고 기아 측이 공식 발표.",sources:11,speed:"빠름",sent:"긍정",score:94,verdict:"confirmed",detail:{key_points:["기아 공식 보도자료","유럽 복수 매체 동시 보도","EV 시장 회복 신호"],risk_level:"낮음",official_check:"DART 공시 일치",action_note:"긍정적 모멘텀, 과열 유의"},dartResult:null,judgment:null,spreadHistory:[1,3,6,9,11],urgency:3,impactScore:82,themes:["자동차","EV"],relStocks:[{code:"005380",dir:"pos",strength:"보통"},{code:"051910",dir:"pos",strength:"약함"}],aiSummary:"EV3 유럽 사전예약 1만대 3일 달성. 유럽 전기차 시장 회복 신호.",aiKeywords:["EV3","유럽","사전예약"],priceReaction:{priceChg:"+1.5%",volChg:"+33%",instFlow:"중립 +12억",desc:"해외 수요 확인으로 안정적 상승"},scoreBreakdown:{news:30,supply:20,theme:22,tech:22}},
-  {id:13,code:"012450",time:"13:40",type:"news",title:"한화에어로 폴란드 K9 추가 계약 2조원",body:"한화에어로스페이스가 폴란드 정부와 K9 자주포 추가 공급 계약 2조원 규모를 체결.",sources:8,speed:"빠름",sent:"긍정",score:96,verdict:"confirmed",detail:{key_points:["양국 정부 공동발표","방위산업진흥회 확인","수출 성과 사상 최대"],risk_level:"낮음",official_check:"방사청 공식 확인",action_note:"중장기 방산 모멘텀 지속"},dartResult:null,judgment:null,spreadHistory:[1,3,6,8,8],urgency:3,impactScore:93,themes:["방산"],relStocks:[{code:"034020",dir:"pos",strength:"강함"},{code:"329180",dir:"pos",strength:"보통"}],aiSummary:"한화에어로 폴란드 K9 2조원 추가 계약. 방산 수출 역대 최대 실적 경신.",aiKeywords:["K9","폴란드","방산수출"],priceReaction:{priceChg:"+6.1%",volChg:"+280%",instFlow:"순매수 +850억",desc:"계약 확정 직후 급등, 외국인·기관 동반 대규모 매수"},scoreBreakdown:{news:30,supply:28,theme:22,tech:16}},
-];
+/* ══ 뉴스 데이터 — news.json 에서 동적 로드 ══
+   news.json 이 없거나 로드 실패 시 빈 배열로 시작.
+   GitHub Actions 가 매일 장마감 후 자동 수집.            */
+let NEWS = [];   // fetchAllData() 에서 채워짐
+let _newsLoaded = false;
 
 /* ══════════════════════════════════════════════
    ③ 주가 데이터 — Yahoo Finance 프록시 + 시뮬 폴백
@@ -809,6 +799,56 @@ const PRICE_BASE = {
 /* ──────────────────────────────────────────
    🔧 설정
 ────────────────────────────────────────── */
+/* ════════════════════════════════════════════════
+   🔐 AI API 엔드포인트 설정
+   ─────────────────────────────────────────────
+   보안을 위해 Anthropic API를 직접 호출하지 않고
+   Cloudflare Workers 프록시를 경유합니다.
+
+   [배포 전 설정 방법]
+   1. https://workers.cloudflare.com 에서 Worker 생성
+   2. 아래 worker.js 코드를 붙여넣기:
+
+      export default {
+        async fetch(request, env) {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "x-api-key": env.ANTHROPIC_API_KEY,
+              "anthropic-version": "2023-06-01",
+              "Content-Type": "application/json"
+            },
+            body: request.body
+          });
+          return new Response(res.body, {
+            headers: { ...res.headers, "Access-Control-Allow-Origin": "*" }
+          });
+        }
+      };
+
+   3. Worker 설정 → 환경변수 → ANTHROPIC_API_KEY 입력
+   4. Worker URL을 아래 AI_API_URL에 붙여넣기
+   ════════════════════════════════════════════════ */
+const AI_API_URL = (() => {
+  // 로컬/개발 환경: 비워두면 AI 기능 비활성화
+  // 배포 환경: Cloudflare Workers URL 입력
+  // 예시: "https://kospi-ai-proxy.YOUR-SUBDOMAIN.workers.dev"
+  const stored = (() => { try { return localStorage.getItem('cf_worker_url') || ''; } catch(e) { return ''; } })();
+  return stored || '';
+})();
+
+function aiApiFetch(body) {
+  const url = (() => { try { return localStorage.getItem('cf_worker_url') || AI_API_URL; } catch(e) { return AI_API_URL; } })();
+  if (!url) {
+    return Promise.reject(new Error('CF_WORKER_NOT_SET'));
+  }
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
 const PRICE_ENGINE = {
   /* HTML 파일과 같은 폴더의 prices.json 을 1순위로 시도
      파일 형식: { "005930": 55800, "000660": 192000, ... }
@@ -1333,24 +1373,11 @@ function updatePrices() {
 /* ══════════════════════════════════════════════
    ④ 수급 데이터
 ══════════════════════════════════════════════ */
-const SUPPLY_BASE = {
-  "005930":{foreign:+520, inst:+310, retail:-830, f5:["+","+","−","+","+"], i5:["+","−","+","+","−"]},
-  "000660":{foreign:+1240,inst:+680, retail:-1920,f5:["+","+","+","−","+"], i5:["+","+","−","+","+"]},
-  "035420":{foreign:-120, inst:+45,  retail:+75,  f5:["−","−","+","−","−"], i5:["−","+","−","+","−"]},
-  "005380":{foreign:+380, inst:-95,  retail:-285, f5:["+","−","+","+","−"], i5:["−","−","+","−","+"]},
-  "068270":{foreign:-450, inst:-220, retail:+670, f5:["−","−","−","+","−"], i5:["−","−","−","+","−"]},
-  "051910":{foreign:-80,  inst:+120, retail:-40,  f5:["−","+","−","−","+"], i5:["+","+","−","+","−"]},
-  "006400":{foreign:+240, inst:+175, retail:-415, f5:["+","−","+","+","+"], i5:["+","−","+","−","+"]},
-  "105560":{foreign:+95,  inst:-30,  retail:-65,  f5:["+","+","−","+","−"], i5:["−","+","−","−","+"]},
-  "034020":{foreign:+840, inst:+620, retail:-1460,f5:["+","+","+","+","+"], i5:["+","+","+","−","+"]},
-  "000270":{foreign:+210, inst:+88,  retail:-298, f5:["+","−","+","+","−"], i5:["+","+","−","+","+"]},
-  "035720":{foreign:-680, inst:-240, retail:+920, f5:["−","−","−","−","−"], i5:["−","−","−","+","−"]},
-  "207940":{foreign:+320, inst:+195, retail:-515, f5:["+","+","−","+","+"], i5:["+","−","+","+","−"]},
-  "329180":{foreign:+1580,inst:+740, retail:-2320,f5:["+","+","+","+","+"], i5:["+","+","+","+","−"]},
-  "012450":{foreign:+2140,inst:+960, retail:-3100,f5:["+","+","+","+","+"], i5:["+","+","+","+","+"]},
-  "247540":{foreign:-95,  inst:-48,  retail:+143, f5:["−","−","+","−","−"], i5:["−","−","+","−","−"]},
-  "042700":{foreign:+680, inst:+320, retail:-1000,f5:["+","+","−","+","+"], i5:["+","−","+","+","+"]},
-};
+/* ══ 수급 데이터 — supply.json 에서 동적 로드 ══
+   supply.json 이 없거나 로드 실패 시 빈 객체.
+   supplyHTML() 에서 null 체크 후 "수급 데이터 로딩중" 표시.  */
+let SUPPLY_BASE = {};   // fetchAllData() 에서 채워짐
+let _supplyLoaded = false;
 
 /* ══════════════════════════════════════════════
    ③ STATE
@@ -1403,6 +1430,79 @@ function getMarketStatus() {
   return 'closed';
 }
 
+/* ════════════════════════════════════════════════
+   📦 fetchAllData() — news.json / supply.json 로드
+   prices.json 과 함께 앱 시작 시 한 번, 이후 5분마다 갱신
+   ════════════════════════════════════════════════ */
+async function fetchNewsJson() {
+  const urls = ['./news.json', window.location.pathname.replace(/\/[^\/]*$/, '') + '/news.json'];
+  for (const url of [...new Set(urls)]) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 5000);
+      const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(t);
+      if (!r.ok) continue;
+      const json = await r.json();
+      if (!Array.isArray(json) || json.length === 0) continue;
+      // 기존 판단/팩트체크 결과 유지 (id 기준 merge)
+      const existingMap = {};
+      NEWS.forEach(n => { existingMap[n.id] = n; });
+      NEWS = json.map(n => {
+        const ex = existingMap[n.id];
+        if (!ex) return n;
+        // 사용자가 이미 분석한 항목 보존
+        return {
+          ...n,
+          score:      ex.score      ?? n.score,
+          verdict:    ex.verdict    ?? n.verdict,
+          detail:     ex.detail     ?? n.detail,
+          dartResult: ex.dartResult ?? n.dartResult,
+          judgment:   ex.judgment   ?? n.judgment,
+          aiSummary:  ex.aiSummary  ?? n.aiSummary,
+          aiKeywords: ex.aiKeywords ?? n.aiKeywords,
+        };
+      });
+      _newsLoaded = true;
+      console.log(`[News] news.json 로드 완료: ${NEWS.length}건 (${url})`);
+      return NEWS.length;
+    } catch(e) { /* 다음 URL 시도 */ }
+  }
+  return 0;
+}
+
+async function fetchSupplyJson() {
+  const urls = ['./supply.json', window.location.pathname.replace(/\/[^\/]*$/, '') + '/supply.json'];
+  for (const url of [...new Set(urls)]) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 5000);
+      const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(t);
+      if (!r.ok) continue;
+      const json = await r.json();
+      if (typeof json !== 'object' || Array.isArray(json)) continue;
+      // SUPPLY_BASE 갱신
+      Object.assign(SUPPLY_BASE, json);
+      _supplyLoaded = true;
+      console.log(`[Supply] supply.json 로드 완료: ${Object.keys(json).length}종목 (${url})`);
+      return Object.keys(json).length;
+    } catch(e) { /* 다음 URL 시도 */ }
+  }
+  return 0;
+}
+
+async function fetchAllData() {
+  /* 주가 + 수급 + 뉴스 병렬 로드 */
+  const [priceN, supplyN, newsN] = await Promise.all([
+    fetchAllPrices(),
+    fetchSupplyJson(),
+    fetchNewsJson(),
+  ]);
+  console.log(`[DataLoad] price:${priceN} supply:${supplyN} news:${newsN}`);
+  return { priceN, supplyN, newsN };
+}
+
 function startAutoRefresh() {
   if(S.autoTimer) clearInterval(S.autoTimer);
   if(S.priceTimer) clearInterval(S.priceTimer);
@@ -1412,9 +1512,10 @@ function startAutoRefresh() {
   // prices.json 5분마다 fetch (GitHub Actions 업데이트 반영)
   S.priceTimer = setInterval(async() => {
     if(!S.autoRefresh) return;
-    const ok = await fetchAllPrices();
-    if(ok === 0) { updatePrices(); refreshPriceDom(); }
+    const { priceN, supplyN, newsN } = await fetchAllData();
+    if(priceN === 0) { updatePrices(); refreshPriceDom(); }
     if(S.tab === 'port') refreshPortfolioDom();
+    if(newsN > 0 || supplyN > 0) render();  // 수급/뉴스 갱신 시 화면 재렌더
   }, 5 * 60 * 1000);  // 5분마다
 
   // 5분마다 뉴스 갱신
@@ -1431,20 +1532,28 @@ function startAutoRefresh() {
      2) 백그라운드에서 JSON/API 조회
      3) 실패 시 시뮬 틱으로 폴백                   */
   (async () => {
-    notify('📡 prices.json 로딩 중...', 'info');
-    const n = await fetchAllPrices();
-    if (n > 0) {
-      const src_label = Object.values(PRICE_BASE).find(p=>p.dataSource==='json') ? 'JSON' : 'LIVE';
-      notify(`✅ ${n}종목 가격 로드 완료 · 출처: ${src_label}`, 'ok');
+    notify('📡 데이터 로딩 중... (주가·수급·뉴스)', 'info');
+    const { priceN, supplyN, newsN } = await fetchAllData();
+
+    const msgs = [];
+    if (priceN > 0) {
+      const src_label = Object.values(PRICE_BASE).find(p => p.dataSource === 'json') ? 'JSON' : 'LIVE';
+      msgs.push(`주가 ${priceN}종목(${src_label})`);
+    }
+    if (supplyN > 0) msgs.push(`수급 ${supplyN}종목`);
+    if (newsN  > 0) msgs.push(`뉴스 ${newsN}건`);
+
+    if (msgs.length > 0) {
+      notify(`✅ 로드 완료: ${msgs.join(' · ')}`, 'ok');
       if (S._priceUpdatedAt) {
-        setTimeout(() => notify(`🕐 데이터 기준: ${S._priceUpdatedAt} (장 마감후 자동업데이트)`, 'info'), 2000);
+        setTimeout(() => notify(`🕐 데이터 기준: ${S._priceUpdatedAt}`, 'info'), 2000);
       }
     } else {
-      notify('📊 prices.json 미로드 — 💰 주가입력 버튼으로 직접 입력하거나 자동 조회를 시도해주세요', 'info');
+      notify('📊 JSON 파일 미로드 — GitHub Actions 첫 실행 후 자동으로 생성됩니다', 'info');
       updatePrices();
-      refreshPriceDom();
-      refreshPortfolioDom();
     }
+
+    render();  // 뉴스/수급 로드 후 화면 갱신
   })();
 }
 
@@ -1466,44 +1575,29 @@ function checkMarketEvents() {
   }, 60000);
 }
 
-function autoFetchNews() {
-  const templates = [
-    {code:"005930",type:"rumor",title:"삼성전자 3나노 수율 80% 돌파설 (신규 감지)",body:"삼성전자 파운드리 3나노 GAA 공정 수율이 80%를 넘어섰다는 내부 소식이 반도체 텔레그램 채널에 유포됨.",sent:"긍정",impactScore:82,themes:["반도체"],relStocks:[{code:"000660",dir:"neg"}]},
-    {code:"000660",type:"news",title:"SK하이닉스 HBM4 E 샘플 엔비디아 전달",body:"SK하이닉스가 차세대 HBM4 E 샘플을 엔비디아에 전달했다고 업계 복수 소식통이 확인.",sent:"긍정",impactScore:91,themes:["반도체","AI","HBM"],relStocks:[{code:"005930",dir:"neg"}]},
-    {code:"034020",type:"news",title:"두산에너빌리티 미국 SMR 수주전 참여 확정",body:"두산에너빌리티가 미국 테라파워 SMR 프로젝트 핵심 기자재 공급사로 최종 선정.",sent:"긍정",impactScore:89,themes:["원전","SMR"],relStocks:[{code:"012450",dir:"pos"}]},
-    {code:"012450",type:"analyst",title:"한화에어로 목표주가 50만원 상향 (신한)",body:"신한증권, 방산 수출 모멘텀 가속화 감안해 목표주가 기존 42만원→50만원 상향.",sent:"긍정",impactScore:74,themes:["방산"],relStocks:[]},
-    {code:"051910",type:"rumor",title:"LG화학-GM 배터리 소재 계약 파기 루머",body:"GM의 배터리 조달 전략 변경으로 LG화학 양극재 대규모 계약이 축소될 수 있다는 루머.",sent:"부정",impactScore:77,themes:["2차전지","소재"],relStocks:[{code:"006400",dir:"neg"}]},
-  ];
-  const pick = templates[Math.floor(Math.random() * templates.length)];
-  const t = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-  const newItem = {
-    ...pick,
-    id: Date.now(),
-    time: t,
-    sources: Math.floor(Math.random()*8)+2,
-    speed: ["빠름","매우 빠름","중간"][Math.floor(Math.random()*3)],
-    score: null, verdict: null, detail: null, dartResult: null, judgment: null,
-    spreadHistory: [1, Math.floor(Math.random()*3)+1],
-    urgency: pick.impactScore >= 85 ? 1 : pick.impactScore >= 70 ? 2 : 3,
-    aiSummary: null, aiKeywords: null,
-    _new: true,
-  };
-  NEWS.unshift(newItem);
+async function autoFetchNews() {
+  /* news.json 을 새로 fetch 하여 갱신 (하드코딩 템플릿 제거) */
+  const prevLen = NEWS.length;
+  const n = await fetchNewsJson();
 
-  // 키워드 알림 체크
-  if(S.alertSettings.newIssueAlert) {
-    notify(`🆕 신규 이슈 감지: ${newItem.title.slice(0,20)}...`, newItem.urgency===1?'warn':'info');
+  if (n > 0 && NEWS.length > prevLen) {
+    const newItems = NEWS.slice(0, NEWS.length - prevLen);
+    newItems.forEach(newItem => {
+      newItem._new = true;
+      if(S.alertSettings.newIssueAlert) {
+        notify(`🆕 신규 이슈: ${newItem.title.slice(0,20)}...`, newItem.urgency===1?'warn':'info');
+      }
+      if(S.alertSettings.keywordAlert) {
+        const matched = S.keywords.find(kw => newItem.title.includes(kw) || newItem.body.includes(kw));
+        if(matched) notify(`🔔 키워드 알림 [${matched}] 이슈 발생!`, 'warn');
+      }
+      checkWatchlistAlert(newItem);
+    });
+    S.refreshToast = true;
+    if(S.tab === 'feed') reCards();
+    else render();
+    setTimeout(() => { S.refreshToast = false; render(); }, 3000);
   }
-  if(S.alertSettings.keywordAlert) {
-    const matched = S.keywords.find(kw => newItem.title.includes(kw) || newItem.body.includes(kw));
-    if(matched) notify(`🔔 키워드 알림 [${matched}] 이슈 발생!`, 'warn');
-  }
-  checkWatchlistAlert(newItem);
-
-  S.refreshToast = true;
-  if(S.tab === 'feed') reCards();
-  else render();
-  setTimeout(() => { S.refreshToast = false; render(); }, 3000);
 }
 
 function checkWatchlistAlert(item) {
@@ -1622,7 +1716,20 @@ function priceHTML(code) {
 
 /* ══ 수급 HTML ══ */
 function supplyHTML(code) {
-  const s = SUPPLY_BASE[code]; if(!s) return '';
+  const s = SUPPLY_BASE[code];
+  if(!s) {
+    // supply.json 미로드 상태
+    if (!_supplyLoaded) {
+      return `<div class="supply-box">
+        <div class="supply-title"><span>💰 오늘 수급 현황</span></div>
+        <div style="text-align:center;padding:12px;font-size:12px;color:var(--ink3)">
+          ⏳ 수급 데이터 로딩 중...<br>
+          <span style="font-size:11px">GitHub Actions 장마감 후 자동 수집</span>
+        </div>
+      </div>`;
+    }
+    return '';
+  }
   const fmt = v => { const a=Math.abs(v); return (v>=0?'+':'-')+(a>=10000?(a/10000).toFixed(1)+'조':(a/100).toFixed(0)+'억')+'원'; };
   const maxV = Math.max(Math.abs(s.foreign),Math.abs(s.inst),Math.abs(s.retail),1);
   const bw = v => Math.round(Math.abs(v)/maxV*100);
@@ -1777,13 +1884,17 @@ async function runAISummary(id) {
 내용:${item.body}
 {"summary":"1~2문장 핵심 요약 (투자자 관점)","keywords":["핵심키워드1","핵심키워드2","핵심키워드3"],"invest_points":["투자관점포인트1","투자관점포인트2"]}`;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,system:"JSON만.",messages:[{role:"user",content:prompt}]})});
+    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:400,system:"JSON만.",messages:[{role:"user",content:prompt}]}));
     const data = await res.json();
     const p = JSON.parse(data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim()||"{}");
     const i = NEWS.findIndex(n=>n.id===id);
     if(i>=0){ NEWS[i].aiSummary = p.summary; NEWS[i].aiKeywords = p.keywords; NEWS[i].aiInvestPoints = p.invest_points; }
     notify(`✅ AI 요약 완료`,"ok");
   } catch(e) {
+    if (e.message === 'CF_WORKER_NOT_SET') {
+      notify('⚙️ AI 기능 미설정 — 설정탭에서 CF Worker URL을 입력해주세요', 'warn');
+      S.aiSumF[id] = false; reCards(); return;
+    }
     const i = NEWS.findIndex(n=>n.id===id);
     if(i>=0){ NEWS[i].aiSummary = `${stock?.name} 관련 ${SRC[item.type]?.label}. 투자자 주목 필요.`; NEWS[i].aiKeywords = [stock?.sector, item.type==="rumor"?"찌라시":"공식"]; }
     notify(`📝 AI 요약 완료`,"info");
@@ -2413,6 +2524,27 @@ function rAlert() {
       </div>
     </div>
 
+    <!-- CF Worker URL 설정 (AI 기능) -->
+    <div class="alert-card">
+      <div class="alert-section-title">🤖 AI 기능 설정 (Cloudflare Workers)</div>
+      <div style="font-size:12px;color:var(--ink2);line-height:1.7;margin-bottom:10px;padding:10px 12px;background:rgba(155,127,232,0.08);border-radius:10px;border-left:3px solid var(--purple)">
+        AI 팩트체크·투자판단 기능을 사용하려면 Cloudflare Workers 프록시 URL이 필요합니다.<br>
+        <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--purple);font-weight:700">workers.cloudflare.com↗</a>에서 무료로 생성 가능합니다.
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="cf-worker-inp" class="kw-add-inp" placeholder="https://your-worker.workers.dev"
+          value="${(()=>{ try { return localStorage.getItem('cf_worker_url')||''; } catch(e){return '';} })()}"
+          style="flex:1;font-size:12px">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveCfWorkerUrl()" class="kw-add-btn" style="flex:1">💾 저장</button>
+        <button onclick="testCfWorker()" style="flex:1;background:var(--card);border:1.5px solid var(--bdr2);border-radius:10px;padding:9px 14px;color:var(--purple);font-size:13px;font-weight:800">🧪 연결 테스트</button>
+      </div>
+      <div id="cf-status" style="margin-top:8px;font-size:12px;color:var(--ink3)">
+        ${(()=>{ try { const u=localStorage.getItem('cf_worker_url'); return u ? '✅ URL 설정됨: '+u.slice(0,40)+'...' : '⚠️ 미설정 — AI 기능 비활성화'; } catch(e){return '';} })()}
+      </div>
+    </div>
+
     <!-- 관심 종목 -->
     <div class="alert-card">
       <div class="alert-section-title">⭐ 관심 종목</div>
@@ -2460,6 +2592,8 @@ function render() {
         <span style="color:var(--ink3)">·</span>
         <span style="color:var(--ink3)">${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
         ${S._priceUpdatedAt ? `<span style="color:var(--ink3)">·</span><span style="font-family:var(--mono);font-size:10px;color:var(--teal)">데이터 ${S._priceUpdatedAt}</span>` : ''}
+        ${_supplyLoaded ? `<span style="font-family:var(--mono);font-size:9px;color:var(--sage);padding:1px 5px;border:1px solid rgba(109,184,122,0.3);border-radius:4px">수급LIVE</span>` : ''}
+        ${_newsLoaded   ? `<span style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:1px 5px;border:1px solid rgba(90,158,224,0.3);border-radius:4px">뉴스LIVE</span>` : ''}
         <span style="margin-left:auto;display:flex;align-items:center;gap:5px">
           <span class="auto-badge ${S.autoRefresh?'on':'off'}">${S.autoRefresh?'●':'○'} AUTO</span>
         </span>
@@ -2674,6 +2808,44 @@ function removeWL(code) {
   render();
 }
 
+/* CF Worker URL 저장/테스트 */
+function saveCfWorkerUrl() {
+  const inp = document.getElementById('cf-worker-inp');
+  const url = (inp?.value || '').trim();
+  try {
+    if (url) {
+      localStorage.setItem('cf_worker_url', url);
+      notify('✅ CF Worker URL 저장 완료', 'ok');
+    } else {
+      localStorage.removeItem('cf_worker_url');
+      notify('🗑 CF Worker URL 삭제됨 — AI 기능 비활성화', 'info');
+    }
+    const el = document.getElementById('cf-status');
+    if (el) el.textContent = url ? '✅ URL 설정됨: ' + url.slice(0, 40) + '...' : '⚠️ 미설정';
+  } catch(e) { notify('❌ 저장 실패', 'warn'); }
+}
+
+async function testCfWorker() {
+  const url = (() => { try { return localStorage.getItem('cf_worker_url') || ''; } catch(e) { return ''; } })();
+  if (!url) { notify('⚠️ CF Worker URL을 먼저 입력해주세요', 'warn'); return; }
+  notify('🧪 연결 테스트 중...', 'info');
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 10, messages: [{ role: 'user', content: 'ping' }] }),
+    });
+    if (res.ok) {
+      notify('✅ CF Worker 연결 성공! AI 기능 활성화됨', 'ok');
+    } else {
+      const err = await res.text();
+      notify(`❌ 연결 실패 (${res.status}): ${err.slice(0, 40)}`, 'warn');
+    }
+  } catch(e) {
+    notify(`❌ 연결 오류: ${e.message.slice(0, 50)}`, 'warn');
+  }
+}
+
 /* 포트폴리오 */
 function addPortfolio() {
   const code = S.portInp.code || document.getElementById('port-code')?.value;
@@ -2774,7 +2946,7 @@ async function runPortAnalysis(code) {
 {"verdict":"강력보유|매수|분할매수|관망|일부매도|손절검토","confidence":0-100,"summary":"2~3문장 투자 분석","upProb":0-100,"flatProb":0-100,"dnProb":0-100,"stopLoss":"X원(-X%) 트레일링이면 현재가기준","target":"X원(+X%) 트레일링이면 현재가기준","d1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"w1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"m1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"y1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"detail":"리스크·기회·액션 분석. 트레일링이면 반드시 트레일링 수익 구간 언급","_trailing":${_isTrailing}}`;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]})});
+    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]}));
     const data = await res.json();
     const txt = data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim();
     const ana = JSON.parse(txt||"{}");
@@ -2846,7 +3018,7 @@ async function rfc(id){
   const dartCtx=item.dartResult?.length>0?`\nDART: ${item.dartResult.map(d=>`${d.title}(${d.relevance})`).join(', ')}`:'';
   const prompt=`한국 주식시장 팩트체커. JSON만 응답.\n종목:${stock?.name}(${item.code}) 섹터:${stock?.sector}\n제목:${item.title}\n내용:${item.body}\n유형:${SRC[item.type]?.label} 출처:${item.sources}개 확산:${item.speed}${dartCtx}\n{"reliability_score":0-100,"verdict":"confirmed|partial|unverified|false","key_points":["분석1","분석2","분석3"],"risk_level":"높음|중간|낮음","official_check":"한줄","action_note":"한줄"}`;
   try {
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]})});
+    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]}));
     const data=await res.json();
     const p=JSON.parse(data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim()||"{}");
     const i=NEWS.findIndex(n=>n.id===id);
@@ -2881,7 +3053,7 @@ async function runJudge(id){
 JSON만 응답:
 {"verdict":"강력매수|매수|단기매수|관망|주의/관망|매도 고려|회피/매도","confidence":0-100,"summary":"2~3문장 종합 투자 의견","short":{"signal":"매수|관망|매도","reason":"단기 1~4주 이유"},"mid":{"signal":"매수|관망|매도","reason":"중기 1~6개월 이유"},"long":{"signal":"매수|관망|매도","reason":"장기 6개월+ 이유"},"factors":[{"icon":"📊","text":"근거1"},{"icon":"⚡","text":"근거2"},{"icon":"🎯","text":"근거3"}],"stopLoss":"-5~8%","targetReturn":"+10~20%"}`;
   try {
-    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"JSON만 출력.",messages:[{role:"user",content:prompt}]})});
+    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"JSON만 출력.",messages:[{role:"user",content:prompt}]}));
     const data=await res.json();
     const j=JSON.parse(data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim()||"{}");
     const i=NEWS.findIndex(n=>n.id===id); if(i>=0)NEWS[i].judgment=j;
