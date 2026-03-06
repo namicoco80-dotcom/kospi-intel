@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>KOSPI INTEL v3 — AI 주식 분석 플랫폼</title>
+<title>KOSPI INTEL v5 — AI 주식 분석 플랫폼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@500;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
@@ -65,7 +65,7 @@ input,select{font-family:var(--body)}
 .brand{flex:1}
 .brand-tag{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--amber);letter-spacing:3px;text-transform:uppercase;margin-bottom:3px}
 .brand-name{font-family:var(--display);font-size:17px;font-weight:900;color:var(--ink);line-height:1.1;letter-spacing:-0.3px}
-.brand-sub{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-top:3px}
+.brand-sub{font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:2px;display:flex;align-items:center;gap:4px}
 .hdr-btns{display:flex;gap:5px;align-items:flex-start;flex-wrap:nowrap}
 .crawl-btn{
   background:var(--card2);border:1.5px solid var(--bdr2);
@@ -813,7 +813,11 @@ const PRICE_ENGINE = {
   /* HTML 파일과 같은 폴더의 prices.json 을 1순위로 시도
      파일 형식: { "005930": 55800, "000660": 192000, ... }
      또는     : { "005930": { "price":55800, "chg":1.23 }, ... }  */
-  JSON_URL: './prices.json',
+  JSON_URL: (() => {
+    // GitHub Pages 배포 경로 자동 감지
+    const base = window.location.pathname.replace(/\/[^\/]*$/, '');
+    return base + '/prices.json';
+  })(),
 
   /* CORS 프록시 URL 목록 (순서대로 시도)
      file:// 환경에서 외부 API 직접 호출은 대부분 차단되므로
@@ -906,21 +910,33 @@ function applyLsPrices(lsData) {
    (HTML과 같은 폴더에 prices.json 이 있으면 자동 사용)
 ────────────────────────────────────────── */
 async function fetchJsonPrices() {
-  /* file:// 프로토콜에서는 fetch('./prices.json') 이
-     일부 브라우저(특히 안드로이드 Chrome)에서 작동함 */
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 4000);
-    const r = await fetch(PRICE_ENGINE.JSON_URL, {
-      signal: ctrl.signal,
-      cache:  'no-store',
-    });
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    // GitHub Pages: /kospi-intel/prices.json 경로 자동 대응
+    const urls = [
+      PRICE_ENGINE.JSON_URL,
+      './prices.json',
+      window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '') + '/prices.json',
+    ];
     clearTimeout(timer);
-    if (!r.ok) return 0;
-    const json = await r.json();
-    return applyJsonData(json, 'json');
+    for (const url of [...new Set(urls)]) {
+      try {
+        const ctrl2 = new AbortController();
+        const t2 = setTimeout(() => ctrl2.abort(), 4000);
+        const r = await fetch(url, { signal: ctrl2.signal, cache: 'no-store' });
+        clearTimeout(t2);
+        if (!r.ok) continue;
+        const json = await r.json();
+        const n = applyJsonData(json, 'json');
+        if (n > 0) {
+          console.log(`[PriceEngine] prices.json 로드 성공 (${url}): ${n}종목`);
+          return n;
+        }
+      } catch(e2) { /* 다음 URL 시도 */ }
+    }
+    return 0;
   } catch(e) {
-    // file:// 또는 네트워크 실패 → 정상적인 실패, 다음 단계로
     return 0;
   }
 }
@@ -931,10 +947,11 @@ async function fetchJsonPrices() {
    { "005930": { price:55800, chg:1.2, ... } }  ← 상세 객체  */
 function applyJsonData(json, source) {
   let count = 0;
+  let latestUpdatedAt = null;
   Object.keys(json).forEach(code => {
     if (!PRICE_BASE[code]) return;
     const val = json[code];
-    let price, chg, high, low, open, vol, basePrice;
+    let price, chg, high, low, open, vol, basePrice, updatedAt;
 
     if (typeof val === 'number') {
       price     = Math.round(val);
@@ -942,21 +959,37 @@ function applyJsonData(json, source) {
       basePrice = PRICE_BASE[code].basePrice ?? price;
       high = low = open = '—';
       vol = '—';
+      updatedAt = null;
     } else if (typeof val === 'object' && val !== null) {
       price     = Math.round(val.price ?? val.currentPrice ?? val.close ?? 0);
       chg       = val.chg   ?? val.changeRate ?? val.change ?? 0;
       basePrice = val.basePrice ?? val.prevClose ?? val.prev ?? price;
-      high      = val.high  ? Number(val.high).toLocaleString('ko-KR')  : '—';
-      low       = val.low   ? Number(val.low).toLocaleString('ko-KR')   : '—';
-      open      = val.open  ? Number(val.open).toLocaleString('ko-KR')  : '—';
-      vol       = val.vol   ?? val.volume ?? '—';
+      // prices.json high/low/open은 문자열 숫자 가능 ("56200" 형태)
+      const fmtN = v => v ? Number(String(v).replace(/,/g,'')).toLocaleString('ko-KR') : '—';
+      high      = fmtN(val.high);
+      low       = fmtN(val.low);
+      open      = fmtN(val.open);
+      vol       = val.vol ?? val.volume ?? '—';
+      updatedAt = val.updatedAt ?? null;
+      if (updatedAt && (!latestUpdatedAt || updatedAt > latestUpdatedAt)) {
+        latestUpdatedAt = updatedAt;
+      }
     } else return;
 
     if (!price || price <= 0) return;
 
-    setPriceBase(code, { price, chg, basePrice, high, low, open, vol, dataSource: source });
+    setPriceBase(code, { price, chg, basePrice, high, low, open, vol, dataSource: source, updatedAt });
     count++;
   });
+  // 마지막 업데이트 시간 헤더에 표시
+  if (latestUpdatedAt) {
+    try {
+      const dt = new Date(latestUpdatedAt);
+      const kst = new Date(dt.getTime() + 0); // updatedAt은 이미 KST ISO
+      const hhmm = kst.toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      S._priceUpdatedAt = hhmm;
+    } catch(e) {}
+  }
   return count;
 }
 
@@ -1117,13 +1150,13 @@ function refreshPriceDom() {
 
     if (sEl) {
       const labels = {
-        live:        'LIVE',
-        json:        'JSON',
-        cached:      '저장',
-        cached_old:  '구저장',
-        manual:      '수동',
+        live:       'LIVE',
+        json:       'JSON',
+        cached:     '저장',
+        cached_old: '구저장',
+        manual:     '수동',
       };
-      const cls = p.dataSource === 'live' || p.dataSource === 'json' ? 'live' : 'sim';
+      const cls = ['live','json'].includes(p.dataSource) ? 'live' : 'sim';
       sEl.textContent = labels[p.dataSource] ?? 'SIM';
       sEl.className   = 'price-source-tag ' + cls;
     }
@@ -1354,6 +1387,7 @@ let S = {
   newKw:"",newWl:"",
   showPriceModal: false,
   manualPriceInputs: {},
+  _priceUpdatedAt: null,
 };
 
 /* ══════════════════════════════════════════════
@@ -1397,12 +1431,16 @@ function startAutoRefresh() {
      2) 백그라운드에서 JSON/API 조회
      3) 실패 시 시뮬 틱으로 폴백                   */
   (async () => {
-    notify('📡 가격 데이터 로딩 중...', 'info');
+    notify('📡 prices.json 로딩 중...', 'info');
     const n = await fetchAllPrices();
     if (n > 0) {
-      notify(`✅ ${n}종목 가격 로드 완료`, 'ok');
+      const src_label = Object.values(PRICE_BASE).find(p=>p.dataSource==='json') ? 'JSON' : 'LIVE';
+      notify(`✅ ${n}종목 가격 로드 완료 · 출처: ${src_label}`, 'ok');
+      if (S._priceUpdatedAt) {
+        setTimeout(() => notify(`🕐 데이터 기준: ${S._priceUpdatedAt} (장 마감후 자동업데이트)`, 'info'), 2000);
+      }
     } else {
-      notify('📊 저장된 가격 없음 — 💰 주가입력 버튼으로 입력해주세요', 'info');
+      notify('📊 prices.json 미로드 — 💰 주가입력 버튼으로 직접 입력하거나 자동 조회를 시도해주세요', 'info');
       updatePrices();
       refreshPriceDom();
       refreshPortfolioDom();
@@ -1560,8 +1598,9 @@ function priceHTML(code) {
 
   const isUp = p.chg > 0, isFlat = p.chg === 0 || p.chg === null;
   const cls    = isFlat ? 'flat' : isUp ? 'up' : 'dn';
-  const srcCls = p.dataSource === 'live' ? 'live' : 'sim';
-  const srcLbl = p.dataSource === 'live' ? 'LIVE' : p.dataSource === 'manual' ? '수동' : 'SIM';
+  const isRealData = ['live','json'].includes(p.dataSource);
+  const srcCls = isRealData ? 'live' : 'sim';
+  const srcLbl = p.dataSource === 'live' ? 'LIVE' : p.dataSource === 'json' ? 'JSON' : p.dataSource === 'manual' ? '수동' : p.dataSource === 'cached' ? '저장' : 'SIM';
   return `<div class="price-row" data-price-code="${code}">
     <span class="price-source-tag ${srcCls}">${srcLbl}</span>
     <div style="flex:1">
@@ -2177,7 +2216,7 @@ function rStocks() {
           ${ring(s.avg, 60)}
         </div>
         ${p ? `<div class="price-row" data-price-code="${s.code}">
-          <span class="price-source-tag ${p.dataSource==='live'?'live':'sim'}">${p.dataSource==='live'?'LIVE':'SIM'}</span>
+          <span class="price-source-tag ${['live','json'].includes(p.dataSource)?'live':'sim'}">${p.dataSource==='live'?'LIVE':p.dataSource==='json'?'JSON':p.dataSource==='manual'?'수동':'SIM'}</span>
           <div style="flex:1"><div style="display:flex;align-items:center;gap:7px;margin-bottom:2px"><span class="price-val">${p.price.toLocaleString('ko-KR')}원</span><span class="price-chg ${p.chg>0?'up':p.chg<0?'dn':'flat'}">${p.chg>=0?'+':''}${p.chg}%</span></div><div style="display:flex;gap:8px"><span style="font-size:10px;color:var(--ink3);font-family:var(--mono)">고 ${p.high||'—'}</span><span style="font-size:10px;color:var(--ink3);font-family:var(--mono)">저 ${p.low||'—'}</span></div></div>
           <div class="price-meta"><span>${p.vol}</span><span>${p.amt}</span></div>
         </div>` : ''}
@@ -2420,13 +2459,14 @@ function render() {
         </span>
         <span style="color:var(--ink3)">·</span>
         <span style="color:var(--ink3)">${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
+        ${S._priceUpdatedAt ? `<span style="color:var(--ink3)">·</span><span style="font-family:var(--mono);font-size:10px;color:var(--teal)">데이터 ${S._priceUpdatedAt}</span>` : ''}
         <span style="margin-left:auto;display:flex;align-items:center;gap:5px">
           <span class="auto-badge ${S.autoRefresh?'on':'off'}">${S.autoRefresh?'●':'○'} AUTO</span>
         </span>
       </div>
       <div class="hdr-row1">
         <div class="brand">
-          <div class="brand-tag">Kospi Intel v4</div>
+          <div class="brand-tag">Kospi Intel v5</div>
           <div class="brand-name">AI 투자 분석</div>
         </div>
         <div class="hdr-btns">
@@ -2505,7 +2545,7 @@ function render() {
         </div>
         <div class="price-modal-body">
           <div class="price-modal-desc">
-            📱 현재 증권앱에서 확인한 실시간 가격을 직접 입력해주세요.<br>
+            📋 prices.json 자동 로드값이 미리 채워집니다. 수정 시 저장 버튼을 누르세요.<br>
             입력한 가격은 저장되어 다음에도 유지됩니다.<br>
             ⚡ 자동조회 버튼으로 API 연결을 시도할 수 있습니다.
           </div>
@@ -2532,7 +2572,7 @@ function render() {
           }).join('')}
         </div>
         <button class="price-modal-api-btn" onclick="tryAutoFetch()">⚡ 자동 조회 시도 (API)</button>
-        <div class="price-notice">💡 자동 조회가 실패하면 직접 입력을 사용해주세요. 네이버·카카오증권 앱에서 현재가를 확인 후 입력하시면 됩니다.</div>
+        <div class="price-notice">📋 prices.json → 🌐 Yahoo Finance 실시간 → 💾 캐시 순으로 가격을 불러옵니다. GitHub Actions가 매일 16:35 자동 업데이트합니다.</div>
         <button class="price-modal-save" onclick="savePriceModal()">✅ 저장 및 적용</button>
       </div>
     </div>`;
