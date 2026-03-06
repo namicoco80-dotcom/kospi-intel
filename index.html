@@ -1884,7 +1884,7 @@ async function runAISummary(id) {
 내용:${item.body}
 {"summary":"1~2문장 핵심 요약 (투자자 관점)","keywords":["핵심키워드1","핵심키워드2","핵심키워드3"],"invest_points":["투자관점포인트1","투자관점포인트2"]}`;
   try {
-    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:400,system:"JSON만.",messages:[{role:"user",content:prompt}]}));
+    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:400,system:"JSON만.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
     const p = JSON.parse(data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim()||"{}");
     const i = NEWS.findIndex(n=>n.id===id);
@@ -2946,7 +2946,7 @@ async function runPortAnalysis(code) {
 {"verdict":"강력보유|매수|분할매수|관망|일부매도|손절검토","confidence":0-100,"summary":"2~3문장 투자 분석","upProb":0-100,"flatProb":0-100,"dnProb":0-100,"stopLoss":"X원(-X%) 트레일링이면 현재가기준","target":"X원(+X%) 트레일링이면 현재가기준","d1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"w1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"m1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"y1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"detail":"리스크·기회·액션 분석. 트레일링이면 반드시 트레일링 수익 구간 언급","_trailing":${_isTrailing}}`;
 
   try {
-    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]}));
+    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
     const txt = data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim();
     const ana = JSON.parse(txt||"{}");
@@ -3018,7 +3018,7 @@ async function rfc(id){
   const dartCtx=item.dartResult?.length>0?`\nDART: ${item.dartResult.map(d=>`${d.title}(${d.relevance})`).join(', ')}`:'';
   const prompt=`한국 주식시장 팩트체커. JSON만 응답.\n종목:${stock?.name}(${item.code}) 섹터:${stock?.sector}\n제목:${item.title}\n내용:${item.body}\n유형:${SRC[item.type]?.label} 출처:${item.sources}개 확산:${item.speed}${dartCtx}\n{"reliability_score":0-100,"verdict":"confirmed|partial|unverified|false","key_points":["분석1","분석2","분석3"],"risk_level":"높음|중간|낮음","official_check":"한줄","action_note":"한줄"}`;
   try {
-    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]}));
+    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]});
     const data=await res.json();
     const p=JSON.parse(data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim()||"{}");
     const i=NEWS.findIndex(n=>n.id===id);
@@ -3053,7 +3053,7 @@ async function runJudge(id){
 JSON만 응답:
 {"verdict":"강력매수|매수|단기매수|관망|주의/관망|매도 고려|회피/매도","confidence":0-100,"summary":"2~3문장 종합 투자 의견","short":{"signal":"매수|관망|매도","reason":"단기 1~4주 이유"},"mid":{"signal":"매수|관망|매도","reason":"중기 1~6개월 이유"},"long":{"signal":"매수|관망|매도","reason":"장기 6개월+ 이유"},"factors":[{"icon":"📊","text":"근거1"},{"icon":"⚡","text":"근거2"},{"icon":"🎯","text":"근거3"}],"stopLoss":"-5~8%","targetReturn":"+10~20%"}`;
   try {
-    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"JSON만 출력.",messages:[{role:"user",content:prompt}]}));
+    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"JSON만 출력.",messages:[{role:"user",content:prompt}]});
     const data=await res.json();
     const j=JSON.parse(data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim()||"{}");
     const i=NEWS.findIndex(n=>n.id===id); if(i>=0)NEWS[i].judgment=j;
