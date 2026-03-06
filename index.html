@@ -677,6 +677,24 @@ input,select{font-family:var(--body)}
 .price-modal-save{width:calc(100% - 40px);margin:16px 20px 0;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--amber),var(--amber2));color:#fff;font-size:15px;font-weight:900}
 .price-modal-api-btn{width:calc(100% - 40px);margin:8px 20px 0;padding:12px;border-radius:14px;border:1.5px solid var(--bdr2);background:var(--card);color:var(--teal);font-size:13px;font-weight:800}
 .price-notice{margin:12px 20px 0;padding:10px 12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;font-size:11px;color:var(--teal);line-height:1.6}
+
+/* ══ 모바일 최적화 추가 ══ */
+@media (max-width: 420px) {
+  .jhs { gap: 5px; }
+  .jh  { padding: 9px 6px; }
+  .jhlbl { font-size: 9px; letter-spacing: 0.5px; }
+  .jhval { font-size: 14px; }
+  .jhdesc { font-size: 10px; line-height: 1.4; }
+  .jpos { gap: 5px; }
+  .jpositem { padding: 8px 6px; }
+  .jposlbl { font-size: 9px; }
+  .jposval { font-size: 13px; }
+  .card { border-radius: 14px; }
+  .cfooter { gap: 8px; flex-wrap: wrap; }
+  .ctitle { font-size: 13px; line-height: 1.45; }
+  .cmeta { gap: 4px; flex-wrap: wrap; }
+  .bdg { font-size: 10px; padding: 2px 6px; }
+}
 </style>
 </head>
 <body>
@@ -1656,7 +1674,15 @@ function filtered() {
     if(S.gradeFilter!=="all" && getGrade(n)!==S.gradeFilter) return false;
     if(S.q && !n.title.includes(S.q) && !s?.name.includes(S.q) && !(n.aiKeywords||[]).join('').includes(S.q)) return false;
     return true;
-  }).sort((a,b) => a.urgency - b.urgency);
+  }).sort((a,b) => {
+    // ⭐ 관심종목 항상 상단 고정
+    const aWL = S.watchlist.includes(a.code) ? 0 : 1;
+    const bWL = S.watchlist.includes(b.code) ? 0 : 1;
+    if(aWL !== bWL) return aWL - bWL;
+    // 긴급도 → 신호 강도순
+    if(a.urgency !== b.urgency) return a.urgency - b.urgency;
+    return (b.score||0) - (a.score||0);
+  });
 }
 
 function uPill(u) {
@@ -1924,6 +1950,12 @@ function judgeHTML(j) {
         <div><div class="jconf-n" style="color:${t.accent}">${j.confidence}%</div><div class="jconf-l">신뢰도</div></div>
       </div>
       <div class="jsum">${j.summary}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+        <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:${j.confidence>=75?'rgba(34,197,94,0.15)':j.confidence>=55?'rgba(245,200,64,0.15)':'rgba(239,68,68,0.15)'};color:${j.confidence>=75?'var(--teal)':j.confidence>=55?'var(--amber)':'var(--rose)'}">
+          ${j.confidence>=75?'신뢰도 높음':j.confidence>=55?'신뢰도 보통':'신뢰도 낮음'} ${j.confidence}%
+        </span>
+        <span style="font-size:10px;color:var(--ink3)">${j.confidence>=75?'복수 근거 확인됨':j.confidence>=55?'추가 확인 권장':'루머·미확인 정보 주의'}</span>
+      </div>
       <div class="jhs">
         <div class="jh"><div class="jhlbl">단기 1~4주</div><div class="jhval" style="color:${sigC(j.short.signal)}">${j.short.signal}</div><div class="jhdesc">${j.short.reason}</div></div>
         <div class="jh"><div class="jhlbl">중기 1~6개월</div><div class="jhval" style="color:${sigC(j.mid.signal)}">${j.mid.signal}</div><div class="jhdesc">${j.mid.reason}</div></div>
@@ -1989,6 +2021,7 @@ function cardHTML(item) {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
         <div style="flex:1">
           <div class="cmeta">
+            ${S.watchlist.includes(item.code) ? '<span style="font-size:13px" title="관심종목">⭐</span>' : ''}
             <span class="bdg" style="background:${src.color}20;color:${src.color};border-color:${src.color}40">${src.icon} ${src.label}</span>
             <span class="bdg" style="background:var(--bg3);color:var(--ink2);border-color:var(--bdr2)">${stock?.name}</span>
             <span class="grade-badge grade-${grade}">${gm.sublabel}</span>
@@ -2592,8 +2625,8 @@ function render() {
         <span style="color:var(--ink3)">·</span>
         <span style="color:var(--ink3)">${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
         ${S._priceUpdatedAt ? `<span style="color:var(--ink3)">·</span><span style="font-family:var(--mono);font-size:10px;color:var(--teal)">데이터 ${S._priceUpdatedAt}</span>` : ''}
-        ${_supplyLoaded ? `<span style="font-family:var(--mono);font-size:9px;color:var(--sage);padding:1px 5px;border:1px solid rgba(109,184,122,0.3);border-radius:4px">수급LIVE</span>` : ''}
-        ${_newsLoaded   ? `<span style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:1px 5px;border:1px solid rgba(90,158,224,0.3);border-radius:4px">뉴스LIVE</span>` : ''}
+        ${_supplyLoaded ? `<span style="font-family:var(--mono);font-size:9px;color:var(--sage);padding:1px 5px;border:1px solid rgba(109,184,122,0.3);border-radius:4px;cursor:pointer" title="수급 데이터 로드 완료">수급 LIVE</span>` : `<span style="font-family:var(--mono);font-size:9px;color:var(--ink3);padding:1px 5px;border:1px solid var(--bdr);border-radius:4px">수급 --</span>`}
+        ${_newsLoaded   ? `<span style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:1px 5px;border:1px solid rgba(90,158,224,0.3);border-radius:4px;cursor:pointer" title="뉴스 ${NEWS.length}건 로드 완료">뉴스 LIVE</span>` : `<span style="font-family:var(--mono);font-size:9px;color:var(--ink3);padding:1px 5px;border:1px solid var(--bdr);border-radius:4px">뉴스 --</span>`}
         <span style="margin-left:auto;display:flex;align-items:center;gap:5px">
           <span class="auto-badge ${S.autoRefresh?'on':'off'}">${S.autoRefresh?'●':'○'} AUTO</span>
         </span>
@@ -3080,14 +3113,28 @@ JSON만 응답:
 /* 일괄 분석 */
 async function runAll(){
   const u=NEWS.filter(n=>!n.verdict).sort((a,b)=>a.urgency-b.urgency);
-  notify(`🤖 ${u.length}건 순차 분석 시작...`,"info");
+  if(u.length===0){notify('✅ 모든 항목이 이미 분석됐어요!','ok');return;}
+  notify(`🤖 총 ${u.length}건 분석 시작...`,"info");
+  let done=0;
   for(const item of u){
+    done++;
+    // 진행률 실시간 표시
+    const pct = Math.round(done/u.length*100);
+    const bar = '█'.repeat(Math.floor(pct/10))+'░'.repeat(10-Math.floor(pct/10));
+    notify(`⏳ [${bar}] ${pct}% · ${done}/${u.length}건 분석 중...`,'info');
     if(!item.dartResult) await runDart(item.id);
     await rfc(item.id);
     await runJudge(item.id);
-    await new Promise(r=>setTimeout(r,500));
+    await new Promise(r=>setTimeout(r,400));
   }
-  notify(`✅ 전체 분석 완료!`, 'ok');
+  // 완료 후 신호 강도순 정렬 (매수 확률 높은 순)
+  NEWS.sort((a,b)=>{
+    const sa = a.score ?? 0;
+    const sb = b.score ?? 0;
+    return sb - sa;
+  });
+  notify(`✅ 전체 ${u.length}건 분석 완료! 신호 강도순 정렬됨`, 'ok');
+  render();
 }
 
 /* ══ 시작 ══ */
