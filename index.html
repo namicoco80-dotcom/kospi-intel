@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>KOSPI INTEL V8 · 03.07 · 03.07 — AI 주식 분석 플랫폼</title>
+<title>KOSPI INTEL V9 · 03.07 · 03.07 · 03.07 — AI 주식 분석 플랫폼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@500;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
@@ -3683,7 +3683,7 @@ function render() {
       </div>
       <div class="hdr-row1">
         <div class="brand">
-          <div class="brand-tag">KOSPI INTEL V8 · 03.07 · 03.07 · 03.07</div>
+          <div class="brand-tag">KOSPI INTEL V9 · 03.07 · 03.07 · 03.07 · 03.07</div>
           <div class="brand-name">AI 투자 분석</div>
         </div>
         <div class="hdr-btns">
@@ -3952,6 +3952,21 @@ function removePortfolio(code) {
 
 /* ── AI 개인 투자 분석 결과 HTML ── */
 function portAnalysisHTML(ana, p) {
+  // ── 옛날 캐시 데이터 방어 (undefined 방지) ──
+  if (!ana || !ana.verdict || ana.verdict === 'undefined') return '';
+  ana.confidence  = ana.confidence  ?? 65;
+  ana.summary     = ana.summary     || '분석 데이터를 불러오는 중...';
+  ana.upProb      = ana.upProb      ?? 50;
+  ana.flatProb    = ana.flatProb    ?? 25;
+  ana.dnProb      = ana.dnProb      ?? 25;
+  ana.stopLoss    = ana.stopLoss    || '-';
+  ana.target      = ana.target      || '-';
+  ana.detail      = ana.detail      || '';
+  ana.d1 = ana.d1 || {signal:'관망', up:50, dn:50};
+  ana.w1 = ana.w1 || {signal:'관망', up:50, dn:50};
+  ana.m1 = ana.m1 || {signal:'관망', up:50, dn:50};
+  ana.y1 = ana.y1 || {signal:'관망', up:50, dn:50};
+
   const T={"강력보유":{bg:"linear-gradient(135deg,#E8F5E9,#C8E6C9)",ac:"#2E7D32"},"매수":{bg:"linear-gradient(135deg,#E3F2FD,#BBDEFB)",ac:"#1565C0"},"분할매수":{bg:"linear-gradient(135deg,#E8EAF6,#C5CAE9)",ac:"#283593"},"관망":{bg:"linear-gradient(135deg,#FFF8E1,#FFECB3)",ac:"#E65100"},"일부매도":{bg:"linear-gradient(135deg,#FFF3E0,#FFE0B2)",ac:"#BF360C"},"손절검토":{bg:"linear-gradient(135deg,#FFEBEE,#FFCDD2)",ac:"#B71C1C"}};
   const t=T[ana.verdict]||T["관망"];
   const periods=[{label:"1일",d:ana.d1},{label:"1주",d:ana.w1},{label:"1개월",d:ana.m1},{label:"1년",d:ana.y1}];
@@ -4212,6 +4227,15 @@ async function runAll(){
 
 /* ══ 시작 ══ */
 function _init() {
+  // 구버전 캐시 자동 삭제 (undefined 방지)
+  try {
+    const pa = JSON.parse(localStorage.getItem('portAnalysis') || '{}');
+    const needsClear = Object.values(pa).some(a => !a.verdict || a.verdict === 'undefined');
+    if (needsClear) {
+      localStorage.removeItem('portAnalysis');
+      console.log('[Cache] 구버전 분석 캐시 삭제');
+    }
+  } catch(e) { localStorage.removeItem('portAnalysis'); }
   try { render(); } catch(e) {
     console.error('[KOSPI] render 초기 오류:', e);
     var app = document.getElementById('app');
