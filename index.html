@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>KOSPI INTEL V7 · 03.07 — AI 주식 분석 플랫폼</title>
+<title>KOSPI INTEL V8 · 03.07 · 03.07 — AI 주식 분석 플랫폼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@500;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
@@ -822,6 +822,10 @@ input,select{font-family:var(--body)}
 .prob-cell.up .prob-val  { color:#E53935 !important; }
 .prob-cell.dn .prob-val  { color:#1565C0 !important; }
 .prob-cell.flat .prob-val{ color:#546E7A !important; }
+@keyframes slideUp {
+  from { opacity:0; transform:translateX(-50%) translateY(20px); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0); }
+}
 </style>
 </head>
 <body>
@@ -3679,7 +3683,7 @@ function render() {
       </div>
       <div class="hdr-row1">
         <div class="brand">
-          <div class="brand-tag">KOSPI INTEL V7 · 03.07 · 03.07</div>
+          <div class="brand-tag">KOSPI INTEL V8 · 03.07 · 03.07 · 03.07</div>
           <div class="brand-name">AI 투자 분석</div>
         </div>
         <div class="hdr-btns">
@@ -4054,7 +4058,7 @@ JSON만 응답 (마크다운 없이):
 {"verdict":"강력보유|매수|분할매수|관망|일부매도|손절검토","confidence":0-100,"summary":"버핏 관점 핵심 판단 2~3문장 — 해자·내재가치·장기전망 반드시 언급","buffett_moat":"경제적 해자 평가: 강함/보통/약함/없음 + 한국시장 맥락에서 근거","buffett_quote":"버핏 어록 스타일의 촌철살인 한마디 (한국어, 이 종목 맞춤)","upProb":0-100,"flatProb":0-100,"dnProb":0-100,"stopLoss":"X원(-X%) 트레일링이면 현재가기준","target":"X원(+X%) 장기 내재가치 기준","d1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"w1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"m1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"y1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"detail":"버핏식 투자 액션 플랜: 단기 노이즈 vs 장기가치 구분 서술. 트레일링이면 반드시 언급","_trailing":${_isTrailing}}`;
 
   try {
-    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]});
+    const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"JSON만.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
     const txt = data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim();
     const ana = JSON.parse(txt||"{}");
@@ -4090,6 +4094,8 @@ JSON만 응답 (마크다운 없이):
       verdict: isPos ? "강력보유" : "관망",
       confidence: 65,
       summary: `${stock?.name} ${isPos?'수익':'손실'} 중. 수급 ${sup&&(sup.foreign+sup.inst)>0?'외국인·기관 매수세':'혼조세'}. 관련 이슈 ${relNews.length}건 모니터링 필요.`,
+      buffett_moat: `${stock?.sector} 섹터 내 ${stock?.name}의 경제적 해자는 AI 연결 후 정밀 분석 가능합니다.`,
+      buffett_quote: `훌륭한 기업을 적정한 가격에 사는 것이, 적정한 기업을 훌륭한 가격에 사는 것보다 낫다.`,
       upProb: isPos?62:38, flatProb:22, dnProb: isPos?16:40,
       stopLoss: stopLossStr,
       target:   targetStr,
@@ -4126,7 +4132,7 @@ async function rfc(id){
   const dartCtx=item.dartResult?.length>0?`\nDART: ${item.dartResult.map(d=>`${d.title}(${d.relevance})`).join(', ')}`:'';
   const prompt=`한국 주식시장 팩트체커. JSON만 응답.\n종목:${stock?.name}(${item.code}) 섹터:${stock?.sector}\n제목:${item.title}\n내용:${item.body}\n유형:${SRC[item.type]?.label} 출처:${item.sources}개 확산:${item.speed}${dartCtx}\n{"reliability_score":0-100,"verdict":"confirmed|partial|unverified|false","key_points":["분석1","분석2","분석3"],"risk_level":"높음|중간|낮음","official_check":"한줄","action_note":"한줄"}`;
   try {
-    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]});
+    const res=await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"JSON만.",messages:[{role:"user",content:prompt}]});
     const data=await res.json();
     const p=JSON.parse(data.content?.map(c=>c.text||"").join("").replace(/`{3}json/g,"").replace(/`{3}/g,"").trim()||"{}");
     const i=NEWS.findIndex(n=>n.id===id);
@@ -4219,11 +4225,60 @@ if(document.readyState === 'loading') {
   _init();
 }
 
-// PWA Service Worker
+// PWA Service Worker + 자동 업데이트 감지
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js')
-    .then(() => console.log('[PWA] SW 등록 완료'))
+    .then(reg => {
+      console.log('[PWA] SW 등록 완료');
+      // 새 SW 발견 시
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateToast();
+          }
+        });
+      });
+      // 주기적 업데이트 체크 (앱 포커스 시)
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) reg.update();
+      });
+    })
     .catch(e => console.warn('[PWA] SW 실패:', e));
+
+  // 새 버전 활성화 메시지 수신
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'NEW_VERSION') showUpdateToast();
+  });
+}
+
+function showUpdateToast() {
+  // 이미 떠있으면 스킵
+  if (document.getElementById('update-toast')) return;
+  const toast = document.createElement('div');
+  toast.id = 'update-toast';
+  toast.innerHTML = `
+    <div style="
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:#1565C0;color:#fff;border-radius:16px;
+      padding:13px 18px;display:flex;align-items:center;gap:12px;
+      box-shadow:0 4px 20px rgba(21,101,192,0.4);
+      z-index:9999;font-size:13px;font-weight:700;
+      animation:slideUp 0.3s ease;white-space:nowrap
+    ">
+      <span>🆕 새 버전이 있어요!</span>
+      <button onclick="location.reload(true)" style="
+        background:#fff;color:#1565C0;border:none;border-radius:10px;
+        padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer
+      ">업데이트</button>
+      <button onclick="document.getElementById('update-toast').remove()" style="
+        background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:8px;
+        padding:6px 8px;font-size:12px;cursor:pointer
+      ">✕</button>
+    </div>`;
+  document.body.appendChild(toast);
+  // 10초 후 자동 사라짐
+  setTimeout(() => toast?.remove(), 10000);
 }</script>
 </body>
 </html>
