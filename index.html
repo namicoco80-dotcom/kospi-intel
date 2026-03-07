@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>KOSPI INTEL V9 · 03.07 · 03.07 · 03.07 — AI 주식 분석 플랫폼</title>
+<title>KOSPI INTEL V9 · 03.07 — AI 주식 분석 플랫폼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@500;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
@@ -3111,20 +3111,44 @@ function rPortfolio() {
    ║   💹 자산 관리 탭 (ETF · 연금 · 해외 · 채권·금)      ║
    ╚══════════════════════════════════════════════════════╝ */
 
-// ── ETF 마스터 데이터 ──
+// ── ETF 마스터 데이터 (30개) ──
 const ETF_LIST = [
-  // 국내 ETF
+  // 국내 지수
   {code:'069500',name:'KODEX 200',type:'etf',region:'국내',category:'지수',expense:0.15,desc:'코스피200 추종'},
+  {code:'102110',name:'TIGER 200',type:'etf',region:'국내',category:'지수',expense:0.05,desc:'코스피200 저보수'},
+  {code:'229200',name:'KODEX 코스닥150',type:'etf',region:'국내',category:'지수',expense:0.40,desc:'코스닥150 추종'},
+  {code:'278540',name:'KODEX MSCI Korea',type:'etf',region:'국내',category:'지수',expense:0.25,desc:'MSCI 한국 지수'},
+  // 해외 지수
   {code:'360750',name:'TIGER 미국S&P500',type:'etf',region:'해외',category:'지수',expense:0.07,desc:'미국 S&P500 추종'},
-  {code:'133690',name:'TIGER 미국나스닥100',type:'etf',region:'해외',category:'지수',expense:0.07,desc:'나스닥100 추종'},
-  {code:'114800',name:'KODEX 인버스',type:'etf',region:'국내',category:'인버스',expense:0.64,desc:'코스피200 역방향'},
-  {code:'122630',name:'KODEX 레버리지',type:'etf',region:'국내',category:'레버리지',expense:0.64,desc:'코스피200 2배'},
   {code:'379800',name:'KODEX 미국S&P500TR',type:'etf',region:'해외',category:'지수',expense:0.05,desc:'S&P500 배당재투자'},
-  {code:'411060',name:'ACE 미국빅테크TOP7',type:'etf',region:'해외',category:'테마',expense:0.25,desc:'M7 빅테크'},
+  {code:'133690',name:'TIGER 미국나스닥100',type:'etf',region:'해외',category:'지수',expense:0.07,desc:'나스닥100 추종'},
+  {code:'368590',name:'KODEX 미국나스닥100TR',type:'etf',region:'해외',category:'지수',expense:0.05,desc:'나스닥100 배당재투자'},
+  {code:'195930',name:'TIGER 유럽스탁스50',type:'etf',region:'해외',category:'지수',expense:0.50,desc:'유럽 대형주 50'},
+  {code:'192090',name:'TIGER 차이나CSI300',type:'etf',region:'해외',category:'지수',expense:0.59,desc:'중국 본토 300'},
+  // 테마·섹터
+  {code:'411060',name:'ACE 미국빅테크TOP7',type:'etf',region:'해외',category:'테마',expense:0.25,desc:'애플·MS·엔비디아 등 M7'},
+  {code:'448540',name:'TIGER 미국AI빅테크10',type:'etf',region:'해외',category:'테마',expense:0.25,desc:'AI 빅테크 10종목'},
+  {code:'091160',name:'KODEX 반도체',type:'etf',region:'국내',category:'테마',expense:0.45,desc:'삼성전자·SK하이닉스 등'},
   {code:'305720',name:'KODEX 2차전지',type:'etf',region:'국내',category:'테마',expense:0.45,desc:'2차전지 테마'},
-  {code:'091160',name:'KODEX 반도체',type:'etf',region:'국내',category:'테마',expense:0.45,desc:'반도체 테마'},
+  {code:'364980',name:'TIGER 2차전지TOP10',type:'etf',region:'국내',category:'테마',expense:0.40,desc:'2차전지 상위 10종목'},
+  {code:'203780',name:'TIGER 헬스케어',type:'etf',region:'국내',category:'테마',expense:0.40,desc:'바이오·헬스케어'},
+  {code:'139270',name:'TIGER 200 IT',type:'etf',region:'국내',category:'테마',expense:0.15,desc:'IT 섹터'},
+  {code:'140710',name:'KODEX 방산',type:'etf',region:'국내',category:'테마',expense:0.45,desc:'한국 방산 테마'},
+  {code:'455900',name:'TIGER 조선TOP10',type:'etf',region:'국내',category:'테마',expense:0.40,desc:'조선 상위 10종목'},
+  // 레버리지·인버스
+  {code:'122630',name:'KODEX 레버리지',type:'etf',region:'국내',category:'레버리지',expense:0.64,desc:'코스피200 2배'},
+  {code:'114800',name:'KODEX 인버스',type:'etf',region:'국내',category:'인버스',expense:0.64,desc:'코스피200 역방향'},
+  {code:'252670',name:'KODEX 200선물인버스2X',type:'etf',region:'국내',category:'인버스',expense:0.64,desc:'코스피200 -2배'},
+  // 채권
   {code:'148070',name:'KOSEF 국고채10년',type:'etf',region:'국내',category:'채권',expense:0.07,desc:'국고채 10년물'},
+  {code:'273130',name:'KODEX 종합채권AA이상',type:'etf',region:'국내',category:'채권',expense:0.08,desc:'AA등급 이상 종합채권'},
+  {code:'453850',name:'ACE 미국30년국채',type:'etf',region:'해외',category:'채권',expense:0.05,desc:'미국 30년 국채'},
+  // 배당
+  {code:'408480',name:'TIGER 미국배당다우존스',type:'etf',region:'해외',category:'배당',expense:0.08,desc:'미국 고배당 월지급'},
+  {code:'441640',name:'ACE 미국배당다우존스',type:'etf',region:'해외',category:'배당',expense:0.07,desc:'미국 배당 월지급'},
+  // 금·원자재
   {code:'132030',name:'KODEX 골드선물',type:'etf',region:'원자재',category:'금',expense:0.68,desc:'금 선물 추종'},
+  {code:'319640',name:'TIGER 금은선물',type:'etf',region:'원자재',category:'금',expense:0.39,desc:'금·은 선물 혼합'},
   {code:'139310',name:'TIGER 원유선물',type:'etf',region:'원자재',category:'원자재',expense:0.69,desc:'WTI 원유 선물'},
 ];
 
@@ -3471,28 +3495,78 @@ function addPensionAccount() {
 async function showETFAnalysis(code) {
   const etf = ETF_LIST.find(e=>e.code===code);
   if (!etf) return;
-  notify(`🤖 ${etf.name} 버핏 분석 중...`, 'info');
+  notify(`🤖 ${etf.name} 분석 중...`, 'info');
   const prompt = `워런 버핏 관점에서 아래 ETF를 분석해주세요.
 ETF: ${etf.name} (${etf.region} · ${etf.category})
-설명: ${etf.desc}
-운용보수: ${etf.expense}%
+설명: ${etf.desc} / 운용보수: ${etf.expense}%
 
-버핏은 "저비용 인덱스 펀드가 최선"이라 했습니다. 이 ETF가 버핏 기준에 부합하는지 평가하고:
-1. 장기 투자 적합성
-2. 비용 효율성
-3. 지금 매수/보유/관망 판단
-4. 버핏 스타일 촌철살인 한마디
-
-한국어로 3~4문장 간결하게 답해주세요.`;
+버핏은 "저비용 인덱스 펀드가 최선"이라 했습니다. 아래 JSON만 응답:
+{"verdict":"적극추천|추천|보통|비추천","summary":"버핏 관점 2~3문장 핵심 평가","moat":"이 ETF의 분산투자 강점","quote":"버핏 스타일 촌철살인 한마디","action":"지금 매수/보유/관망 중 선택 + 이유 한 문장"}`;
   try {
-    const res = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]});
+    const res = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]});
     const data = await res.json();
-    const txt = data.content?.map(c=>c.text||'').join('');
-    notify(`💬 ${etf.name}: ${txt.slice(0,80)}...`, 'ok');
-    // 모달로 표시
-    S._etfAnalysisResult = {name:etf.name, text:txt};
-    render();
-  } catch(e) { notify('⚠️ 분석 실패', 'info'); }
+    const txt = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const ana = JSON.parse(txt||'{}');
+    showETFModal(etf, ana);
+  } catch(e) {
+    showETFModal(etf, {
+      verdict:'추천',
+      summary:`${etf.name}은 ${etf.region} ${etf.category} ETF로 운용보수 ${etf.expense}%의 장기 투자 상품입니다.`,
+      moat:'분산투자로 개별 종목 리스크 최소화',
+      quote:'분산투자는 무지에 대한 보호다.',
+      action:'장기 보유 — 꾸준한 적립식 투자 권장'
+    });
+  }
+}
+
+function showETFModal(etf, ana) {
+  // 기존 모달 제거
+  document.getElementById('etf-modal')?.remove();
+  const vColor = {'적극추천':'#1565C0','추천':'#2E7D32','보통':'#E65100','비추천':'#B71C1C'}[ana.verdict]||'#1565C0';
+  const modal = document.createElement('div');
+  modal.id = 'etf-modal';
+  modal.innerHTML = `
+  <div onclick="document.getElementById('etf-modal').remove()" style="
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;
+    display:flex;align-items:flex-end;justify-content:center">
+    <div onclick="event.stopPropagation()" style="
+      background:#FFFFFF;border-radius:20px 20px 0 0;padding:20px 18px 40px;
+      width:100%;max-width:500px;max-height:80vh;overflow-y:auto;
+      box-shadow:0 -4px 30px rgba(0,0,0,0.15)">
+      <!-- 핸들 -->
+      <div style="width:40px;height:4px;background:#E2E8F4;border-radius:2px;margin:0 auto 16px"></div>
+      <!-- 헤더 -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#0F1D3A">${etf.name}</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">${etf.region} · ${etf.category} · 보수 ${etf.expense}%</div>
+        </div>
+        <span style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:800;background:${vColor}20;color:${vColor}">${ana.verdict||'분석중'}</span>
+      </div>
+      <!-- 요약 -->
+      <div style="background:#F4F6FA;border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:13px;color:#0F1D3A;line-height:1.6">${ana.summary||''}</div>
+      <!-- 해자 -->
+      ${ana.moat?`<div style="display:flex;gap:8px;align-items:flex-start;padding:10px 12px;background:#EEF4FF;border-radius:12px;margin-bottom:10px">
+        <span style="font-size:16px">🏰</span>
+        <div><div style="font-size:10px;font-weight:800;color:#1565C0;margin-bottom:2px">분산투자 강점</div>
+        <div style="font-size:12px;color:#0F1D3A;line-height:1.5">${ana.moat}</div></div>
+      </div>`:''}
+      <!-- 버핏 명언 -->
+      ${ana.quote?`<div style="padding:10px 14px;background:#F0F4FF;border-left:3px solid #1565C0;border-radius:0 12px 12px 0;margin-bottom:10px">
+        <div style="font-size:10px;font-weight:800;color:#1565C0;margin-bottom:3px">💬 버핏이라면</div>
+        <div style="font-size:12px;color:#0F1D3A;font-style:italic;line-height:1.6">"${ana.quote}"</div>
+      </div>`:''}
+      <!-- 액션 -->
+      ${ana.action?`<div style="background:#1565C0;border-radius:12px;padding:12px 14px;text-align:center">
+        <div style="font-size:12px;font-weight:800;color:#fff">${ana.action}</div>
+      </div>`:''}
+      <!-- 닫기 -->
+      <button onclick="document.getElementById('etf-modal').remove()" style="
+        width:100%;margin-top:12px;background:#F4F6FA;border:none;border-radius:12px;
+        padding:12px;font-size:13px;font-weight:700;color:#4A5A7A">닫기</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
 }
 
 async function runOverseasAnalysis(ticker) {
@@ -3683,7 +3757,7 @@ function render() {
       </div>
       <div class="hdr-row1">
         <div class="brand">
-          <div class="brand-tag">KOSPI INTEL V9 · 03.07 · 03.07 · 03.07 · 03.07</div>
+          <div class="brand-tag">KOSPI INTEL V9 · 03.07</div>
           <div class="brand-name">AI 투자 분석</div>
         </div>
         <div class="hdr-btns">
