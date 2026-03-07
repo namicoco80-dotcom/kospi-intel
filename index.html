@@ -2,6 +2,13 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="KOSPI INTEL">
+  <meta name="theme-color" content="#1565C0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>KOSPI INTEL v5 — AI 주식 분석 플랫폼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3563,6 +3570,13 @@ if(document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', _init);
 } else {
   _init();
+}
+
+// PWA Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js')
+    .then(() => console.log('[PWA] SW 등록 완료'))
+    .catch(e => console.warn('[PWA] SW 실패:', e));
 }</script>
 </body>
 </html>
