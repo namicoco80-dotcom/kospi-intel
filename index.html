@@ -2098,33 +2098,77 @@ function ring(score, size=60) {
 ══════════════════════════════════════════════ */
 
 
+
+/* ══ 영어 제목 자동 번역 (Google 무료) ══ */
+function isEnglishTitle(title) {
+  if (!title) return false;
+  const eng = (title.match(/[a-zA-Z]/g) || []).length;
+  return eng >= 6 && eng / title.length > 0.55;
+}
+
+async function googleTranslate(text) {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data[0]?.map(d => d[0]).join('') || text;
+  } catch(e) { return text; }
+}
+
+async function autoTranslateEnglish() {
+  const targets = NEWS.filter(n => isEnglishTitle(n.title) && !n._translated);
+  if (!targets.length) return;
+  console.log(`[번역] 영어 뉴스 ${targets.length}건 번역 시작`);
+  // 3개씩 병렬 처리
+  for (let i = 0; i < targets.length; i += 3) {
+    const batch = targets.slice(i, i + 3);
+    await Promise.all(batch.map(async n => {
+      const idx = NEWS.findIndex(x => x.id === n.id);
+      if (idx < 0) return;
+      const translated = await googleTranslate(n.title);
+      NEWS[idx]._origTitle = n.title;
+      NEWS[idx].title = translated;
+      NEWS[idx]._translated = true;
+    }));
+    await new Promise(r => setTimeout(r, 400));
+  }
+  console.log('[번역] 완료');
+  reCards();
+}
+
 /* ══ impactScore 자동 계산 ══ */
 function calcImpactScores() {
   NEWS.forEach((n, i) => {
-    if (n.impactScore && n.impactScore !== 50 && n.impactScore !== 65) return; // 이미 있으면 스킵
+    if (n.impactScore && n.impactScore !== 50 && n.impactScore !== 65) return;
     let score = 50;
-    // 출처 신뢰도
+    // 출처별 기본 점수
     if (n.type === 'official') score += 20;
-    else if (n.type === 'news')   score += 10;
     else if (n.type === 'report') score += 15;
+    else if (n.type === 'news')   score += 10;
     else if (n.type === 'rumor')  score -= 5;
-    // 감성
+    // 감성 (긍정/부정 모두 임팩트)
     if (n.sent === '긍정') score += 8;
-    else if (n.sent === '부정') score += 10; // 부정도 임팩트 높음
+    else if (n.sent === '부정') score += 12;
     // 긴급도
-    if (n.urgency === 1) score += 15;
-    else if (n.urgency === 2) score += 7;
-    // 소스 수
-    if (n.sources >= 5) score += 10;
+    if (n.urgency === 1) score += 18;
+    else if (n.urgency === 2) score += 8;
+    // 소스 수 (확산도)
+    if      (n.sources >= 7) score += 15;
+    else if (n.sources >= 5) score += 10;
     else if (n.sources >= 3) score += 5;
-    // 제목 키워드 임팩트
-    const title = n.title || '';
-    if (/급등|폭등|서킷|상한가|실적|어닝|깜짝|사상최대|최고가/.test(title)) score += 12;
-    if (/급락|폭락|하한가|쇼크|위기|파산|손실|실망|어닝쇼크/.test(title)) score += 12;
-    if (/인수|합병|M&A|계약|수주|협약|MOU/.test(title)) score += 8;
-    if (/금리|환율|FOMC|Fed|연준|기준금리/.test(title)) score += 6;
-    if (/루머|소문|카더라|추정|전망/.test(title)) score -= 8;
-    // 최종 클램프 40~98
+    else if (n.sources <= 1) score -= 5;
+    // 제목 키워드 (한국어 + 영어)
+    const t = (n.title || '') + ' ' + (n._origTitle || '');
+    if (/급등|폭등|서킷|상한가|사상최대|최고가|어닝서프라이즈|깜짝실적/.test(t)) score += 15;
+    if (/급락|폭락|하한가|쇼크|위기|파산|어닝쇼크|실망|손실/.test(t)) score += 15;
+    if (/인수|합병|M&A|수주|계약|협약|MOU|파트너십/.test(t)) score += 10;
+    if (/금리|FOMC|Fed|연준|기준금리|환율/.test(t)) score += 8;
+    if (/실적|매출|영업이익|순이익|EPS|earnings|revenue/.test(t)) score += 8;
+    if (/AI|인공지능|반도체|HBM|배터리|신약|임상/.test(t)) score += 6;
+    if (/루머|소문|카더라|추정|예상|전망/.test(t)) score -= 10;
+    if (/Earnings Call Summary|분기보고|기본정보/.test(t)) score -= 8; // 일반적 정기보고
+    // 랜덤 노이즈 추가 (±5) - 같은 점수 방지
+    score += (n.id % 11) - 5;
     NEWS[i].impactScore = Math.min(98, Math.max(40, score));
   });
 }
