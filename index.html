@@ -1684,10 +1684,10 @@ async function fetchNewsJson() {
       });
       _newsLoaded = true;
       console.log(`[News] news.json 로드 완료: ${NEWS.length}건 (${url})`);
-      setTimeout(() => calcImpactScores(), 100);
-      setTimeout(() => restoreAnalysisToNews(), 300);
-      setTimeout(() => autoAddNewStocks(), 600);
-      setTimeout(() => autoTranslateEnglish(), 1200);
+      setTimeout(() => runMarketLearning(), 100);       // 임팩트+감성+테마+주가패턴
+      setTimeout(() => restoreAnalysisToNews(), 400);
+      setTimeout(() => autoAddNewStocks(), 700);
+      setTimeout(() => autoTranslateEnglish(), 1300);
       return NEWS.length;
     } catch(e) { /* 다음 URL 시도 */ }
   }
@@ -2099,79 +2099,199 @@ function ring(score, size=60) {
 
 
 
-/* ══ 영어 제목 자동 번역 (Google 무료) ══ */
-function isEnglishTitle(title) {
-  if (!title) return false;
-  const eng = (title.match(/[a-zA-Z]/g) || []).length;
-  return eng >= 6 && eng / title.length > 0.55;
-}
 
-async function googleTranslate(text) {
-  try {
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=${encodeURIComponent(text)}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data[0]?.map(d => d[0]).join('') || text;
-  } catch(e) { return text; }
-}
+/* ╔══════════════════════════════════════════════════════╗
+   ║   📚 시대 흐름 학습 엔진 (Market Memory System)      ║
+   ║   - 주가 방향성 패턴 저장                            ║
+   ║   - 테마별 트렌드 점수 누적                          ║
+   ║   - 종목별 뉴스 감성 히스토리                        ║
+   ║   - AI 분석 시 과거 패턴 자동 반영                   ║
+   ╚══════════════════════════════════════════════════════╝ */
 
-async function autoTranslateEnglish() {
-  const targets = NEWS.filter(n => isEnglishTitle(n.title) && !n._translated);
-  if (!targets.length) return;
-  console.log(`[번역] 영어 뉴스 ${targets.length}건 번역 시작`);
-  // 3개씩 병렬 처리
-  for (let i = 0; i < targets.length; i += 3) {
-    const batch = targets.slice(i, i + 3);
-    await Promise.all(batch.map(async n => {
-      const idx = NEWS.findIndex(x => x.id === n.id);
-      if (idx < 0) return;
-      const translated = await googleTranslate(n.title);
-      NEWS[idx]._origTitle = n.title;
-      NEWS[idx].title = translated;
-      NEWS[idx]._translated = true;
-    }));
-    await new Promise(r => setTimeout(r, 400));
-  }
-  console.log('[번역] 완료');
-  reCards();
-}
+// ── 메모리 스토어 (localStorage 기반) ──
+const MEM = {
+  // 종목별 뉴스 감성 히스토리 { code: [{date, sent, title, impactScore}] }
+  getSentHistory: (code) => safeLS(`mem_sent_${code}`, []),
+  setSentHistory: (code, arr) => safeSetLS(`mem_sent_${code}`, arr.slice(-60)), // 최근 60건
 
-/* ══ impactScore 자동 계산 ══ */
-function calcImpactScores() {
-  NEWS.forEach((n, i) => {
-    if (n.impactScore && n.impactScore !== 50 && n.impactScore !== 65) return;
-    let score = 50;
-    // 출처별 기본 점수
-    if (n.type === 'official') score += 20;
-    else if (n.type === 'report') score += 15;
-    else if (n.type === 'news')   score += 10;
-    else if (n.type === 'rumor')  score -= 5;
-    // 감성 (긍정/부정 모두 임팩트)
-    if (n.sent === '긍정') score += 8;
-    else if (n.sent === '부정') score += 12;
-    // 긴급도
-    if (n.urgency === 1) score += 18;
-    else if (n.urgency === 2) score += 8;
-    // 소스 수 (확산도)
-    if      (n.sources >= 7) score += 15;
-    else if (n.sources >= 5) score += 10;
-    else if (n.sources >= 3) score += 5;
-    else if (n.sources <= 1) score -= 5;
-    // 제목 키워드 (한국어 + 영어)
-    const t = (n.title || '') + ' ' + (n._origTitle || '');
-    if (/급등|폭등|서킷|상한가|사상최대|최고가|어닝서프라이즈|깜짝실적/.test(t)) score += 15;
-    if (/급락|폭락|하한가|쇼크|위기|파산|어닝쇼크|실망|손실/.test(t)) score += 15;
-    if (/인수|합병|M&A|수주|계약|협약|MOU|파트너십/.test(t)) score += 10;
-    if (/금리|FOMC|Fed|연준|기준금리|환율/.test(t)) score += 8;
-    if (/실적|매출|영업이익|순이익|EPS|earnings|revenue/.test(t)) score += 8;
-    if (/AI|인공지능|반도체|HBM|배터리|신약|임상/.test(t)) score += 6;
-    if (/루머|소문|카더라|추정|예상|전망/.test(t)) score -= 10;
-    if (/Earnings Call Summary|분기보고|기본정보/.test(t)) score -= 8; // 일반적 정기보고
-    // 랜덤 노이즈 추가 (±5) - 같은 점수 방지
-    score += (n.id % 11) - 5;
-    NEWS[i].impactScore = Math.min(98, Math.max(40, score));
+  // 테마별 트렌드 점수 { theme: [{date, score, delta}] }
+  getThemeTrend: (theme) => safeLS(`mem_theme_${theme}`, []),
+  setThemeTrend: (theme, arr) => safeSetLS(`mem_theme_${theme}`, arr.slice(-30)), // 최근 30일
+
+  // 주가 방향성 패턴 { code: {trend: 'up'|'down'|'flat', streak: N, lastDate, history:[]} }
+  getPricePattern: (code) => safeLS(`mem_price_${code}`, {trend:'flat', streak:0, bullDays:0, bearDays:0, history:[]}),
+  setPricePattern: (code, obj) => safeSetLS(`mem_price_${code}`, obj),
+
+  // 전체 테마 트렌드 요약 캐시
+  getThemeSummary: () => safeLS('mem_theme_summary', {}),
+  setThemeSummary: (obj) => safeSetLS('mem_theme_summary', obj),
+};
+
+// ── 1. 뉴스 로드 시 감성 히스토리 업데이트 ──
+function updateSentimentHistory() {
+  const today = new Date().toISOString().slice(0,10);
+  const processed = safeLS('mem_processed_dates', []);
+
+  NEWS.forEach(n => {
+    if (!n.code || !n.sent) return;
+    const hist = MEM.getSentHistory(n.code);
+    // 오늘 같은 뉴스 중복 방지
+    const alreadyHas = hist.some(h => h.id === n.id);
+    if (alreadyHas) return;
+    hist.push({
+      id: n.id,
+      date: today,
+      sent: n.sent,
+      title: (n.title||'').slice(0, 40),
+      impact: n.impactScore || 50,
+      type: n.type
+    });
+    MEM.setSentHistory(n.code, hist);
   });
 }
+
+// ── 2. 테마별 트렌드 점수 누적 ──
+function updateThemeTrends() {
+  const today = new Date().toISOString().slice(0,10);
+  const summary = {};
+
+  THEMES.forEach(th => {
+    const relNews = NEWS.filter(n => (n.themes||[]).includes(th.name));
+    if (!relNews.length) return;
+
+    // 오늘 점수 계산
+    const posCount = relNews.filter(n => n.sent === '긍정').length;
+    const negCount = relNews.filter(n => n.sent === '부정').length;
+    const avgImpact = relNews.reduce((s,n) => s+(n.impactScore||50), 0) / relNews.length;
+    const todayScore = Math.round(
+      (posCount * 2 - negCount * 2 + avgImpact * 0.3 + relNews.length * 0.5)
+    );
+
+    const hist = MEM.getThemeTrend(th.name);
+    const lastEntry = hist[hist.length-1];
+
+    // 오늘 데이터 없으면 추가
+    if (!lastEntry || lastEntry.date !== today) {
+      const delta = lastEntry ? todayScore - lastEntry.score : 0;
+      hist.push({ date: today, score: todayScore, delta, newsCount: relNews.length });
+      MEM.setThemeTrend(th.name, hist);
+    }
+
+    // 트렌드 방향 (최근 3일 기준)
+    const recent = hist.slice(-3);
+    const avgDelta = recent.length > 1
+      ? recent.slice(1).reduce((s,h) => s+h.delta, 0) / (recent.length-1)
+      : 0;
+
+    summary[th.name] = {
+      score: todayScore,
+      trend: avgDelta > 2 ? '↑상승' : avgDelta < -2 ? '↓하락' : '→횡보',
+      trendColor: avgDelta > 2 ? '#E53935' : avgDelta < -2 ? '#1565C0' : '#78909C',
+      history: hist.slice(-7), // 최근 7일
+      newsCount: relNews.length
+    };
+  });
+
+  MEM.setThemeSummary(summary);
+  return summary;
+}
+
+// ── 3. 주가 방향성 패턴 저장 ──
+function updatePricePatterns() {
+  const today = new Date().toISOString().slice(0,10);
+
+  Object.keys(PRICE_BASE).forEach(code => {
+    const pr = PRICE_BASE[code];
+    if (!pr || pr.price === null) return;
+    const pat = MEM.getPricePattern(code);
+
+    // 어제 데이터와 비교
+    const last = pat.history[pat.history.length-1];
+    if (last && last.date === today) return; // 오늘 이미 저장됨
+
+    const direction = !last ? 'flat'
+      : pr.price > last.price ? 'up'
+      : pr.price < last.price ? 'down' : 'flat';
+
+    // 연속 방향 카운트
+    if (direction === 'up') { pat.bullDays = (pat.bullDays||0)+1; pat.bearDays = 0; }
+    else if (direction === 'down') { pat.bearDays = (pat.bearDays||0)+1; pat.bullDays = 0; }
+    else { pat.bullDays = 0; pat.bearDays = 0; }
+
+    pat.trend = pat.bullDays >= 3 ? 'up' : pat.bearDays >= 3 ? 'down' : 'flat';
+    pat.streak = Math.max(pat.bullDays||0, pat.bearDays||0);
+    pat.history = [...(pat.history||[]), { date: today, price: pr.price, dir: direction }].slice(-30);
+
+    MEM.setPricePattern(code, pat);
+  });
+}
+
+// ── 4. 종목 메모리 컨텍스트 생성 (AI 프롬프트용) ──
+function getMemoryContext(code) {
+  const sentHist = MEM.getSentHistory(code).slice(-10);
+  const pricePat = MEM.getPricePattern(code);
+  const stock = gs(code);
+  const themeSummary = MEM.getThemeSummary();
+
+  // 감성 추세
+  const recentSent = sentHist.slice(-5);
+  const posRatio = recentSent.length
+    ? Math.round(recentSent.filter(h=>h.sent==='긍정').length / recentSent.length * 100)
+    : 50;
+  const sentTrend = posRatio >= 70 ? '긍정 우세' : posRatio <= 30 ? '부정 우세' : '혼조';
+
+  // 테마 흐름
+  const myThemes = (stock?.themes || []);
+  const themeCtx = myThemes.map(t => {
+    const ts = themeSummary[t];
+    return ts ? `${t}섹터 ${ts.trend}(${ts.score}점)` : '';
+  }).filter(Boolean).join(', ');
+
+  // 주가 패턴
+  const priceCtx = pricePat.streak >= 2
+    ? `최근 ${pricePat.streak}일 연속 ${pricePat.trend==='up'?'상승':'하락'}세`
+    : '방향성 불분명';
+
+  return {
+    sentTrend,
+    posRatio,
+    priceCtx,
+    themeCtx,
+    historyCount: sentHist.length,
+    summary: `[과거 패턴] 뉴스감성 최근5건: 긍정${posRatio}% (${sentTrend}) | 주가: ${priceCtx}${themeCtx ? ` | 섹터흐름: ${themeCtx}` : ''}`
+  };
+}
+
+// ── 5. 종목별 감성 추세 미니 차트 HTML ──
+function sentimentMiniChart(code) {
+  const hist = MEM.getSentHistory(code).slice(-10);
+  if (hist.length < 2) return '';
+
+  const bars = hist.map(h => {
+    const color = h.sent==='긍정' ? '#E53935' : h.sent==='부정' ? '#1565C0' : '#94A3B8';
+    const height = Math.round((h.impact||50) / 100 * 24);
+    return `<div style="width:6px;height:${height}px;background:${color};border-radius:2px;flex-shrink:0" title="${h.date} ${h.sent}"></div>`;
+  }).join('');
+
+  const posCount = hist.filter(h=>h.sent==='긍정').length;
+  const trend = posCount > hist.length*0.6 ? '📈 긍정우세' : posCount < hist.length*0.4 ? '📉 부정우세' : '↔ 혼조';
+
+  return `<div style="margin-bottom:8px;padding:8px 10px;background:#F4F6FA;border-radius:10px;border:1px solid #E2E8F4">
+    <div style="font-size:10px;color:#4A5A7A;font-weight:700;margin-bottom:5px">📊 뉴스 감성 히스토리 ${trend}</div>
+    <div style="display:flex;align-items:flex-end;gap:2px;height:28px">${bars}</div>
+    <div style="font-size:9px;color:#94A3B8;margin-top:3px">최근 ${hist.length}건 · 빨강=긍정 파랑=부정</div>
+  </div>`;
+}
+
+// ── 6. 전체 학습 실행 (뉴스 로드 후 자동) ──
+function runMarketLearning() {
+  calcImpactScores();
+  updateSentimentHistory();
+  updateThemeTrends();
+  updatePricePatterns();
+  console.log('[MarketMemory] 학습 완료:', new Date().toLocaleTimeString());
+}
+
 
 /* ══ 종목 자동 추가 시스템 ══ */
 async function fetchStockNameNaver(code) {
@@ -2538,6 +2658,7 @@ function rHeatmap() {
             </div>
             <div style="text-align:right">
               <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${t.color}">${t.avgImpact}pt</div>
+              <div style="font-size:10px;font-weight:700;color:${(MEM.getThemeSummary()[t.name]||{}).trendColor||'#94A3B8'}">${(MEM.getThemeSummary()[t.name]||{}).trend||'→횡보'}</div>
               <div class="theme-count">${t.newsCount}건</div>
             </div>
           </div>
@@ -2919,6 +3040,9 @@ function rPortfolio() {
             <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:${r.v>=0?'var(--rose)':'var(--teal)'}">${r.v>=0?'+':''}${(Math.abs(r.v)/100).toFixed(0)}억</div>
           </div>`).join('')}
         </div>` : ''}
+
+        <!-- 뉴스 감성 히스토리 미니차트 -->
+        ${sentimentMiniChart(p.code)}
 
         <!-- AI 개인 투자 분석 -->
         ${S.portAnalysis[p.code] ? portAnalysisHTML(S.portAnalysis[p.code], p) :
@@ -3425,6 +3549,8 @@ async function runPortAnalysis(code) {
 
   /* 트레일링 구간 판단 */
   const _curPrc      = pr?.price ?? portItem.buyPrice;
+  /* 시대 흐름 메모리 컨텍스트 */
+  const _mem = getMemoryContext(code);
   const _basedTarget = portItem.buyPrice * 1.15;
   const _isTrailing  = _curPrc > _basedTarget;
   const trailingCtx  = _isTrailing
@@ -3439,6 +3565,7 @@ async function runPortAnalysis(code) {
 매수가: ${portItem.buyPrice.toLocaleString()}원 / 현재가: ${_curPrc.toLocaleString()}원 / 수량: ${portItem.qty}주 / 수익률: ${pnlPct}%${trailingCtx}
 수급(외국인·기관·개인): ${supCtx||'정보없음'}
 최근 이슈: ${newsCtx||'없음'}
+${_mem.historyCount > 0 ? _mem.summary : ''}
 
 [버핏 관점 분석 기준]
 1. 이 기업이 10년 후에도 존재하며 더 강해질 것인가?
