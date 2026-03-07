@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>KOSPI INTEL V6 — AI 주식 분석 플랫폼</title>
+<title>KOSPI INTEL V6 · 03.07 — AI 주식 분석 플랫폼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@500;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
@@ -2293,6 +2293,39 @@ function runMarketLearning() {
 }
 
 
+/* ══ 영어 제목 자동 번역 ══ */
+function isEnglishTitle(title) {
+  if (!title) return false;
+  const eng = (title.match(/[a-zA-Z]/g) || []).length;
+  return eng >= 6 && eng / title.length > 0.55;
+}
+async function googleTranslate(text) {
+  try {
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=' + encodeURIComponent(text);
+    const res = await fetch(url);
+    const data = await res.json();
+    return data[0]?.map(d => d[0]).join('') || text;
+  } catch(e) { return text; }
+}
+async function autoTranslateEnglish() {
+  const targets = NEWS.filter(n => isEnglishTitle(n.title) && !n._translated);
+  if (!targets.length) return;
+  console.log('[번역] 영어 뉴스', targets.length, '건');
+  for (let i = 0; i < targets.length; i += 3) {
+    const batch = targets.slice(i, i + 3);
+    await Promise.all(batch.map(async n => {
+      const idx = NEWS.findIndex(x => x.id === n.id);
+      if (idx < 0) return;
+      const translated = await googleTranslate(n.title);
+      NEWS[idx]._origTitle = n.title;
+      NEWS[idx].title = translated;
+      NEWS[idx]._translated = true;
+    }));
+    await new Promise(r => setTimeout(r, 400));
+  }
+  reCards();
+}
+
 /* ══ 종목 자동 추가 시스템 ══ */
 async function fetchStockNameNaver(code) {
   try {
@@ -3205,7 +3238,7 @@ function render() {
       </div>
       <div class="hdr-row1">
         <div class="brand">
-          <div class="brand-tag">KOSPI INTEL V6</div>
+          <div class="brand-tag">KOSPI INTEL V6 · 03.07</div>
           <div class="brand-name">AI 투자 분석</div>
         </div>
         <div class="hdr-btns">
