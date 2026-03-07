@@ -3274,6 +3274,21 @@ function portAnalysisHTML(ana, p) {
       </div>
       <div class="ai-port-summary">${ana.summary}</div>
 
+      <!-- 버핏 해자 + 명언 -->
+      ${ana.buffett_moat ? `
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:9px 11px;background:rgba(255,255,255,0.65);border-radius:10px;border:1px solid rgba(255,255,255,0.8)">
+        <span style="font-size:15px;flex-shrink:0">🏰</span>
+        <div>
+          <div style="font-size:10px;font-weight:800;color:#4A5A7A;letter-spacing:0.5px;margin-bottom:2px">경제적 해자</div>
+          <div style="font-size:12px;color:#0F1D3A;line-height:1.5">${ana.buffett_moat}</div>
+        </div>
+      </div>` : ''}
+      ${ana.buffett_quote ? `
+      <div style="margin-top:8px;padding:9px 13px;background:rgba(21,101,192,0.08);border-left:3px solid #1565C0;border-radius:0 10px 10px 0">
+        <div style="font-size:10px;font-weight:800;color:#1565C0;margin-bottom:3px">💬 버핏이라면</div>
+        <div style="font-size:12px;color:#0F1D3A;font-style:italic;line-height:1.6">"${ana.buffett_quote}"</div>
+      </div>` : ''}
+
       <!-- 1일/1주/1개월/1년 전망 -->
       <div class="forecast-grid">
         ${periods.map(fp=>`<div class="forecast-cell" style="border-color:${t.ac}22">
@@ -3331,13 +3346,24 @@ async function runPortAnalysis(code) {
     ? `\n⚠️ 현재가(${_curPrc.toLocaleString()}원)가 목표가(${Math.round(_basedTarget).toLocaleString()}원) 초과 — 트레일링 수익 구간.\n손절가=현재가×0.93(${Math.round(_curPrc*0.93).toLocaleString()}원), 목표가=현재가×1.15(${Math.round(_curPrc*1.15).toLocaleString()}원)로 계산하세요.`
     : '';
 
-  const prompt = `한국 주식 투자 분석 전문가. JSON만 응답.
-종목: ${stock?.name}(${code}) 섹터:${stock?.sector}
-매수가:${portItem.buyPrice.toLocaleString()}원 현재가:${_curPrc.toLocaleString()}원 수량:${portItem.qty}주
-현재수익률:${pnlPct}%${trailingCtx}
-오늘수급:${supCtx}
-관련뉴스:${newsCtx||'없음'}
-{"verdict":"강력보유|매수|분할매수|관망|일부매도|손절검토","confidence":0-100,"summary":"2~3문장 투자 분석","upProb":0-100,"flatProb":0-100,"dnProb":0-100,"stopLoss":"X원(-X%) 트레일링이면 현재가기준","target":"X원(+X%) 트레일링이면 현재가기준","d1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"w1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"m1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"y1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"detail":"리스크·기회·액션 분석. 트레일링이면 반드시 트레일링 수익 구간 언급","_trailing":${_isTrailing}}`;
+  const prompt = `당신은 워런 버핏의 투자 철학을 완벽히 내면화한 한국 주식 전문 애널리스트입니다.
+버핏 핵심 원칙: ①내재가치 vs 시장가격(안전마진) ②경제적 해자(진입장벽·브랜드·독점) ③훌륭한 경영진 ④이해할 수 있는 사업 ⑤장기 보유(단기 노이즈 무시) ⑥공포에 매수 탐욕에 매도
+
+[분석 종목]
+종목: ${stock?.name}(${code}) / 섹터: ${stock?.sector}
+매수가: ${portItem.buyPrice.toLocaleString()}원 / 현재가: ${_curPrc.toLocaleString()}원 / 수량: ${portItem.qty}주 / 수익률: ${pnlPct}%${trailingCtx}
+수급(외국인·기관·개인): ${supCtx||'정보없음'}
+최근 이슈: ${newsCtx||'없음'}
+
+[버핏 관점 분석 기준]
+1. 이 기업이 10년 후에도 존재하며 더 강해질 것인가?
+2. 지금 가격이 내재가치 대비 싼가, 비싼가? 안전마진은?
+3. 이 뉴스·수급은 장기 가치에 실질 영향인가, 무시할 노이즈인가?
+4. 경제적 해자(독점력, 브랜드, 전환비용, 원가우위)가 있는가?
+5. 버핏이라면 지금 무엇을 선택하겠는가?
+
+JSON만 응답 (마크다운 없이):
+{"verdict":"강력보유|매수|분할매수|관망|일부매도|손절검토","confidence":0-100,"summary":"버핏 관점 핵심 판단 2~3문장 — 해자·내재가치·장기전망 반드시 언급","buffett_moat":"경제적 해자 평가: 강함/보통/약함/없음 + 한국시장 맥락에서 근거","buffett_quote":"버핏 어록 스타일의 촌철살인 한마디 (한국어, 이 종목 맞춤)","upProb":0-100,"flatProb":0-100,"dnProb":0-100,"stopLoss":"X원(-X%) 트레일링이면 현재가기준","target":"X원(+X%) 장기 내재가치 기준","d1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"w1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"m1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"y1":{"signal":"매수|관망|매도","up":0-100,"dn":0-100},"detail":"버핏식 투자 액션 플랜: 단기 노이즈 vs 장기가치 구분 서술. 트레일링이면 반드시 언급","_trailing":${_isTrailing}}`;
 
   try {
     const res = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만.",messages:[{role:"user",content:prompt}]});
