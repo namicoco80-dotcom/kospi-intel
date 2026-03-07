@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>KOSPI INTEL V6 · 03.07 — AI 주식 분석 플랫폼</title>
+<title>KOSPI INTEL V7 · 03.07 — AI 주식 분석 플랫폼</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@500;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
@@ -3102,6 +3102,447 @@ function rPortfolio() {
   </div>`;
 }
 
+
+/* ╔══════════════════════════════════════════════════════╗
+   ║   💹 자산 관리 탭 (ETF · 연금 · 해외 · 채권·금)      ║
+   ╚══════════════════════════════════════════════════════╝ */
+
+// ── ETF 마스터 데이터 ──
+const ETF_LIST = [
+  // 국내 ETF
+  {code:'069500',name:'KODEX 200',type:'etf',region:'국내',category:'지수',expense:0.15,desc:'코스피200 추종'},
+  {code:'360750',name:'TIGER 미국S&P500',type:'etf',region:'해외',category:'지수',expense:0.07,desc:'미국 S&P500 추종'},
+  {code:'133690',name:'TIGER 미국나스닥100',type:'etf',region:'해외',category:'지수',expense:0.07,desc:'나스닥100 추종'},
+  {code:'114800',name:'KODEX 인버스',type:'etf',region:'국내',category:'인버스',expense:0.64,desc:'코스피200 역방향'},
+  {code:'122630',name:'KODEX 레버리지',type:'etf',region:'국내',category:'레버리지',expense:0.64,desc:'코스피200 2배'},
+  {code:'379800',name:'KODEX 미국S&P500TR',type:'etf',region:'해외',category:'지수',expense:0.05,desc:'S&P500 배당재투자'},
+  {code:'411060',name:'ACE 미국빅테크TOP7',type:'etf',region:'해외',category:'테마',expense:0.25,desc:'M7 빅테크'},
+  {code:'305720',name:'KODEX 2차전지',type:'etf',region:'국내',category:'테마',expense:0.45,desc:'2차전지 테마'},
+  {code:'091160',name:'KODEX 반도체',type:'etf',region:'국내',category:'테마',expense:0.45,desc:'반도체 테마'},
+  {code:'148070',name:'KOSEF 국고채10년',type:'etf',region:'국내',category:'채권',expense:0.07,desc:'국고채 10년물'},
+  {code:'132030',name:'KODEX 골드선물',type:'etf',region:'원자재',category:'금',expense:0.68,desc:'금 선물 추종'},
+  {code:'139310',name:'TIGER 원유선물',type:'etf',region:'원자재',category:'원자재',expense:0.69,desc:'WTI 원유 선물'},
+];
+
+// ── 해외주식 마스터 ──
+const OVERSEAS_LIST = [
+  {ticker:'AAPL',name:'애플',sector:'IT',region:'미국',desc:'아이폰·맥·서비스'},
+  {ticker:'MSFT',name:'마이크로소프트',sector:'IT',region:'미국',desc:'클라우드·AI·오피스'},
+  {ticker:'NVDA',name:'엔비디아',sector:'반도체',region:'미국',desc:'AI GPU 독점'},
+  {ticker:'GOOGL',name:'알파벳',sector:'IT',region:'미국',desc:'검색·유튜브·클라우드'},
+  {ticker:'AMZN',name:'아마존',sector:'IT',region:'미국',desc:'이커머스·AWS'},
+  {ticker:'META',name:'메타',sector:'IT',region:'미국',desc:'페이스북·인스타·AI'},
+  {ticker:'TSLA',name:'테슬라',sector:'EV',region:'미국',desc:'전기차·에너지'},
+  {ticker:'BRK.B',name:'버크셔해서웨이',sector:'금융',region:'미국',desc:'워런 버핏 지주회사'},
+  {ticker:'005930.KS',name:'삼성전자(해외)',sector:'반도체',region:'미국',desc:'ADR'},
+];
+
+// ── 채권·금·원자재 ──
+const COMMODITY_LIST = [
+  {id:'gold',name:'금',icon:'🥇',category:'귀금속',desc:'안전자산 대표'},
+  {id:'silver',name:'은',icon:'🥈',category:'귀금속',desc:'산업+귀금속'},
+  {id:'oil',name:'WTI 원유',icon:'🛢️',category:'원자재',desc:'글로벌 경기 선행'},
+  {id:'bond_kr',name:'국고채 10년',icon:'📜',category:'채권',desc:'무위험 수익률'},
+  {id:'bond_us',name:'미국채 10년',icon:'🇺🇸',category:'채권',desc:'글로벌 금리 기준'},
+  {id:'bitcoin',name:'비트코인',icon:'₿',category:'가상자산',desc:'디지털 금'},
+];
+
+// ── 자산 포트폴리오 상태 (S에 추가) ──
+// S.assetPortfolio: [{assetType:'etf'|'overseas'|'commodity'|'pension', id, name, buyPrice, qty, buyDate}]
+// S.pensionAccounts: [{name:'연금저축', items:[{type, id, name, buyPrice, qty, ratio}]}]
+
+/* ── 자산 탭 렌더링 ── */
+function rAsset() {
+  const port = safeLS('assetPortfolio', []);
+  const pension = safeLS('pensionAccounts', []);
+
+  // 서브탭
+  const sub = S.assetSub || 'etf';
+
+  return `<div style="padding:12px 14px 120px">
+    <!-- 서브 탭 -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px">
+      ${[
+        {id:'etf',label:'💹 ETF'},
+        {id:'overseas',label:'🌍 해외주식'},
+        {id:'pension',label:'🏦 연금·IRP'},
+        {id:'commodity',label:'🥇 채권·금'},
+      ].map(t=>`<button onclick="S.assetSub='${t.id}';render()" style="
+        flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:800;
+        border:1.5px solid ${sub===t.id?'#1565C0':'#E2E8F4'};
+        background:${sub===t.id?'#1565C0':'#FFFFFF'};
+        color:${sub===t.id?'#FFFFFF':'#4A5A7A'};
+        white-space:nowrap">${t.label}</button>`).join('')}
+    </div>
+
+    ${sub==='etf'      ? rETFTab(port)       : ''}
+    ${sub==='overseas' ? rOverseasTab(port)   : ''}
+    ${sub==='pension'  ? rPensionTab(pension) : ''}
+    ${sub==='commodity'? rCommodityTab(port)  : ''}
+  </div>`;
+}
+
+/* ── ETF 탭 ── */
+function rETFTab(port) {
+  const myETF = port.filter(p => p.assetType === 'etf');
+  const etfGroups = {
+    '지수': ETF_LIST.filter(e=>e.category==='지수'),
+    '테마': ETF_LIST.filter(e=>e.category==='테마'),
+    '채권': ETF_LIST.filter(e=>e.category==='채권'),
+    '금·원자재': ETF_LIST.filter(e=>['금','원자재'].includes(e.category)),
+    '레버리지·인버스': ETF_LIST.filter(e=>['레버리지','인버스'].includes(e.category)),
+  };
+
+  return `
+  <!-- 내 ETF 보유현황 -->
+  ${myETF.length > 0 ? `
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">💹 내 ETF 현황</div>
+    ${myETF.map(p => {
+      const etf = ETF_LIST.find(e=>e.code===p.id);
+      const pr = PRICE_BASE[p.id];
+      const cur = pr?.price || p.buyPrice;
+      const pnl = (cur - p.buyPrice) * p.qty;
+      const pnlPct = ((cur - p.buyPrice)/p.buyPrice*100).toFixed(2);
+      const isPos = pnl >= 0;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #F4F6FA">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#0F1D3A">${p.name}</div>
+          <div style="font-size:11px;color:#94A3B8">${etf?.region||''} · ${etf?.category||''} · ${p.qty}좌</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:800;color:${isPos?'#E53935':'#1565C0'}">${isPos?'+':''}${pnlPct}%</div>
+          <div style="font-size:11px;color:#94A3B8">${isPos?'+':''}${Math.round(pnl).toLocaleString()}원</div>
+        </div>
+      </div>`;
+    }).join('')}
+    ${rRebalanceAdvice(myETF)}
+  </div>` : ''}
+
+  <!-- ETF 추가 -->
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">📂 ETF 추가</div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <select id="etf-sel" style="background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px 12px;font-size:13px;color:#0F1D3A;outline:none">
+        <option value="">ETF 선택</option>
+        ${Object.entries(etfGroups).map(([grp,list])=>`
+          <optgroup label="── ${grp} ──">
+            ${list.map(e=>`<option value="${e.code}">${e.name} (보수${e.expense}%)</option>`).join('')}
+          </optgroup>`).join('')}
+      </select>
+      <div style="display:flex;gap:6px">
+        <input id="etf-price" type="number" placeholder="매수가 (원)" style="flex:1;background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px;font-size:13px;outline:none">
+        <input id="etf-qty" type="number" placeholder="수량" style="flex:0.5;background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px;font-size:13px;outline:none">
+        <button onclick="addAsset('etf')" style="background:#1565C0;border:none;border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;font-weight:800">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETF 목록 -->
+  ${Object.entries(etfGroups).map(([grp,list])=>`
+  <div style="margin-bottom:12px">
+    <div style="font-size:11px;font-weight:800;color:#94A3B8;margin-bottom:6px;letter-spacing:1px">${grp}</div>
+    ${list.map(e=>`
+    <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:14px;padding:12px 14px;margin-bottom:6px;box-shadow:0 1px 6px rgba(21,101,192,0.05)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#0F1D3A">${e.name}</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:2px">${e.desc} · 보수 ${e.expense}%</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <span style="font-size:10px;padding:3px 8px;border-radius:8px;font-weight:700;background:${e.region==='해외'?'rgba(21,101,192,0.1)':'rgba(229,57,53,0.08)'};color:${e.region==='해외'?'#1565C0':'#C62828'}">${e.region}</span>
+          <button onclick="showETFAnalysis('${e.code}')" style="background:#F0F4FF;border:1px solid #C7D4F0;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;color:#1565C0">🤖 분석</button>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`).join('')}`;
+}
+
+/* ── 해외주식 탭 ── */
+function rOverseasTab(port) {
+  const myOverseas = port.filter(p => p.assetType === 'overseas');
+  return `
+  ${myOverseas.length > 0 ? `
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">🌍 내 해외주식</div>
+    ${myOverseas.map(p=>{
+      const pnlPct = ((p.curPrice||p.buyPrice) - p.buyPrice)/p.buyPrice*100;
+      const isPos = pnlPct >= 0;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #F4F6FA">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#0F1D3A">${p.name} <span style="font-size:11px;color:#94A3B8">(${p.id})</span></div>
+          <div style="font-size:11px;color:#94A3B8">${p.qty}주 · 매수 $${p.buyPrice}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:800;color:${isPos?'#E53935':'#1565C0'}">${isPos?'+':''}${pnlPct.toFixed(2)}%</div>
+          <button onclick="runOverseasAnalysis('${p.id}')" style="margin-top:3px;background:#F0F4FF;border:1px solid #C7D4F0;border-radius:7px;padding:3px 8px;font-size:10px;font-weight:700;color:#1565C0">🤖 버핏 분석</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>` : ''}
+
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">📂 해외주식 추가</div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <select id="ov-sel" style="background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px;font-size:13px;color:#0F1D3A;outline:none">
+        <option value="">종목 선택</option>
+        ${OVERSEAS_LIST.map(o=>`<option value="${o.ticker}">${o.name} (${o.ticker}) · ${o.sector}</option>`).join('')}
+      </select>
+      <div style="display:flex;gap:6px">
+        <input id="ov-price" type="number" placeholder="매수가 ($)" style="flex:1;background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px;font-size:13px;outline:none">
+        <input id="ov-qty" type="number" placeholder="수량" style="flex:0.5;background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px;font-size:13px;outline:none">
+        <button onclick="addAsset('overseas')" style="background:#1565C0;border:none;border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;font-weight:800">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size:11px;font-weight:800;color:#94A3B8;margin-bottom:8px;letter-spacing:1px">주요 해외주식</div>
+  ${OVERSEAS_LIST.map(o=>`
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:14px;padding:12px 14px;margin-bottom:6px;box-shadow:0 1px 6px rgba(21,101,192,0.05);display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:13px;font-weight:800;color:#0F1D3A">${o.name} <span style="font-family:var(--mono);font-size:11px;color:#1565C0">${o.ticker}</span></div>
+      <div style="font-size:11px;color:#94A3B8">${o.desc} · ${o.sector}</div>
+    </div>
+    <button onclick="runOverseasAnalysis('${o.ticker}')" style="background:#F0F4FF;border:1px solid #C7D4F0;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#1565C0;flex-shrink:0">🤖 분석</button>
+  </div>`).join('')}`;
+}
+
+/* ── 연금·IRP 탭 ── */
+function rPensionTab(pension) {
+  const accs = pension.length > 0 ? pension : [];
+  return `
+  <!-- 연금 계좌 추가 -->
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:4px">🏦 연금저축 · IRP 관리</div>
+    <div style="font-size:11px;color:#94A3B8;margin-bottom:10px">ETF·펀드 혼합 포트폴리오 분석</div>
+    <button onclick="addPensionAccount()" style="width:100%;background:#F0F4FF;border:1.5px dashed #C7D4F0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;color:#1565C0">+ 계좌 추가 (연금저축 / IRP)</button>
+  </div>
+
+  ${accs.length === 0 ? `
+  <div style="text-align:center;padding:30px;color:#94A3B8">
+    <div style="font-size:36px;margin-bottom:10px">🏦</div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:6px">연금 계좌를 추가해보세요</div>
+    <div style="font-size:12px;line-height:1.6">연금저축·IRP 포트폴리오를<br>버핏 스타일로 분석해드려요</div>
+  </div>` : accs.map(acc => rPensionAccountCard(acc)).join('')}
+
+  <!-- 연금 가이드 -->
+  <div style="background:#F0F4FF;border:1px solid #C7D4F0;border-radius:14px;padding:14px;margin-top:12px">
+    <div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:8px">💡 연금 포트폴리오 기본 원칙</div>
+    ${[
+      {icon:'📊', text:'주식:채권 = 나이에 따라 조정 (100-나이 = 주식비중)'},
+      {icon:'🌍', text:'국내:해외 = 3:7 권장 (글로벌 분산)'},
+      {icon:'🔄', text:'연 1~2회 리밸런싱 (수익난 자산 → 비중 조정)'},
+      {icon:'⏳', text:'장기 투자 (20년+ 복리 효과 극대화)'},
+    ].map(g=>`<div style="display:flex;gap:8px;margin-bottom:6px;font-size:12px;color:#0F1D3A">
+      <span>${g.icon}</span><span style="line-height:1.5">${g.text}</span>
+    </div>`).join('')}
+  </div>`;
+}
+
+function rPensionAccountCard(acc) {
+  const total = acc.items.reduce((s,i) => s + i.value, 0);
+  return `
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:800;color:#0F1D3A">${acc.name}</div>
+      <div style="font-size:13px;font-weight:700;color:#1565C0">${total.toLocaleString()}원</div>
+    </div>
+    ${acc.items.map(item=>{
+      const ratio = total > 0 ? Math.round(item.value/total*100) : 0;
+      return `<div style="margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:12px;color:#0F1D3A;font-weight:600">${item.name}</span>
+          <span style="font-size:12px;color:#4A5A7A">${ratio}% · ${item.value.toLocaleString()}원</span>
+        </div>
+        <div style="height:6px;background:#EEF1F8;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${ratio}%;background:${item.type==='주식'?'#E53935':item.type==='채권'?'#1565C0':item.type==='금'?'#E65100':'#2E7D32'};border-radius:3px"></div>
+        </div>
+      </div>`;
+    }).join('')}
+    <button onclick="runPensionAnalysis('${acc.id}')" style="width:100%;margin-top:8px;background:#1565C0;border:none;border-radius:10px;padding:10px;color:#fff;font-size:13px;font-weight:800">🤖 버핏 스타일 배분 분석</button>
+  </div>`;
+}
+
+/* ── 채권·금·원자재 탭 ── */
+function rCommodityTab(port) {
+  const myCom = port.filter(p => p.assetType === 'commodity');
+  return `
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:4px">🥇 채권·금·원자재</div>
+    <div style="font-size:11px;color:#94A3B8;margin-bottom:10px">안전자산 & 인플레이션 헤지</div>
+    ${COMMODITY_LIST.map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #F4F6FA">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">${c.icon}</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#0F1D3A">${c.name}</div>
+          <div style="font-size:11px;color:#94A3B8">${c.desc} · ${c.category}</div>
+        </div>
+      </div>
+      <button onclick="runCommodityAnalysis('${c.id}')" style="background:#F0F4FF;border:1px solid #C7D4F0;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#1565C0">🤖 분석</button>
+    </div>`).join('')}
+  </div>
+
+  <!-- 자산 배분 가이드 -->
+  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">⚖️ 버핏식 자산 배분 원칙</div>
+    ${[
+      {label:'주식 ETF', pct:90, color:'#E53935', note:'S&P500 인덱스 (버핏 권장)'},
+      {label:'단기채권', pct:10, color:'#1565C0', note:'현금성 자산 유지'},
+    ].map(a=>`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:700;color:#0F1D3A">${a.label}</span>
+        <span style="font-size:12px;color:#4A5A7A">${a.pct}% · ${a.note}</span>
+      </div>
+      <div style="height:8px;background:#EEF1F8;border-radius:4px">
+        <div style="height:100%;width:${a.pct}%;background:${a.color};border-radius:4px"></div>
+      </div>
+    </div>`).join('')}
+    <div style="font-size:11px;color:#94A3B8;font-style:italic;margin-top:8px;line-height:1.6">
+      "내가 죽으면 아내 재산의 90%를 S&P500 인덱스에, 10%를 단기 국채에 넣어라" — 워런 버핏
+    </div>
+  </div>`;
+}
+
+/* ── 리밸런싱 조언 ── */
+function rRebalanceAdvice(myETF) {
+  if (myETF.length < 2) return '';
+  const total = myETF.reduce((s,p) => s + (PRICE_BASE[p.id]?.price||p.buyPrice)*p.qty, 0);
+  const domestic = myETF.filter(p=>ETF_LIST.find(e=>e.code===p.id)?.region==='국내')
+    .reduce((s,p)=>s+(PRICE_BASE[p.id]?.price||p.buyPrice)*p.qty,0);
+  const domPct = total > 0 ? Math.round(domestic/total*100) : 0;
+  const needRebal = domPct > 60 || domPct < 20;
+  if (!needRebal) return '';
+  return `<div style="margin-top:10px;padding:9px 12px;background:rgba(230,81,0,0.07);border:1px solid rgba(230,81,0,0.25);border-radius:10px;font-size:12px;color:#E65100;font-weight:700">
+    🔄 리밸런싱 권장: 국내 비중 ${domPct}% ${domPct>60?'— 해외 ETF 추가 고려':'— 국내 ETF 추가 고려'}
+  </div>`;
+}
+
+/* ── 자산 추가 함수 ── */
+function addAsset(type) {
+  let id, name, buyPrice, qty;
+  if (type === 'etf') {
+    id = document.getElementById('etf-sel')?.value;
+    buyPrice = Number(document.getElementById('etf-price')?.value);
+    qty = Number(document.getElementById('etf-qty')?.value);
+    const etf = ETF_LIST.find(e=>e.code===id);
+    name = etf?.name || id;
+  } else if (type === 'overseas') {
+    id = document.getElementById('ov-sel')?.value;
+    buyPrice = Number(document.getElementById('ov-price')?.value);
+    qty = Number(document.getElementById('ov-qty')?.value);
+    const ov = OVERSEAS_LIST.find(o=>o.ticker===id);
+    name = ov?.name || id;
+  }
+  if (!id || !buyPrice || !qty) { notify('⚠️ 모든 항목을 입력해주세요','info'); return; }
+  const port = safeLS('assetPortfolio', []);
+  const existing = port.findIndex(p=>p.id===id&&p.assetType===type);
+  if (existing >= 0) port[existing] = {assetType:type, id, name, buyPrice, qty};
+  else port.push({assetType:type, id, name, buyPrice, qty, addedAt:Date.now()});
+  safeSetLS('assetPortfolio', port);
+  notify(`✅ ${name} 추가됨`, 'ok');
+  render();
+}
+
+function addPensionAccount() {
+  const accName = prompt('계좌 이름을 입력하세요 (예: 연금저축·IRP)');
+  if (!accName) return;
+  const pension = safeLS('pensionAccounts', []);
+  pension.push({
+    id: Date.now().toString(),
+    name: accName,
+    items: [
+      {name:'국내주식ETF', type:'주식', value:0},
+      {name:'해외주식ETF', type:'주식', value:0},
+      {name:'채권ETF', type:'채권', value:0},
+      {name:'현금', type:'현금', value:0},
+    ]
+  });
+  safeSetLS('pensionAccounts', pension);
+  render();
+}
+
+/* ── AI 분석 함수들 ── */
+async function showETFAnalysis(code) {
+  const etf = ETF_LIST.find(e=>e.code===code);
+  if (!etf) return;
+  notify(`🤖 ${etf.name} 버핏 분석 중...`, 'info');
+  const prompt = `워런 버핏 관점에서 아래 ETF를 분석해주세요.
+ETF: ${etf.name} (${etf.region} · ${etf.category})
+설명: ${etf.desc}
+운용보수: ${etf.expense}%
+
+버핏은 "저비용 인덱스 펀드가 최선"이라 했습니다. 이 ETF가 버핏 기준에 부합하는지 평가하고:
+1. 장기 투자 적합성
+2. 비용 효율성
+3. 지금 매수/보유/관망 판단
+4. 버핏 스타일 촌철살인 한마디
+
+한국어로 3~4문장 간결하게 답해주세요.`;
+  try {
+    const res = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]});
+    const data = await res.json();
+    const txt = data.content?.map(c=>c.text||'').join('');
+    notify(`💬 ${etf.name}: ${txt.slice(0,80)}...`, 'ok');
+    // 모달로 표시
+    S._etfAnalysisResult = {name:etf.name, text:txt};
+    render();
+  } catch(e) { notify('⚠️ 분석 실패', 'info'); }
+}
+
+async function runOverseasAnalysis(ticker) {
+  const stock = OVERSEAS_LIST.find(o=>o.ticker===ticker);
+  notify(`🤖 ${stock?.name||ticker} 버핏 분석 중...`, 'info');
+  const prompt = `워런 버핏 관점에서 ${stock?.name||ticker}(${ticker})를 분석해주세요.
+섹터: ${stock?.sector} / 설명: ${stock?.desc}
+버핏의 해자·내재가치·장기전망 기준으로 평가하고 매수/보유/관망 판단을 한국어 3문장으로 답해주세요.`;
+  try {
+    const res = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]});
+    const data = await res.json();
+    const txt = data.content?.map(c=>c.text||'').join('');
+    notify(`💬 ${stock?.name}: ${txt.slice(0,100)}`, 'ok');
+  } catch(e) { notify('⚠️ 분석 실패','info'); }
+}
+
+async function runPensionAnalysis(accId) {
+  const pension = safeLS('pensionAccounts',[]);
+  const acc = pension.find(a=>a.id===accId);
+  if (!acc) return;
+  const total = acc.items.reduce((s,i)=>s+i.value,0);
+  const breakdown = acc.items.map(i=>`${i.name}:${total>0?Math.round(i.value/total*100):0}%`).join(', ');
+  notify(`🤖 ${acc.name} 연금 배분 분석 중...`,'info');
+  const prompt = `워런 버핏 + 장기 연금 전문가 관점에서 아래 포트폴리오를 분석해주세요.
+계좌: ${acc.name}
+현재 배분: ${breakdown}
+총 자산: ${total.toLocaleString()}원
+
+1. 현재 배분의 문제점
+2. 버핏 권장 배분 (주식90%:채권10% 원칙 기반)
+3. 리밸런싱 제안
+한국어로 간결하게 3~4문장 답해주세요.`;
+  try {
+    const res = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}]});
+    const data = await res.json();
+    const txt = data.content?.map(c=>c.text||'').join('');
+    notify(`💬 ${acc.name}: ${txt.slice(0,100)}...`,'ok');
+  } catch(e) { notify('⚠️ 분석 실패','info'); }
+}
+
+async function runCommodityAnalysis(id) {
+  const com = COMMODITY_LIST.find(c=>c.id===id);
+  if (!com) return;
+  notify(`🤖 ${com.name} 분석 중...`,'info');
+  const prompt = `워런 버핏 관점에서 ${com.name}(${com.category}) 투자를 평가해주세요.
+버핏은 금 투자에 부정적이지만 현재 거시경제 상황도 고려해서, 지금 시점에 이 자산이 포트폴리오에 필요한지 한국어 3문장으로 답해주세요.`;
+  try {
+    const res = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]});
+    const data = await res.json();
+    const txt = data.content?.map(c=>c.text||'').join('');
+    notify(`💬 ${com.name}: ${txt.slice(0,100)}`,'ok');
+  } catch(e) { notify('⚠️ 분석 실패','info'); }
+}
+
 /* ── 알림 설정 탭 ── */
 function rAlert() {
   return `<div class="alert-tab">
@@ -3238,7 +3679,7 @@ function render() {
       </div>
       <div class="hdr-row1">
         <div class="brand">
-          <div class="brand-tag">KOSPI INTEL V6 · 03.07</div>
+          <div class="brand-tag">KOSPI INTEL V7 · 03.07 · 03.07</div>
           <div class="brand-name">AI 투자 분석</div>
         </div>
         <div class="hdr-btns">
@@ -3274,6 +3715,7 @@ function render() {
       <button class="tab${S.tab==='sk'?' on':''}" onclick="setTab('sk')">🗺 종목</button>
       <button class="tab${S.tab==='port'?' on':''}" onclick="setTab('port')">💼 포트</button>
       <button class="tab${S.tab==='alert'?' on':''}" onclick="setTab('alert')">🔔 알림</button>
+      <button class="tab${S.tab==='asset'?' on':''}" onclick="setTab('asset')">💹 자산</button>
       <button class="tab${S.tab==='src'?' on':''}" onclick="setTab('src')">🕵️ 출처</button>
       <button class="tab${S.tab==='tl'?' on':''}" onclick="setTab('tl')">⏱ 타임라인</button>
     </div>
@@ -3285,6 +3727,7 @@ function render() {
     ${S.tab==='sk'    ? rStocks()    : ''}
     ${S.tab==='port'  ? rPortfolio() : ''}
     ${S.tab==='alert' ? rAlert()     : ''}
+    ${S.tab==='asset' ? rAsset()     : ''}
   `;
   bindInputs();
 
