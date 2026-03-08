@@ -183,7 +183,7 @@ input,select{font-family:var(--body)}
   border-radius:20px;margin-bottom:12px;overflow:hidden;
   box-shadow:0 2px 12px rgba(21,101,192,0.07);
   transition:box-shadow 0.2s,border-color 0.2s;
-}
+;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .card:hover{box-shadow:0 4px 20px rgba(21,101,192,0.13)}
 .card.lv1{border-left:4px solid var(--rose)}
 .card.lv2{border-left:4px solid var(--amber)}
@@ -2532,7 +2532,7 @@ function cardHTML(item) {
   </div>`;
 
   return `<div class="card${item.urgency===1?' lv1':item.urgency===2?' lv2':''}${isE?' open':''}${item._new?' new-item':''}" id="card-${item.id}">
-    <div class="ch" onclick="tog(${item.id})">
+    <div class="ch" onclick="tog(${item.id})" ontouchend="event.preventDefault();tog(${item.id})" style="cursor:pointer;-webkit-tap-highlight-color:rgba(21,101,192,0.1)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
         <div style="flex:1">
           <div class="cmeta">
@@ -3676,7 +3676,68 @@ async function runCommodityAnalysis(id) {
 
 /* ── 알림 설정 탭 ── */
 function rAlert() {
-  return `<div class="alert-tab">
+  const changelogHTML = `
+    <div class="alert-card" style="margin-bottom:14px">
+      <div class="alert-section-title">📋 업데이트 내역</div>
+      <div style="margin-top:10px">
+
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:#1565C0;color:#fff;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800">V9</span>
+            <span style="font-size:11px;color:#94A3B8">03.07</span>
+            <span style="margin-left:auto;font-size:11px;color:#2E7D32;font-weight:800">✓ 완료</span>
+          </div>
+          <div style="font-size:12px;color:#4A5A7A;line-height:2">
+            ✅ 버튼 전체 터치 수정 (시계 독립 분리)<br>
+            ✅ ETF 30개 확대 + AI 분석 모달<br>
+            ✅ 앱 자동 업데이트 토스트<br>
+            ✅ undefined 오류 방어코드
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;padding-top:12px;border-top:1px solid #F0F2F8">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:#1565C0;color:#fff;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800">V8</span>
+            <span style="font-size:11px;color:#94A3B8">03.07</span>
+            <span style="margin-left:auto;font-size:11px;color:#2E7D32;font-weight:800">✓ 완료</span>
+          </div>
+          <div style="font-size:12px;color:#4A5A7A;line-height:2">
+            ✅ 자산 탭 (ETF·해외·연금·채권)<br>
+            ✅ 워런 버핏 AI 분석 프롬프트<br>
+            ✅ Gemini 무료 AI 자동화
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;padding-top:12px;border-top:1px solid #F0F2F8">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:#64748B;color:#fff;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800">V7</span>
+            <span style="font-size:11px;color:#94A3B8">03.06</span>
+            <span style="margin-left:auto;font-size:11px;color:#2E7D32;font-weight:800">✓ 완료</span>
+          </div>
+          <div style="font-size:12px;color:#4A5A7A;line-height:2">
+            ✅ Market Memory 학습 엔진<br>
+            ✅ 영어 뉴스 자동 번역<br>
+            ✅ PWA 홈화면 설치
+          </div>
+        </div>
+
+        <div style="padding-top:12px;border-top:1px solid #F0F2F8">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="background:#64748B;color:#fff;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:800">V10</span>
+            <span style="font-size:11px;color:#94A3B8">예정</span>
+            <span style="margin-left:auto;font-size:11px;color:#E65100;font-weight:800">🔄 개발중</span>
+          </div>
+          <div style="font-size:12px;color:#94A3B8;line-height:2">
+            🔄 Gemini 완전 무료 자동화<br>
+            🔄 주가 5분마다 실시간 업데이트<br>
+            🔄 사용자 키 입력 완전 제거
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+
+  return `<div class="alert-tab">${changelogHTML}
     <!-- 알림 토글 -->
     <div class="alert-card">
       <div class="alert-section-title">🔔 알림 설정</div>
