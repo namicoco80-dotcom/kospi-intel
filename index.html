@@ -883,7 +883,7 @@ input,select{font-family:var(--body)}
     // SW 새로 등록
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=12&t=' + Date.now());
+        navigator.serviceWorker.register('./sw.js?v=12');
       });
     }
   </script>
@@ -7314,7 +7314,7 @@ function _buildHelpHTML() {
 
 // PWA Service Worker + 자동 업데이트 감지
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=12&t=' + Date.now())
+  navigator.serviceWorker.register('./sw.js?v=12')
     .then(reg => {
       console.log('[PWA] SW 등록 완료');
       // 새 SW 발견 시
@@ -7326,9 +7326,13 @@ if ('serviceWorker' in navigator) {
           }
         });
       });
-      // 주기적 업데이트 체크 (앱 포커스 시)
+      // 앱 포커스 시 업데이트 체크 (1시간에 1번만)
+      let _lastSWCheck = 0;
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) reg.update();
+        if (!document.hidden && Date.now() - _lastSWCheck > 3600000) {
+          _lastSWCheck = Date.now();
+          reg.update();
+        }
       });
     })
     .catch(e => console.warn('[PWA] SW 실패:', e));
