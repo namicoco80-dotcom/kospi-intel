@@ -2366,9 +2366,13 @@ function sentimentMiniChart(code) {
   if (hist.length < 2) return '';
 
   const bars = hist.map(h => {
-    const color = h.sent==='긍정' ? '#E53935' : h.sent==='부정' ? '#1565C0' : '#94A3B8';
-    const height = Math.round((h.impact||50) / 100 * 24);
-    return `<div style="width:6px;height:${height}px;background:${color};border-radius:2px;flex-shrink:0" title="${h.date} ${h.sent}"></div>`;
+    // sent 값 정규화 (pos/긍정/positive → 빨강, neg/부정/negative → 파랑)
+    const s = (h.sent||'').toLowerCase();
+    const isPos = s==='긍정'||s==='pos'||s==='positive'||s==='good';
+    const isNeg = s==='부정'||s==='neg'||s==='negative'||s==='bad';
+    const color = isPos ? '#E53935' : isNeg ? '#1565C0' : '#94A3B8';
+    const height = Math.max(4, Math.round(((h.impactScore||h.impact||50)) / 100 * 24));
+    return `<div style="width:8px;height:${height}px;background:${color};border-radius:3px;flex-shrink:0;min-height:4px" title="${h.date||''} ${h.sent||''}"></div>`;
   }).join('');
 
   const posCount = hist.filter(h=>h.sent==='긍정').length;
@@ -5875,8 +5879,8 @@ function showTimingResult(name, code, r) {
     </div>
     <div style="padding:16px 18px">
 
-      <!-- 3조건 미충족 배너 -->
-      \${r.verdict === '관망' || r.verdict === '매수금지' ? \`
+      <!-- 3조건 배너 -->
+      ${(r.verdict === '관망' || r.verdict === '매수금지') ? `
       <div style="background:#EFF6FF;border:1.5px solid #BBDEFB;border-radius:14px;
         padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">🚫</span>
@@ -5884,7 +5888,7 @@ function showTimingResult(name, code, r) {
           <div style="font-size:13px;font-weight:900;color:#1565C0">매수 신호 없음</div>
           <div style="font-size:11px;color:#4A5A7A;margin-top:2px">3가지 조건 미충족 — 조건 충족 시까지 관망</div>
         </div>
-      </div>\` : \`
+      </div>` : `
       <div style="background:#FFEBEE;border:1.5px solid #FFCDD2;border-radius:14px;
         padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">🚀</span>
@@ -5892,7 +5896,7 @@ function showTimingResult(name, code, r) {
           <div style="font-size:13px;font-weight:900;color:#C62828">매수 신호 발생!</div>
           <div style="font-size:11px;color:#4A5A7A;margin-top:2px">52주신고가 + 외국인매수 + MACD/RSI 3조건 충족</div>
         </div>
-      </div>\`}
+      </div>`}
 
       <!-- 점수 + 판단 -->
       <div style="display:flex;gap:12px;margin-bottom:16px">
