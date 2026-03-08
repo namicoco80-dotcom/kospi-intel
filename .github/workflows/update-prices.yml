@@ -2,8 +2,8 @@ name: Update KOSPI Data
 
 on:
   schedule:
-    # 평일 장중 30분마다 (KST 09:00~15:30 = UTC 00:00~06:30)
-    - cron: '0,30 0,1,2,3,4,5,6 * * 1-5'
+    # 평일 장중 5분마다 (KST 09:00~15:35 = UTC 00:00~06:35)
+    - cron: '*/5 0,1,2,3,4,5,6 * * 1-5'
   workflow_dispatch:
 
 jobs:
@@ -35,12 +35,14 @@ jobs:
               f.write(f"is_open={'true' if is_open else 'false'}\n")
           PYEOF
 
-      - name: Update prices
+      - name: Update prices & supply
         if: steps.market_check.outputs.is_open == 'true'
         run: python3 scripts/update_prices.py
 
-      - name: Update news
+      - name: Update news & AI analysis
         if: steps.market_check.outputs.is_open == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python3 scripts/fetch_news.py
 
       - name: Commit and push
@@ -48,6 +50,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add prices.json news.json supply.json
+          git add prices.json news.json supply.json analysis.json || true
           git diff --staged --quiet || git commit -m "📊 Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
           git push
