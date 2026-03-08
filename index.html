@@ -219,6 +219,38 @@ input,select{font-family:var(--body)}
 .ai-keywords{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 .ai-kw{font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(232,146,30,0.12);color:var(--amber);border:1px solid rgba(232,146,30,0.3);font-weight:700}
 
+/* ── 도움말 버튼 & 바텀시트 ── */
+.help-btn{position:fixed;bottom:80px;right:16px;width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,#1565C0,#0D47A1);border:none;color:#fff;font-size:20px;
+  box-shadow:0 4px 16px rgba(21,101,192,0.4);cursor:pointer;z-index:900;
+  display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.help-btn:active{transform:scale(.92)}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;
+  opacity:0;transition:opacity .25s;pointer-events:none}
+.help-overlay.on{opacity:1;pointer-events:all}
+.help-sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:22px 22px 0 0;
+  z-index:1001;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.help-sheet.on{transform:translateY(0)}
+.help-sheet-hdr{padding:16px 18px 10px;border-bottom:1px solid #EEF2FA;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.help-sheet-title{font-size:16px;font-weight:900;color:#0F1D3A}
+.help-close{width:32px;height:32px;border-radius:50%;background:#F4F6FA;border:none;
+  font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.help-tabs{display:flex;gap:0;border-bottom:1px solid #EEF2FA;overflow-x:auto;flex-shrink:0}
+.help-tabs::-webkit-scrollbar{display:none}
+.help-tab{padding:10px 14px;font-size:12px;font-weight:700;color:#94A3B8;border:none;
+  background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
+.help-tab.on{color:#1565C0;border-bottom-color:#1565C0}
+.help-body{overflow-y:auto;flex:1;padding:16px 18px 40px}
+.help-section{margin-bottom:20px}
+.help-section-title{font-size:13px;font-weight:900;color:#0F1D3A;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px}
+.help-item{margin-bottom:12px;padding:12px;background:#F8FAFF;border-radius:12px;border-left:3px solid #1565C0}
+.help-term{font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:4px}
+.help-desc{font-size:12px;color:#4A5A7A;line-height:1.65}
+.help-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;margin-right:4px}
+.help-ex{font-size:11px;color:#94A3B8;margin-top:4px;font-style:italic}
+
 /* Impact Score 바 */
 .impact-row{display:flex;align-items:center;gap:8px;margin-top:8px}
 .impact-lbl{font-family:var(--mono);font-size:10px;color:var(--ink3);width:48px;flex-shrink:0}
@@ -4107,7 +4139,10 @@ function render() {
       </div>
     </div>
 
-    <div class="tabs">
+    <!-- 도움말 버튼 -->
+  <button class="help-btn" onclick="openHelp()" title="도움말">❓</button>
+
+  <div class="tabs">
       <button class="tab${S.tab==='my'?' on':''}" onclick="setTab('my')">🎯 내종목</button>
       <button class="tab${S.tab==='trade'?' on':''}" onclick="setTab('trade')">📒 매매기록</button>
       <button class="tab${S.tab==='feed'?' on':''}" onclick="setTab('feed')">📡 뉴스</button>
@@ -7047,6 +7082,231 @@ function getBuffettQuote(situation) {
     ? BUFFETT_QUOTES[situation]
     : Object.values(BUFFETT_QUOTES).flat();
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ══════════════════════════════════════════════
+// 📖 인앱 도움말 매뉴얼
+// ══════════════════════════════════════════════
+let _helpTab = 'signal';
+
+function openHelp() {
+  // 오버레이 + 시트 생성
+  let ov = document.getElementById('help-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'help-overlay';
+    ov.className = 'help-overlay';
+    ov.onclick = closeHelp;
+    document.body.appendChild(ov);
+
+    const sheet = document.createElement('div');
+    sheet.id = 'help-sheet';
+    sheet.className = 'help-sheet';
+    sheet.innerHTML = _buildHelpHTML();
+    document.body.appendChild(sheet);
+  } else {
+    document.getElementById('help-sheet').innerHTML = _buildHelpHTML();
+  }
+  requestAnimationFrame(() => {
+    document.getElementById('help-overlay').classList.add('on');
+    document.getElementById('help-sheet').classList.add('on');
+  });
+  document.body.style.overflow = 'hidden';
+}
+
+function closeHelp() {
+  document.getElementById('help-overlay')?.classList.remove('on');
+  document.getElementById('help-sheet')?.classList.remove('on');
+  document.body.style.overflow = '';
+}
+
+function switchHelpTab(tab) {
+  _helpTab = tab;
+  document.getElementById('help-sheet').innerHTML = _buildHelpHTML();
+}
+
+function _buildHelpHTML() {
+  const tabs = [
+    { id:'signal',  label:'📊 신호등급' },
+    { id:'quant',   label:'🔢 퀀트점수' },
+    { id:'supply',  label:'💰 수급' },
+    { id:'trade',   label:'📒 매매기록' },
+  ];
+
+  const tabBar = tabs.map(t =>
+    `<button class="help-tab${_helpTab===t.id?' on':''}" onclick="switchHelpTab('${t.id}')">${t.label}</button>`
+  ).join('');
+
+  const bodies = {
+
+    // ── 신호 등급 ──
+    signal: `
+      <div class="help-section">
+        <div class="help-section-title">📊 퀀트 신호 등급이란?</div>
+        <p style="font-size:12px;color:#4A5A7A;line-height:1.7;margin-bottom:14px">
+          5가지 전략을 합산한 <b>100점 만점 투자 점수</b>입니다.<br>
+          점수에 따라 A~D 등급으로 분류돼요.
+        </p>
+
+        <div class="help-item" style="border-left-color:#C62828">
+          <div class="help-term"><span class="help-badge" style="background:#FFEBEE;color:#C62828">A등급 80점↑</span> 강한 보유</div>
+          <div class="help-desc">모든 조건이 우수한 최고 등급. 현재 보유 중이라면 계속 들고 가세요. 신규 진입도 적극 고려할 수 있어요.</div>
+          <div class="help-ex">예: 52주 신고가 근접 + 외국인 연속매수 + MACD 상승</div>
+        </div>
+
+        <div class="help-item" style="border-left-color:#1565C0">
+          <div class="help-term"><span class="help-badge" style="background:#EFF6FF;color:#1565C0">B등급 60~79점</span> 보유</div>
+          <div class="help-desc">양호한 상태. 보유 유지가 적합하지만 추가 매수는 신중하게 판단하세요.</div>
+        </div>
+
+        <div class="help-item" style="border-left-color:#E65100">
+          <div class="help-term"><span class="help-badge" style="background:#FFF3E0;color:#E65100">C등급 40~59점</span> 관찰</div>
+          <div class="help-desc">조건이 혼조세. 매수보다 관망이 유리해요. 다음 신호를 기다리세요.</div>
+        </div>
+
+        <div class="help-item" style="border-left-color:#94A3B8">
+          <div class="help-term"><span class="help-badge" style="background:#F4F6FA;color:#64748B">D등급 39점↓</span> 비중 축소</div>
+          <div class="help-desc">여러 조건이 부정적. 보유 중이라면 비중을 줄이거나 손절을 고려하세요.</div>
+        </div>
+
+        <div class="help-item" style="border-left-color:#C62828;background:#FFF5F5">
+          <div class="help-term">🚀 자동 매수 신호</div>
+          <div class="help-desc">아래 <b>3가지 조건을 동시에</b> 충족할 때만 발생해요.</div>
+          <div class="help-ex">① 52주 신고가 80% 이상 근접<br>② 외국인 순매수<br>③ MACD 골든크로스 또는 RSI 50↑ + 모멘텀 양수</div>
+        </div>
+      </div>`,
+
+    // ── 퀀트 점수 ──
+    quant: `
+      <div class="help-section">
+        <div class="help-section-title">🔢 퀀트 5전략 점수 구성</div>
+        <p style="font-size:12px;color:#4A5A7A;line-height:1.7;margin-bottom:14px">
+          5가지 항목을 합산해 <b>100점</b>을 만들어요.<br>
+          매일 장 마감 후(16시) 자동으로 실제 데이터로 업데이트됩니다.
+        </p>
+
+        <div class="help-item">
+          <div class="help-term">📈 모멘텀 <span style="color:#94A3B8;font-weight:400">/ 25점</span></div>
+          <div class="help-desc">최근 12개월 수익률 대비 3개월 수익률. <b>단기에 가속도가 붙는 종목</b>에 높은 점수를 줘요.</div>
+          <div class="help-ex">12개월 +20%, 3개월 +8% → 모멘텀 양호</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">🏔 52주 신고가 <span style="color:#94A3B8;font-weight:400">/ 20점</span></div>
+          <div class="help-desc">현재가가 52주 최고가의 몇 %인지 측정. <b>신고가에 가까울수록</b> 강한 추세를 의미해요.</div>
+          <div class="help-ex">신고가의 95% 이상 → 만점에 가까운 점수</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">💰 외국인 수급 <span style="color:#94A3B8;font-weight:400">/ 20점</span></div>
+          <div class="help-desc">외국인·기관의 매수/매도 방향. <b>5일 연속 외국인 순매수</b> 시 최고점.</div>
+          <div class="help-ex">5일 연속 매수 🔥 → 20점 / 쌍매도 → 0점</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">💎 가치 (PBR) <span style="color:#94A3B8;font-weight:400">/ 20점</span></div>
+          <div class="help-desc"><b>PBR(주가순자산비율)</b>로 저평가 여부 판단. 낮을수록 싸게 사는 거예요.</div>
+          <div class="help-ex">PBR 0.7↓ → 20점 (저평가) / PBR 3↑ → 4점 (과열)</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">⚡ 기술지표 (MACD·RSI) <span style="color:#94A3B8;font-weight:400">/ 15점</span></div>
+          <div class="help-desc">단기 매매 타이밍 지표.<br>
+            <b>MACD</b>: 단기·장기 이동평균선의 교차 → 골든크로스면 상승 신호<br>
+            <b>RSI</b>: 과매수(70↑)/과매도(30↓) 강도 측정</div>
+          <div class="help-ex">MACD 골든크로스 + RSI 50~70 → 15점</div>
+        </div>
+      </div>`,
+
+    // ── 수급 ──
+    supply: `
+      <div class="help-section">
+        <div class="help-section-title">💰 수급이란?</div>
+        <p style="font-size:12px;color:#4A5A7A;line-height:1.7;margin-bottom:14px">
+          주식을 <b>누가 사고 팔았는지</b> 보여주는 지표예요.<br>
+          외국인·기관이 사면 주가가 오를 가능성이 높아요.
+        </p>
+
+        <div class="help-item">
+          <div class="help-term">🌍 외국인</div>
+          <div class="help-desc">해외 기관투자자·펀드 등. <b>한국 증시에서 가장 강한 수급 주체</b>예요. 외국인이 연속 매수하면 강한 상승 신호로 봐요.</div>
+          <div class="help-ex">+500억 → 외국인 대규모 순매수 (강한 긍정 신호)</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">🏢 기관</div>
+          <div class="help-desc">국내 펀드·보험·연기금 등. 외국인과 같은 방향이면 <b>쌍끌이 매수</b>로 가장 강한 신호예요.</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">👤 개인</div>
+          <div class="help-desc">개인투자자 총합. 흔히 <b>개미</b>라고 불러요. 개인이 살 때 기관·외국인이 팔면 주의가 필요해요.</div>
+        </div>
+
+        <div class="help-item" style="border-left-color:#C62828">
+          <div class="help-term">🔥 5일 연속 순매수</div>
+          <div class="help-desc">외국인이 5거래일 연속 순매수한 종목. 강한 추세 매수로 해석해요. 수급 점수 만점(20점)을 받아요.</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">순매수 / 순매도</div>
+          <div class="help-desc">매수금액 - 매도금액의 결과.<br>
+          <b>+</b>(양수) = 더 많이 샀다 → 긍정<br>
+          <b>-</b>(음수) = 더 많이 팔았다 → 부정</div>
+        </div>
+      </div>`,
+
+    // ── 매매기록 ──
+    trade: `
+      <div class="help-section">
+        <div class="help-section-title">📒 매매기록 용어 설명</div>
+
+        <div class="help-item">
+          <div class="help-term">✅ 승률</div>
+          <div class="help-desc">전체 거래 중 <b>수익이 난 거래의 비율</b>이에요.<br>승률 50% = 2번 거래하면 1번 수익.</div>
+          <div class="help-ex">10번 거래 중 6번 수익 → 승률 60%<br>일반적으로 <b>50% 이상이면 양호</b>해요.</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">⚖️ 손익비</div>
+          <div class="help-desc">평균 수익 ÷ 평균 손실.<br><b>손실보다 수익이 얼마나 큰지</b> 나타내요.</div>
+          <div class="help-ex">평균 수익 +15%, 평균 손실 -5% → 손익비 3.0<br><b>2.0 이상이면 좋은 전략</b>이에요.</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">📈 수익 팩터</div>
+          <div class="help-desc">총 수익 ÷ 총 손실.<br><b>1.5 이상이면 안정적인 전략</b>으로 봐요.</div>
+          <div class="help-ex">총 수익 300만, 총 손실 150만 → 수익팩터 2.0<br>1.0 미만이면 전략을 점검해야 해요.</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">📉 최대 낙폭 (MDD)</div>
+          <div class="help-desc">고점 대비 최대로 떨어진 손실 폭.<br>내 투자 전략이 <b>최악의 경우 얼마나 잃었는지</b>예요.</div>
+          <div class="help-ex">-20% MDD = 한때 원금의 20%가 날아간 적 있음<br><b>-15% 이내면 양호</b>한 리스크 관리예요.</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">🎯 진입 이유</div>
+          <div class="help-desc">매수할 때 왜 샀는지 기록하는 란이에요.<br>나중에 <b>AI가 이 이유를 분석해서 어떤 진입 패턴이 수익이 났는지</b> 알려줘요.</div>
+          <div class="help-ex">예: "52주 신고가 돌파 + 외국인 연속매수"</div>
+        </div>
+
+        <div class="help-item">
+          <div class="help-term">📋 전략 분류</div>
+          <div class="help-desc">거래를 전략별로 나눠서 <b>어떤 전략이 나에게 맞는지</b> 분석해요.</div>
+          <div class="help-ex">단기(1주↓) / 스윙(2~4주) / 중기(1~3개월) / 장기(3개월↑) / 모멘텀 / 가치</div>
+        </div>
+      </div>`,
+  };
+
+  return `
+    <div class="help-sheet-hdr">
+      <div class="help-sheet-title">📖 KOSPI INTEL 사용 가이드</div>
+      <button class="help-close" onclick="closeHelp()">✕</button>
+    </div>
+    <div class="help-tabs">${tabBar}</div>
+    <div class="help-body">${bodies[_helpTab] || ''}</div>
+  `;
 }
 
 // PWA Service Worker + 자동 업데이트 감지
