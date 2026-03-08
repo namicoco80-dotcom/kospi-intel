@@ -3283,10 +3283,11 @@ function rETFTab(port) {
     ${myETF.map(p => {
       const etf = ETF_LIST.find(e=>e.code===p.id);
       const pr  = PRICE_BASE[p.id];
-      const cur = pr?.price || p.buyPrice;
-      const pnl = (cur - p.buyPrice) * p.qty;
-      const pnlPct = ((cur - p.buyPrice)/p.buyPrice*100);
-      const isPos = pnl >= 0;
+      const cur = pr?.price || null;
+      const pnl    = cur ? (cur - p.buyPrice) * p.qty : 0;
+      const pnlPct = cur ? ((cur - p.buyPrice)/p.buyPrice*100) : 0;
+      const isPos  = pnl >= 0;
+      const noData = !cur;
       const weight = totalCur > 0 ? ((cur*p.qty)/totalCur*100).toFixed(1) : 0;
       return `
       <div style="background:#fff;border:1.5px solid ${isPos?'#E8F5E9':'#FFF0F0'};
@@ -3301,9 +3302,10 @@ function rETFTab(port) {
           </div>
           <div style="text-align:right">
             <div style="font-size:16px;font-weight:900;
-              color:${isPos?'#E53935':'#1565C0'}">${isPos?'+':''}${pnlPct.toFixed(2)}%</div>
-            <div style="font-size:11px;color:${isPos?'#E53935':'#1565C0'};font-weight:700">
-              ${isPos?'+':''}${Math.round(pnl).toLocaleString()}원</div>
+              color:${noData?'#94A3B8':isPos?'#E53935':'#1565C0'}">
+              ${noData?'갱신중...':((isPos?'+':'')+pnlPct.toFixed(2)+'%')}</div>
+            <div style="font-size:11px;color:${noData?'#94A3B8':isPos?'#E53935':'#1565C0'};font-weight:700">
+              ${noData?'':(isPos?'+':'')+Math.round(pnl).toLocaleString()+'원'}</div>
           </div>
         </div>
         <!-- 비중 바 -->
@@ -3550,6 +3552,48 @@ function rRebalanceAdvice(myETF) {
 }
 
 /* ── 자산 추가 함수 ── */
+
+// ── ETF 현재가 수집 (네이버 polling API) ──
+async function fetchETFPrices(etfCodes) {
+  const results = {};
+  for (const code of etfCodes) {
+    try {
+      const url = `https://polling.finance.naver.com/api/realtime/domestic/stock/${code}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      const data = await res.json();
+      const q = (data.datas || data.data || [null])[0];
+      if (!q) continue;
+      const n = (...keys) => { for(const k of keys){const v=q[k];if(v!=null)try{return parseInt(String(v).replace(/,/g,''))}catch{}};return 0;};
+      const price = n('closePrice','cp','nv','sv');
+      const prev  = n('prevClosePrice','pcv','rf','pv');
+      if (price) {
+        const chg = prev ? Math.round((price-prev)/prev*10000)/100 : 0;
+        results[code] = { price, chg, prev };
+      }
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 150));
+  }
+  return results;
+}
+
+// ── 자산탭 ETF 가격 갱신 ──
+async function refreshETFPrices() {
+  const port = safeLS('assetPortfolio', []);
+  const etfCodes = port.filter(p => p.assetType === 'etf').map(p => p.id);
+  if (!etfCodes.length) return;
+  const prices = await fetchETFPrices(etfCodes);
+  // PRICE_BASE에 병합
+  Object.entries(prices).forEach(([code, data]) => {
+    if (!PRICE_BASE[code]) PRICE_BASE[code] = { price: null, chg: null, vol: '—', cap: '—', high: '—', low: '—', open: '—', dataSource: 'etf' };
+    PRICE_BASE[code].price = data.price;
+    PRICE_BASE[code].chg   = data.chg;
+    PRICE_BASE[code].dataSource = 'live';
+  });
+  if (Object.keys(prices).length > 0) {
+    render();
+    notify(`📊 ETF 현재가 갱신 (${Object.keys(prices).length}종목)`, 'ok');
+  }
+}
 function removeAsset(id) {
   let port = safeLS('assetPortfolio', []);
   port = port.filter(p => p.id !== id);
@@ -4118,11 +4162,14 @@ function bindInputs() {
 /* ══ ACTIONS ══ */
 function setTab(t){
   S.tab=t; S.themeFilter=null; render();
-  // 포트폴리오 탭 진입 시: localStorage 가격 즉시 반영 → 백그라운드 갱신
   if(t === 'port') {
     const ls = lsLoadPrices();
     if(Object.keys(ls).length) { applyLsPrices(ls); refreshPortfolioDom(); }
     fetchAllPrices().then(() => refreshPortfolioDom()).catch(() => {});
+  }
+  // 자산 탭 진입 시 ETF 현재가 자동 갱신
+  if(t === 'asset') {
+    setTimeout(() => refreshETFPrices(), 300);
   }
 }
 function setSec(s){S.sector=s;render()}
