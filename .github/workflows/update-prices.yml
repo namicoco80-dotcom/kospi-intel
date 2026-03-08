@@ -61,4 +61,3 @@ jobs:
           git add prices.json news.json supply.json analysis.json quant.json || true
           git diff --staged --quiet || git commit -m "📊 Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
           git push
-
