@@ -7311,7 +7311,7 @@ function _buildHelpHTML() {
 
 // PWA Service Worker + 자동 업데이트 감지
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=11')
+  navigator.serviceWorker.register('./sw.js?v=12')
     .then(reg => {
       console.log('[PWA] SW 등록 완료');
       // 새 SW 발견 시
