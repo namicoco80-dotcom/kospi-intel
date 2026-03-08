@@ -1054,9 +1054,9 @@ const PRICE_BASE = {
 const AI_API_URL = (() => {
   // 로컬/개발 환경: 비워두면 AI 기능 비활성화
   // 배포 환경: Cloudflare Workers URL 입력
-  // 예시: "https://kospi-ai-proxy.YOUR-SUBDOMAIN.workers.dev"
+  // 예시: "https://kospi-ai-proxy.https://misty-glade-ddcf.namicoco80.workers.dev"
   const stored = (() => { try { return localStorage.getItem('cf_worker_url') || ''; } catch(e) { return ''; } })();
-  return stored || '';
+  return stored || 'https://misty-glade-ddcf.namicoco80.workers.dev';
 })();
 
 function aiApiFetch(body) {
@@ -2695,11 +2695,34 @@ function rFeed() {
 
   const dartBar = S.showDart
     ? `<div class="dart-setup">
-        <h4>📋 DART 공시 연동</h4>
-        <p>금융감독원 API 키로 공시 교차검증 · <a href="https://opendart.fss.or.kr" target="_blank" style="color:var(--amber);font-weight:700">발급↗</a></p>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:18px">📋</span>
+          <span style="font-size:14px;font-weight:900;color:#0F1D3A">DART 공시 연동 설정</span>
+          <span style="font-size:11px;background:#FFF3E0;color:#E65100;border-radius:6px;padding:2px 7px;font-weight:700">선택사항</span>
+        </div>
+
+        <div style="background:#F8FAFF;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#4A5A7A;line-height:1.8">
+          <b style="color:#0F1D3A">DART가 뭔가요?</b><br>
+          금융감독원이 운영하는 <b>전자공시 시스템</b>이에요.<br>
+          기업의 실적·공시·뉴스를 AI가 교차검증할 때 사용해요.<br><br>
+          <b style="color:#0F1D3A">📌 API 키 발급 방법 (3단계)</b><br>
+          <span style="display:block;margin-top:4px">
+            1️⃣ 아래 링크 클릭 →
+            <a href="https://opendart.fss.or.kr/uat/uia/egovLoginUsr.do" target="_blank"
+              style="color:#1565C0;font-weight:700;text-decoration:underline">
+              opendart.fss.or.kr 회원가입↗
+            </a><br>
+            2️⃣ 로그인 후 → <b>API 신청</b> 메뉴 클릭<br>
+            3️⃣ 발급된 <b>인증키(40자리)</b> 복사 후 아래 입력
+          </span>
+        </div>
+
         <div class="dart-row">
-          <input class="dart-inp" id="dki" placeholder="API 키 입력..." value="${S.dartInp}">
+          <input class="dart-inp" id="dki" placeholder="발급받은 40자리 API 키 입력..." value="${S.dartInp}">
           <button class="dart-save" onclick="saveDart()">저장</button>
+        </div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:8px;text-align:center">
+          🔒 키는 내 폰에만 저장돼요 · 외부 전송 없음
         </div>
       </div>`
     : `<div class="dart-ok">✅ DART 연동 <span style="font-family:var(--mono);opacity:.7">${S.dartKey.slice(0,8)}...</span><button onclick="resetDart()" style="margin-left:auto;background:none;border:none;font-size:12px;color:var(--ink3);cursor:pointer">변경</button></div>`;
