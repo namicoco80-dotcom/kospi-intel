@@ -1745,6 +1745,24 @@ async function fetchSupplyJson() {
 }
 
 
+
+// ── fundamental.json 로드 (PBR/ROE/PER) ──
+let FUND_DATA = {};
+let SUPPLY5_DATA = {};
+async function fetchFundamentalData() {
+  try {
+    const [fRes, s5Res] = await Promise.all([
+      fetch('./fundamental.json?_=' + Date.now(), {cache:'no-store'}),
+      fetch('./supply5.json?_=' + Date.now(), {cache:'no-store'}),
+    ]);
+    if (fRes.ok)  FUND_DATA    = await fRes.json();
+    if (s5Res.ok) SUPPLY5_DATA = await s5Res.json();
+    console.log('[Fund] PBR/ROE:', Object.keys(FUND_DATA).length, '종목');
+    console.log('[Sup5] 5일수급:', Object.keys(SUPPLY5_DATA).length, '종목');
+  } catch(e) {
+    console.warn('[Fund] 로드 실패 — 폴백 모드');
+  }
+}
 // ── quant.json 로드 (52주+MACD+RSI 실제 데이터) ──
 let QUANT_DATA = {};
 async function fetchQuantData() {
@@ -4650,6 +4668,9 @@ function _init() {
       console.log('[Cache] 구버전 분석 캐시 삭제');
     }
   } catch(e) { localStorage.removeItem('portAnalysis'); }
+  // 백그라운드 데이터 로드
+  fetchQuantData();
+  fetchFundamentalData();
   // 먼저 render 실행 (즉각 화면 표시)
   try { render(); } catch(e) {
     console.error('[KOSPI] render 초기 오류:', e);
@@ -5325,21 +5346,36 @@ function calcSignal(code) {
   scores.high52 = pos>=70?12:pos>=50?9:pos>=30?6:3;
   details.high52 = {val:`당일${pos}%`, label:'52주데이터없음⚠️', real:false};
 
-  // 수급: 당일 수급 (실제 데이터)
+  // 수급: 당일 + 5일 연속 데이터
   const f = sup?.foreign || 0, inst = sup?.inst || 0;
+  const s5 = SUPPLY5_DATA[code];
+  const consec = s5?.consecutive_buy;
+  const buyDays = s5?.buy_days || 0;
   let ss, slbl;
-  if      (f>0&&inst>0) { ss=20; slbl='쌍끌이매수'; }
-  else if (f>0)         { ss=15; slbl='외인매수'; }
-  else if (inst>0)      { ss=12; slbl='기관매수'; }
-  else if (f<0&&inst<0) { ss=0;  slbl='쌍매도'; }
-  else if (f<0)         { ss=5;  slbl='외인매도'; }
-  else                  { ss=10; slbl='중립'; }
+  if      (consec)          { ss=20; slbl='5일연속매수'; }
+  else if (f>0&&inst>0)     { ss=20; slbl='쌍끌이매수'; }
+  else if (buyDays>=3)      { ss=17; slbl=`${buyDays}일매수`; }
+  else if (f>0)             { ss=15; slbl='외인매수'; }
+  else if (inst>0)          { ss=12; slbl='기관매수'; }
+  else if (f<0&&inst<0)     { ss=0;  slbl='쌍매도'; }
+  else if (f<0)             { ss=5;  slbl='외인매도'; }
+  else                      { ss=10; slbl='중립'; }
   scores.supply = ss;
-  details.supply = {val:slbl, label:slbl, real:!!sup};
+  details.supply = {val:slbl, label:slbl, real:!!sup, buyDays, consecutive:consec};
 
-  // 가치: 데이터 없음
-  scores.value = 10;
-  details.value = {val:'PBR/ROE없음⚠️', label:'미수집', real:false};
+  // 가치: FUND_DATA 실제 PBR 우선, 없으면 폴백
+  const fdFb = FUND_DATA[code];
+  if (fdFb && fdFb.pbr != null) {
+    const pbr = fdFb.pbr, per = fdFb.per;
+    const pbrS = pbr<=0.7?20 : pbr<=1?17 : pbr<=1.5?14 : pbr<=2?11 : pbr<=3?7 : 4;
+    const perA = !per?0 : per<=10?2 : per<=20?1 : per<=30?0 : -2;
+    scores.value = Math.min(20, Math.max(0, pbrS + perA));
+    details.value = {val:`PBR${pbr} PER${per||'?'}`,
+      label: pbr<=1?'저평가':pbr<=2?'적정':'고평가', pbr, per, real:true};
+  } else {
+    scores.value = 10;
+    details.value = {val:'PBR없음⚠️', label:'미수집', real:false};
+  }
 
   // 기술: 당일 시가대비만 (MACD/RSI 없음)
   let ts=8, tl='중립';
