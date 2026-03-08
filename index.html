@@ -2330,6 +2330,22 @@ function sentimentMiniChart(code) {
 }
 
 // ── 6. 전체 학습 실행 (뉴스 로드 후 자동) ──
+function dirIcon(dir) {
+  return dir === 'pos' ? '▲' : dir === 'neg' ? '▼' : '●';
+}
+function dirC(dir) {
+  return dir === 'pos' ? 'var(--rose)' : dir === 'neg' ? 'var(--blue)' : 'var(--ink3)';
+}
+
+function calcImpactScores() {
+  NEWS.forEach(n => {
+    if (n.impactScore) return;
+    const base = {official:80, news:65, analyst:60, rumor:50}[n.type] || 55;
+    const sentBonus = n.sent==='긍정' ? 8 : n.sent==='부정' ? 5 : 0;
+    n.impactScore = Math.min(base + sentBonus, 99);
+  });
+}
+
 function runMarketLearning() {
   calcImpactScores();
   updateSentimentHistory();
