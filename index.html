@@ -2536,7 +2536,7 @@ function cardHTML(item) {
   </div>`;
 
   return `<div class="card${item.urgency===1?' lv1':item.urgency===2?' lv2':''}${item._new?' new-item':''}" id="card-${item.id}">
-    <div class="ch" onclick="tog(${item.id})" ontouchend="event.preventDefault();tog(${item.id})" style="cursor:pointer;-webkit-tap-highlight-color:rgba(21,101,192,0.1)">
+    <div class="ch" style="cursor:default">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
         <div style="flex:1">
           <div class="cmeta">
@@ -2564,7 +2564,15 @@ function cardHTML(item) {
       </div>
       ${sparkline(item.spreadHistory, src.color)}
     </div>
-
+    <div style="padding:0 14px 14px;text-align:right">
+      <button
+        onpointerup="event.stopPropagation();showCardModal(NEWS.find(n=>n.id===${item.id}))"
+        style="background:#1565C0;color:#fff;border:none;border-radius:20px;
+          padding:8px 18px;font-size:12px;font-weight:700;letter-spacing:.3px;
+          cursor:pointer;touch-action:manipulation">
+        상세보기 ›
+      </button>
+    </div>
 
   </div>`;
 }
@@ -4451,11 +4459,11 @@ function showCardModal(item) {
   root.id = 'card-modal-root';
 
   root.innerHTML = `
-  <div id="card-modal-bg" onclick="closeCardModal()" style="
+  <div id="card-modal-bg" onpointerdown="this._py=event.clientY" onpointerup="if(Math.abs(event.clientY-(this._py||0))<8)closeCardModal()" style="
     position:fixed;inset:0;background:rgba(0,0,0,0.5);
     z-index:8000;animation:fadeIn .2s ease">
   </div>
-  <div id="card-modal-sheet" style="
+  <div id="card-modal-sheet" onpointermove="if(event.clientY-(this._py||0)>80&&this.scrollTop===0)closeCardModal()" onpointerdown="this._py=event.clientY" style="
     position:fixed;bottom:0;left:0;right:0;
     background:#fff;border-radius:24px 24px 0 0;
     z-index:8001;max-height:88vh;overflow-y:auto;
