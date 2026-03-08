@@ -143,6 +143,7 @@ def fetch_history_yahoo(code):
     → MACD, RSI, 모멘텀(12개월) 계산용
     """
     sfx = ".KQ" if code in KOSDAQ else ".KS"
+    # 1년치 일봉 (52주 고저 + 12개월 모멘텀)
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{code}{sfx}?interval=1d&range=1y"
     d = _get(url, timeout=15)
     if not d: return None
@@ -156,17 +157,19 @@ def fetch_history_yahoo(code):
 
         high52w  = max(closes)
         low52w   = min(closes)
-        closes20 = closes[-20:]
-        closes_3m = closes[-63:]
-        closes_12m = closes
+        closes20 = closes[-20:]   # 최근 20일
+        closes_3m = closes[-63:]  # 최근 3개월(약 63거래일)
+        closes_12m = closes        # 12개월 전체
 
+        # 12개월 모멘텀
         mom12m = round((closes[-1] - closes[0]) / closes[0] * 100, 2) if len(closes) > 1 else 0
+        # 3개월 모멘텀
         mom3m  = round((closes[-1] - closes_3m[0]) / closes_3m[0] * 100, 2) if closes_3m else 0
 
         return {
             "high52w": high52w,
             "low52w":  low52w,
-            "closes20": closes20,
+            "closes20": closes20,    # MACD/RSI 계산용
             "mom12m":  mom12m,
             "mom3m":   mom3m,
         }
@@ -184,39 +187,38 @@ def calc_ema(prices, period):
     return round(ema, 2)
 
 def calc_macd(closes):
+    """EMA12 - EMA26, Signal(EMA9)"""
     if len(closes) < 26: return None, None, None
     ema12 = calc_ema(closes, 12)
     ema26 = calc_ema(closes, 26)
     if ema12 is None or ema26 is None: return None, None, None
     macd = round(ema12 - ema26, 2)
-
+    # Signal: MACD의 EMA9 (단순화: 최근 9일 MACD값 평균)
     macds = []
     for i in range(9, len(closes)+1):
         e12 = calc_ema(closes[:i], 12)
         e26 = calc_ema(closes[:i], 26)
         if e12 and e26: macds.append(e12 - e26)
-
     signal = round(calc_ema(macds, 9), 2) if len(macds) >= 9 else macd
     hist   = round(macd - signal, 2)
     return macd, signal, hist
 
 def calc_rsi(closes, period=14):
+    """RSI(14)"""
     if len(closes) < period + 1: return None
     deltas = [closes[i] - closes[i-1] for i in range(1, len(closes))]
     gains  = [d if d > 0 else 0 for d in deltas]
     losses = [-d if d < 0 else 0 for d in deltas]
-
     avg_gain = sum(gains[:period]) / period
     avg_loss = sum(losses[:period]) / period
-
     for i in range(period, len(deltas)):
         avg_gain = (avg_gain * (period-1) + gains[i]) / period
         avg_loss = (avg_loss * (period-1) + losses[i]) / period
-
     if avg_loss == 0: return 100.0
     rs = avg_gain / avg_loss
     return round(100 - 100 / (1 + rs), 2)
-  # ── 4. 수급 수집 ──
+
+# ── 4. 수급 수집 ──
 def fetch_supply_naver(code):
     d = _get(f"https://api.finance.naver.com/service/itemSummary.nhn?itemcode={code}")
     foreign = inst = 0
@@ -224,19 +226,14 @@ def fetch_supply_naver(code):
         try:
             foreign = _to_int(d.get("foreignBuyCount", 0)) - _to_int(d.get("foreignSellCount", 0))
             inst    = _to_int(d.get("institutionBuyCount", 0)) - _to_int(d.get("institutionSellCount", 0))
-        except:
-            pass
+        except: pass
     retail = -(foreign + inst)
     return {
-        "foreign": foreign,
-        "inst": inst,
-        "retail": retail,
-        "f5": ["+"] * 5,
-        "i5": ["+"] * 5,
+        "foreign": foreign, "inst": inst, "retail": retail,
+        "f5": ["+"] * 5, "i5": ["+"] * 5,
         "updatedAt": datetime.now().isoformat(timespec="seconds"),
         "dataSource": "live" if (foreign != 0 or inst != 0) else "default",
     }
-
 
 # ── 5. 퀀트 점수 계산 (서버사이드) ──
 def calc_quant_score(code, price_data, hist_data, supply_data):
@@ -247,236 +244,101 @@ def calc_quant_score(code, price_data, hist_data, supply_data):
     scores = {}
     details = {}
 
-    cur = price_data.get("price", 0)
-    chg = price_data.get("chg", 0)
+    cur   = price_data.get("price", 0)
+    chg   = price_data.get("chg", 0)
 
-    # ── 1. 모멘텀 (25점) ──
+    # ── 1. 모멘텀 (25점): 12개월 실제 수익률 ──
     mom12 = hist_data.get("mom12m") if hist_data else None
     if mom12 is not None:
-        s = (
-            25 if mom12 > 30 else
-            22 if mom12 > 15 else
-            18 if mom12 > 5 else
-            14 if mom12 > 0 else
-            10 if mom12 > -10 else
-            5  if mom12 > -20 else
-            2
-        )
+        s = 25 if mom12 > 30 else 22 if mom12 > 15 else 18 if mom12 > 5 else \
+            14 if mom12 > 0 else 10 if mom12 > -10 else 5 if mom12 > -20 else 2
         scores["momentum"] = s
-        details["momentum"] = {
-            "val": f"{mom12:+.1f}%",
-            "label": "강한상승" if mom12 > 15 else "상승" if mom12 > 0 else "하락",
-            "real": True
-        }
+        details["momentum"] = {"val": f"{mom12:+.1f}%", "label": "강한상승" if mom12>15 else "상승" if mom12>0 else "하락", "real": True}
     else:
-        s = (
-            18 if chg > 3 else
-            15 if chg > 1 else
-            12 if chg > 0 else
-            8  if chg > -1 else
-            5  if chg > -3 else
-            2
-        )
+        # 폴백: 당일 등락률
+        s = 18 if chg>3 else 15 if chg>1 else 12 if chg>0 else 8 if chg>-1 else 5 if chg>-3 else 2
         scores["momentum"] = s
-        details["momentum"] = {
-            "val": f"{chg:+.1f}%",
-            "label": "당일기준",
-            "real": False
-        }
+        details["momentum"] = {"val": f"{chg:+.1f}%", "label": "당일기준", "real": False}
 
-    # ── 2. 52주 신고가 (20점) ──
+    # ── 2. 52주 신고가 (20점): 실제 52주 데이터 ──
     high52w = hist_data.get("high52w") if hist_data else None
     low52w  = hist_data.get("low52w")  if hist_data else None
-
     if high52w and low52w and cur and high52w > low52w:
-
         pos = round((cur - low52w) / (high52w - low52w) * 100)
-
+        # 신고가 돌파: 현재가가 52주고가의 95% 이상
         near_high = cur >= high52w * 0.95
         breakout  = cur >= high52w * 0.99
-
-        s = (
-            20 if breakout else
-            17 if near_high else
-            14 if pos >= 70 else
-            9  if pos >= 50 else
-            5  if pos >= 30 else
-            2
-        )
-
+        s = 20 if breakout else 17 if near_high else 14 if pos>=70 else 9 if pos>=50 else 5 if pos>=30 else 2
         scores["high52"] = s
         details["high52"] = {
-            "val": f"{pos}%",
-            "high52w": high52w,
-            "low52w": low52w,
+            "val": f"{pos}%", "high52w": high52w, "low52w": low52w,
             "label": "신고가돌파" if breakout else "신고가근접" if near_high else f"고가권{pos}%",
-            "breakout": breakout,
-            "near": near_high,
-            "real": True
+            "breakout": breakout, "near": near_high, "real": True
         }
-
     else:
-
+        # 폴백: 당일 고저가 위치
         try:
-            hi = int(str(price_data.get("high", "0")).replace(",", ""))
-            lo = int(str(price_data.get("low", "0")).replace(",", ""))
-
-            pos = round((cur - lo) / (hi - lo) * 100) if hi > lo else 50
-
-        except:
-            pos = 50
-
-        s = 14 if pos >= 70 else 9 if pos >= 50 else 5
-
+            hi = int(str(price_data.get("high","0")).replace(",",""))
+            lo = int(str(price_data.get("low","0")).replace(",",""))
+            pos = round((cur-lo)/(hi-lo)*100) if hi>lo else 50
+        except: pos = 50
+        s = 14 if pos>=70 else 9 if pos>=50 else 5
         scores["high52"] = s
-        details["high52"] = {
-            "val": f"당일{pos}%",
-            "label": "52주데이터없음",
-            "real": False
-        }
+        details["high52"] = {"val": f"당일{pos}%", "label": "52주데이터없음", "real": False}
 
     # ── 3. 외국인 수급 (20점) ──
     f = supply_data.get("foreign", 0) if supply_data else 0
     inst = supply_data.get("inst", 0) if supply_data else 0
-
-    if f > 0 and inst > 0:
-        s = 20
-        lbl = "쌍끌이매수"
-
-    elif f > 0:
-        s = 15
-        lbl = "외인매수"
-
-    elif inst > 0:
-        s = 12
-        lbl = "기관매수"
-
-    elif f < 0 and inst < 0:
-        s = 0
-        lbl = "쌍매도"
-
-    elif f < 0:
-        s = 5
-        lbl = "외인매도"
-
-    else:
-        s = 10
-        lbl = "중립"
-
+    if f > 0 and inst > 0:   s = 20; lbl = "쌍끌이매수"
+    elif f > 0:               s = 15; lbl = "외인매수"
+    elif inst > 0:            s = 12; lbl = "기관매수"
+    elif f < 0 and inst < 0: s = 0;  lbl = "쌍매도"
+    elif f < 0:               s = 5;  lbl = "외인매도"
+    else:                     s = 10; lbl = "중립"
     scores["supply"] = s
-    details["supply"] = {
-        "val": f"외인{f:+,} 기관{inst:+,}",
-        "label": lbl,
-        "foreign": f,
-        "inst": inst,
-        "real": True
-    }
-  # ── 4. 가치 (20점) ──
-    # 실제 PBR/ROE 없으므로 기본 중립값
-    scores["value"] = 12
-    details["value"] = {
-        "val": "PBR/ROE 데이터없음",
-        "label": "미수집",
-        "real": False
-    }
+    details["supply"] = {"val": f"외인{f:+,} 기관{inst:+,}", "label": lbl, "foreign": f, "inst": inst, "real": True}
 
-    # ── 5. 기술적 지표 (15점) ──
+    # ── 4. 가치 PBR 대용 (20점): 섹터별 + 모멘텀 조합 ──
+    # 실제 PBR/ROE 없으므로 섹터 특성 + 12개월 모멘텀 조합
+    # 향후 KRX API 연결 시 교체 예정
+    scores["value"] = 12  # 중립 기본값
+    details["value"] = {"val": "PBR/ROE 데이터없음", "label": "미수집", "real": False}
+
+    # ── 5. 기술적 지표 (15점): 실제 MACD + RSI ──
     closes20 = hist_data.get("closes20") if hist_data else None
-
     if closes20 and len(closes20) >= 14:
-
         rsi = calc_rsi(closes20)
         macd, signal, hist_macd = calc_macd(closes20)
 
-        rsi_signal = (
-            "과매수" if (rsi or 0) > 70 else
-            "과매도" if (rsi or 0) < 30 else
-            "중립"
-        )
+        rsi_signal  = "과매수" if (rsi or 0)>70 else "과매도" if (rsi or 0)<30 else "중립"
+        golden_cross = macd is not None and signal is not None and macd > signal
+        macd_signal  = "골든크로스" if golden_cross else "데드크로스" if (macd is not None and signal is not None and macd < signal) else "중립"
 
-        golden_cross = (
-            macd is not None and
-            signal is not None and
-            macd > signal
-        )
-
-        macd_signal = (
-            "골든크로스"
-            if golden_cross
-            else "데드크로스"
-            if (macd is not None and signal is not None and macd < signal)
-            else "중립"
-        )
-
-        if golden_cross and (rsi or 0) > 50:
-            s = 15
-            lbl = "강한매수"
-
-        elif golden_cross or (rsi or 0) > 55:
-            s = 12
-            lbl = "매수신호"
-
-        elif (rsi or 0) < 30:
-            s = 11
-            lbl = "과매도반등"
-
-        elif (rsi or 0) > 70:
-            s = 5
-            lbl = "과열주의"
-
-        else:
-            s = 8
-            lbl = "중립"
+        if golden_cross and (rsi or 0) > 50:   s = 15; lbl = "강한매수"
+        elif golden_cross or (rsi or 0) > 55:  s = 12; lbl = "매수신호"
+        elif (rsi or 0) < 30:                  s = 11; lbl = "과매도반등"
+        elif (rsi or 0) > 70:                  s = 5;  lbl = "과열주의"
+        else:                                  s = 8;  lbl = "중립"
 
         scores["technical"] = s
-
         details["technical"] = {
-            "rsi": rsi,
-            "macd": macd,
-            "signal": signal,
-            "macd_hist": hist_macd,
-            "rsi_signal": rsi_signal,
-            "macd_signal": macd_signal,
-            "val": f"RSI{rsi} MACD{macd_signal}",
-            "label": lbl,
-            "real": True
+            "rsi": rsi, "macd": macd, "signal": signal, "macd_hist": hist_macd,
+            "rsi_signal": rsi_signal, "macd_signal": macd_signal,
+            "val": f"RSI{rsi} MACD{macd_signal}", "label": lbl, "real": True
         }
-
     else:
-
         scores["technical"] = 8
+        details["technical"] = {"val": "MACD/RSI 계산불가", "label": "데이터부족", "real": False}
 
-        details["technical"] = {
-            "val": "MACD/RSI 계산불가",
-            "label": "데이터부족",
-            "real": False
-        }
-
-    # ── 총점 계산 ──
+    # ── 총점 & 등급 ──
     total = sum(scores.values())
+    grade = "A" if total>=80 else "B" if total>=60 else "C" if total>=40 else "D"
 
-    grade = (
-        "A" if total >= 80 else
-        "B" if total >= 60 else
-        "C" if total >= 40 else
-        "D"
-    )
-
-    # ── 자동 매수 조건 ──
+    # ── 자동매수 3조건 (서버사이드 체크) ──
     cond1 = details["high52"].get("near", False) or details["high52"].get("breakout", False)
-
-    cond2 = f > 0
-
-    cond3 = (
-        details["technical"].get("macd_signal") == "골든크로스"
-        or
-        (details["technical"].get("rsi") or 0) >= 50
-    )
-
-    cond_mom = (
-        (hist_data.get("mom12m", 0) if hist_data else chg) > 0
-    )
-
+    cond2 = f > 0   # 외국인 순매수
+    cond3 = details["technical"].get("macd_signal") == "골든크로스" or (details["technical"].get("rsi") or 0) >= 50
+    cond_mom = (hist_data.get("mom12m", 0) if hist_data else chg) > 0
     auto_buy = cond1 and cond2 and cond3 and cond_mom
 
     return {
@@ -490,226 +352,131 @@ def calc_quant_score(code, price_data, hist_data, supply_data):
             "high52near": cond1,
             "foreignBuy": cond2,
             "macdRsi": cond3,
-            "momentum": cond_mom
+            "momentum": cond_mom,
         },
-        "updatedAt": datetime.now().isoformat(timespec="seconds")
+        "updatedAt": datetime.now().isoformat(timespec="seconds"),
     }
 
-
 # ── 메인 실행 ──
-
 def update_prices():
-
     log.info("=" * 50)
     log.info(f"주가 업데이트 시작 ({len(STOCKS)}종목)")
     log.info("=" * 50)
-
     old = {}
-
     if PRICES_FILE.exists():
-        try:
-            old = json.loads(PRICES_FILE.read_text("utf-8"))
-        except:
-            pass
-
-    new = {}
-    ok = 0
-    fail = []
-
+        try: old = json.loads(PRICES_FILE.read_text("utf-8"))
+        except: pass
+    new, ok, fail = {}, 0, []
     for code, name in STOCKS.items():
-
         log.info(f"  [{code}] {name}")
-
         r = fetch_naver(code)
-
-        if r:
-            log.info(f"    ✅ 네이버 {r['price']:,}원 {r['chg']:+.2f}%")
-
+        if r: log.info(f"    ✅ 네이버 {r['price']:,}원 {r['chg']:+.2f}%")
         if not r:
-
             r = fetch_yahoo(code)
-
-            if r:
-                log.info(f"    ✅ Yahoo {r['price']:,}원 {r['chg']:+.2f}%")
-
+            if r: log.info(f"    ✅ Yahoo {r['price']:,}원 {r['chg']:+.2f}%")
         if not r:
-
             if code in old:
-
                 r = {**old[code], "dataSource": "cached"}
-
                 log.warning("    ⚠️ 캐시 유지")
-
             else:
-
-                fail.append(code)
-
-                log.error("    ❌ 실패")
-
-                continue
-
-        new[code] = r
-        ok += 1
-
+                fail.append(code); log.error("    ❌ 실패"); continue
+        new[code] = r; ok += 1
         time.sleep(0.3)
-
     if _atomic_save(PRICES_FILE, new):
-
         log.info(f"✅ prices.json 저장 ({ok}종목)")
-
     return new, ok, fail
 
-
 def update_supply():
-
     log.info("=" * 50)
     log.info("수급 업데이트 시작")
     log.info("=" * 50)
-
     old = {}
-
     if SUPPLY_FILE.exists():
-        try:
-            old = json.loads(SUPPLY_FILE.read_text("utf-8"))
-        except:
-            pass
-
-    new = {}
-    ok = 0
-
+        try: old = json.loads(SUPPLY_FILE.read_text("utf-8"))
+        except: pass
+    new, ok = {}, 0
     for code, name in STOCKS.items():
-
         r = fetch_supply_naver(code)
-
         if r and (r["foreign"] != 0 or r["inst"] != 0):
-
-            new[code] = r
-            ok += 1
-
+            new[code] = r; ok += 1
         elif code in old:
-
             new[code] = {**old[code], "dataSource": "cached"}
-
         else:
-
-            new[code] = {
-                "foreign": 0,
-                "inst": 0,
-                "retail": 0,
-                "f5": ["+"] * 5,
-                "i5": ["+"] * 5,
-                "updatedAt": datetime.now().isoformat(timespec="seconds"),
-                "dataSource": "default"
-            }
-
+            new[code] = {"foreign": 0, "inst": 0, "retail": 0,
+                         "f5": ["+"] * 5, "i5": ["+"] * 5,
+                         "updatedAt": datetime.now().isoformat(timespec="seconds"),
+                         "dataSource": "default"}
         time.sleep(0.3)
-
     if _atomic_save(SUPPLY_FILE, new):
-
         log.info(f"✅ supply.json 저장 ({ok}종목)")
-
     return new
 
-
 def update_quant(prices, supply):
-
+    """
+    52주 고저 + 20일 히스토리 수집 → 퀀트 점수 계산 → quant.json 저장
+    GitHub Actions 1회/일 실행 권장 (API 호출 부하)
+    """
     log.info("=" * 50)
     log.info("퀀트 지표 업데이트 시작 (52주+MACD+RSI)")
     log.info("=" * 50)
-
     old = {}
-
     if QUANT_FILE.exists():
-        try:
-            old = json.loads(QUANT_FILE.read_text("utf-8"))
-        except:
-            pass
+        try: old = json.loads(QUANT_FILE.read_text("utf-8"))
+        except: pass
 
-    new = {}
-    ok = 0
-    fail = []
-
+    new, ok, fail = {}, 0, []
     for code, name in STOCKS.items():
-
         log.info(f"  [{code}] {name} 히스토리 수집")
-
         hist = fetch_history_yahoo(code)
 
         if hist:
-
-            log.info(
-                f"    ✅ 52주고가:{hist['high52w']:,} "
-                f"저가:{hist['low52w']:,} "
-                f"모멘텀12M:{hist['mom12m']:+.1f}% "
-                f"RSI계산가능:{len(hist['closes20'])}일치"
-            )
-
+            log.info(f"    ✅ 52주고가:{hist['high52w']:,} 저가:{hist['low52w']:,} "
+                     f"모멘텀12M:{hist['mom12m']:+.1f}% RSI계산가능:{len(hist['closes20'])}일치")
         else:
-
-            log.warning("    ⚠️ 히스토리 수집 실패 — 캐시 사용")
-
+            log.warning(f"    ⚠️ 히스토리 수집 실패 — 캐시 사용")
+            # 캐시에서 hist만 복원
             if code in old:
-
                 cached = old[code]
-
                 hist = {
                     "high52w": cached.get("details", {}).get("high52", {}).get("high52w"),
-                    "low52w": cached.get("details", {}).get("high52", {}).get("low52w"),
+                    "low52w":  cached.get("details", {}).get("high52", {}).get("low52w"),
                     "closes20": [],
-                    "mom12m": 0,
-                    "mom3m": 0
+                    "mom12m": 0, "mom3m": 0,
                 }
 
-        price_data = prices.get(code, {})
+        price_data  = prices.get(code, {})
         supply_data = supply.get(code, {})
 
         if not price_data:
-
-            fail.append(code)
-            continue
+            fail.append(code); continue
 
         quant = calc_quant_score(code, price_data, hist, supply_data)
-
         new[code] = quant
-
         ok += 1
 
+        # 상태 출력
         g = quant["grade"]
         t = quant["total"]
-
         ab = "🚀매수신호" if quant["autoBuy"] else ""
-
         log.info(f"    📊 퀀트:{t}점({g}등급) {ab}")
-
-        time.sleep(0.5)
+        time.sleep(0.5)  # Yahoo 부하 방지
 
     if _atomic_save(QUANT_FILE, new):
-
         log.info(f"✅ quant.json 저장 ({ok}종목, 실패:{len(fail)})")
-
     return ok
 
-
 if __name__ == "__main__":
-
     try:
-
         prices, ok_p, fail_p = update_prices()
-
         supply = update_supply()
 
+        # 퀀트는 장 마감 후 1회 or --quant 옵션 시
         if "--quant" in sys.argv or "--full" in sys.argv:
-
             update_quant(prices, supply)
-
         else:
-
             log.info("💡 퀀트 지표는 --quant 옵션으로 실행 (1일 1회 권장)")
 
         sys.exit(0)
-
     except Exception as e:
-
         log.critical(f"치명적 오류: {e}", exc_info=True)
-
         sys.exit(2)
