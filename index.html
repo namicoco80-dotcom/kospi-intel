@@ -1719,6 +1719,35 @@ async function fetchSupplyJson() {
   return 0;
 }
 
+// ── analysis.json 자동 로드 (Gemini 서버사이드 분석) ──
+async function fetchAnalysisJson() {
+  try {
+    const r = await fetch('./analysis.json?t=' + Date.now());
+    if (!r.ok) return 0;
+    const data = await r.json();
+    if (!data || typeof data !== 'object') return 0;
+    // portAnalysis에 자동 병합 (수동 재분석 우선)
+    let merged = 0;
+    for (const [code, ana] of Object.entries(data)) {
+      if (code.startsWith('_')) continue;
+      if (!S.portAnalysis) S.portAnalysis = {};
+      // 이미 수동 분석된 건 덮어쓰지 않음
+      if (!S.portAnalysis[code] || S.portAnalysis[code]._fromServer) {
+        S.portAnalysis[code] = {...ana, _fromServer: true};
+        merged++;
+      }
+    }
+    if (merged > 0) {
+      safeSetLS('portAnalysis', S.portAnalysis);
+      console.log(`[AI] analysis.json ${merged}종목 자동 로드`);
+    }
+    return merged;
+  } catch(e) {
+    console.log('[AI] analysis.json 없음 (정상)');
+    return 0;
+  }
+}
+
 async function fetchAllData() {
   /* 주가 + 수급 + 뉴스 병렬 로드 */
   const [priceN, supplyN, newsN] = await Promise.all([
@@ -1753,6 +1782,14 @@ function startAutoRefresh() {
 
   checkMarketEvents();
 
+  // 시계 독립 업데이트 (render() 없이 매초)
+  function tickClock() {
+    const el = document.getElementById('hdr-clock');
+    if(el) el.textContent = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
   // 앱 로드 시 즉시 실시간 조회 시도
   /* 가격 엔진 시작:
      1) localStorage 즉시 복원 (화면에 바로 반영)
@@ -1761,6 +1798,7 @@ function startAutoRefresh() {
   (async () => {
     notify('📡 데이터 로딩 중... (주가·수급·뉴스)', 'info');
     const { priceN, supplyN, newsN } = await fetchAllData();
+    await fetchAnalysisJson();  // AI 분석 자동 로드
 
     const msgs = [];
     if (priceN > 0) {
@@ -3762,7 +3800,7 @@ function render() {
           ${mktStatus==='open'?'장중':mktStatus==='pre'?'장전':mktStatus==='post'?'시간외':'장외'}
         </span>
         <span style="color:var(--ink3)">·</span>
-        <span style="color:var(--ink3)">${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
+        <span id="hdr-clock" style="color:var(--ink3)">--:--:--</span>
         ${S._priceUpdatedAt ? `<span style="color:var(--ink3)">·</span><span style="font-family:var(--mono);font-size:10px;color:var(--teal)">데이터 ${S._priceUpdatedAt}</span>` : ''}
         ${_supplyLoaded ? `<span style="font-family:var(--mono);font-size:9px;color:var(--sage);padding:1px 5px;border:1px solid rgba(109,184,122,0.3);border-radius:4px">수급LIVE</span>` : ''}
         ${_newsLoaded   ? `<span style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:1px 5px;border:1px solid rgba(90,158,224,0.3);border-radius:4px">뉴스LIVE</span>` : ''}
