@@ -3851,6 +3851,11 @@ function render() {
   const urgItems = NEWS.filter(n=>n.urgency===1&&n.type==="rumor").slice(0,1);
   const mktStatus = getMarketStatus();
 
+  // 스크롤 위치 저장 (탭 전환 시 튀는 현상 방지)
+  const _scrollY = window.scrollY || 0;
+  const _tabsEl = document.querySelector('.tabs');
+  const _tabsScrollLeft = _tabsEl ? _tabsEl.scrollLeft : 0;
+
   document.getElementById('app').innerHTML = `
     ${S.notif?`<div class="notif ${S.notif.type==='ok'||S.notif.type==='success'?'ok':S.notif.type}">${S.notif.msg}</div>`:''}
     ${S.refreshToast?`<div class="refresh-bar">🔄 새 이슈가 추가됐습니다</div>`:''}
@@ -3923,6 +3928,21 @@ function render() {
   `;
   bindInputs();
 
+  // 스크롤 위치 복원
+  if (_scrollY > 0) window.scrollTo(0, _scrollY);
+  const _newTabsEl = document.querySelector('.tabs');
+  if (_newTabsEl && _tabsScrollLeft > 0) _newTabsEl.scrollLeft = _tabsScrollLeft;
+  // 현재 탭 버튼이 보이도록 스크롤
+  const _activeTab = document.querySelector('.tab.on');
+  if (_activeTab && _newTabsEl) {
+    const tabLeft = _activeTab.offsetLeft;
+    const tabWidth = _activeTab.offsetWidth;
+    const navWidth = _newTabsEl.offsetWidth;
+    if (tabLeft < _newTabsEl.scrollLeft || tabLeft + tabWidth > _newTabsEl.scrollLeft + navWidth) {
+      _newTabsEl.scrollLeft = tabLeft - navWidth/2 + tabWidth/2;
+    }
+  }
+
   /* 가격입력 모달 렌더 */
   let modalEl = document.getElementById('price-modal-root');
   if(!modalEl) {
@@ -3989,10 +4009,32 @@ function render() {
 function reCards() {
   const el = document.getElementById('cc');
   if(!el) { render(); return; }
+
+  // 스크롤 위치 + 펼쳐진 카드 위치 저장
+  const _sy = window.scrollY || 0;
+  let _expCardTop = 0;
+  if (S.exp) {
+    const openCard = el.querySelector('.card.open');
+    if (openCard) _expCardTop = openCard.getBoundingClientRect().top + window.scrollY;
+  }
+
   const items = filtered();
   el.innerHTML = items.length===0
     ? `<div class="empty"><div class="empty-i">🔭</div><div class="empty-t">해당 조건의 이슈가 없습니다</div></div>`
     : items.map(cardHTML).join('');
+
+  // 스크롤 위치 복원
+  requestAnimationFrame(() => {
+    if (S.exp && _expCardTop > 0) {
+      const newOpenCard = el.querySelector('.card.open');
+      if (newOpenCard) {
+        const newTop = newOpenCard.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo(0, _sy + (newTop - _expCardTop));
+        return;
+      }
+    }
+    if (_sy > 0) window.scrollTo(0, _sy);
+  });
 }
 
 function bindInputs() {
