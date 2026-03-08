@@ -2566,7 +2566,8 @@ function cardHTML(item) {
     </div>
     <div style="padding:0 14px 14px;text-align:right">
       <button
-        onclick="event.stopPropagation();showCardModal(NEWS.find(n=>n.id===${item.id}))"
+        data-nid="${item.id}"
+        onclick="event.stopPropagation();var _n=NEWS.find(n=>n.id==+this.dataset.nid);if(_n)showCardModal(_n)"
         style="background:#1565C0;color:#fff;border:none;border-radius:20px;
           padding:8px 18px;font-size:12px;font-weight:700;letter-spacing:.3px;
           cursor:pointer;touch-action:manipulation;min-height:44px">
@@ -4003,6 +4004,10 @@ function render() {
           <button class="crawl-btn${S.crawling?' off':''}" onclick="crawl()" ${S.crawling?'disabled':''}>
             ${S.crawling?`<span class="spin">⟳</span>`:'🔍'} 크롤
           </button>
+          <button onclick="showHealthPanel()"
+            style="background:none;border:1.5px solid #4CAF5040;border-radius:20px;
+            padding:6px 12px;font-size:13px;color:#2E7D32;cursor:pointer;
+            touch-action:manipulation" title="앱 상태 진단">🏥</button>
         </div>
       </div>
       ${urgItems.map(item=>`<div class="urg lv1" onclick="goCard(${item.id})">
@@ -4590,6 +4595,7 @@ function _init() {
   } catch(e) { localStorage.removeItem('portAnalysis'); }
   try { render(); } catch(e) {
     console.error('[KOSPI] render 초기 오류:', e);
+    HEALTH.log('render', 'render 초기 오류', e.message);
     var app = document.getElementById('app');
     if(app) app.innerHTML = '<div style="color:#F2EBD9;padding:60px 20px;text-align:center"><div style="font-size:48px;margin-bottom:16px">⚠️</div><div style="font-size:16px;font-weight:700;margin-bottom:8px">초기화 오류</div><div style="font-size:12px;color:#8A7D68;margin-bottom:24px;font-family:monospace">' + e.message + '</div><button onclick="location.reload()" style="background:#E8921E;border:none;border-radius:12px;padding:12px 24px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">새로고침</button></div>';
   }
@@ -4742,6 +4748,257 @@ function refreshCardModal(id) {
   if (item && document.getElementById('card-modal-root')) {
     showCardModal(item);
   }
+}
+
+// ══════════════════════════════════════════
+// 🏥 자가진단 & 자동복구 시스템
+// ══════════════════════════════════════════
+const HEALTH = {
+  errors: [],       // 오류 로그
+  recovered: 0,     // 복구 횟수
+  lastCheck: null,
+
+  // 오류 기록
+  log(type, msg, detail) {
+    const entry = {
+      type,           // 'render' | 'data' | 'storage' | 'network' | 'crash'
+      msg,
+      detail: String(detail || '').slice(0, 200),
+      time: new Date().toLocaleTimeString('ko-KR'),
+      ts: Date.now()
+    };
+    this.errors.unshift(entry);
+    if (this.errors.length > 30) this.errors.pop();
+    console.warn(`[Health:${type}]`, msg, detail || '');
+    // 심각한 오류면 즉시 복구 시도
+    if (type === 'crash' || type === 'render') {
+      this.autoRecover(type);
+    }
+  },
+
+  // 자동복구
+  autoRecover(type) {
+    this.recovered++;
+    console.log(`[Health] 복구 시도 #${this.recovered} (${type})`);
+
+    try {
+      if (type === 'render') {
+        // render 오류 → S 초기화 후 재시도
+        S.exp = null;
+        S.q = '';
+        S.tab = 'feed';
+        try { render(); notify('🔧 화면 복구됐어요', 'ok'); return; } catch(e2) {}
+      }
+
+      if (type === 'storage') {
+        // localStorage 오류 → 손상된 키 정리
+        const dangerous = ['portAnalysis','newsCache','supplyCache'];
+        dangerous.forEach(k => { try { JSON.parse(localStorage.getItem(k)||'{}'); } catch(e) { localStorage.removeItem(k); } });
+        try { render(); notify('🔧 저장소 복구됐어요', 'ok'); return; } catch(e2) {}
+      }
+
+      if (type === 'crash') {
+        // 전체 크래시 → 최소 상태로 복구
+        const app = document.getElementById('app');
+        if (app) {
+          app.innerHTML = `
+          <div style="padding:40px 20px;text-align:center">
+            <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+            <div style="font-size:16px;font-weight:800;color:#0F1D3A;margin-bottom:8px">오류가 발생했어요</div>
+            <div style="font-size:13px;color:#64748B;margin-bottom:20px">자동복구를 시도합니다...</div>
+            <button onclick="HEALTH.fullReset()"
+              style="background:#1565C0;color:#fff;border:none;border-radius:12px;
+              padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">
+              🔄 완전 초기화
+            </button>
+            <button onclick="location.reload()"
+              style="background:#F4F6FA;color:#4A5A7A;border:none;border-radius:12px;
+              padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;margin-left:8px">
+              새로고침
+            </button>
+          </div>`;
+        }
+      }
+    } catch(recoveryErr) {
+      console.error('[Health] 복구 실패:', recoveryErr);
+    }
+  },
+
+  // 진단 실행
+  diagnose() {
+    const report = [];
+    let score = 100;
+
+    // 1. render 함수 동작 테스트
+    try {
+      if (typeof render !== 'function') { report.push({lvl:'🔴', msg:'render 함수 없음'}); score -= 40; }
+      else report.push({lvl:'🟢', msg:'render 함수 정상'});
+    } catch(e) { report.push({lvl:'🔴', msg:'render 오류: '+e.message}); score -= 40; }
+
+    // 2. #app 엘리먼트 확인
+    const app = document.getElementById('app');
+    if (!app) { report.push({lvl:'🔴', msg:'#app 엘리먼트 없음'}); score -= 30; }
+    else if (!app.innerHTML || app.innerHTML.length < 100) { report.push({lvl:'🟡', msg:'화면 내용이 비어있음'}); score -= 20; }
+    else report.push({lvl:'🟢', msg:`화면 정상 (${(app.innerHTML.length/1000).toFixed(1)}KB)`});
+
+    // 3. NEWS 데이터 확인
+    if (!Array.isArray(NEWS) || NEWS.length === 0) { report.push({lvl:'🟡', msg:'뉴스 데이터 없음 (로딩 전일 수 있음)'}); score -= 10; }
+    else report.push({lvl:'🟢', msg:`뉴스 ${NEWS.length}건 로드됨`});
+
+    // 4. PRICE_BASE 확인
+    const priceCount = Object.values(PRICE_BASE).filter(p=>p.price).length;
+    if (priceCount === 0) { report.push({lvl:'🟡', msg:'주가 데이터 없음 (장외시간 또는 로딩 전)'}); score -= 5; }
+    else report.push({lvl:'🟢', msg:`주가 ${priceCount}종목 로드됨`});
+
+    // 5. localStorage 용량 확인
+    try {
+      let lsSize = 0;
+      for(let k in localStorage) { if(localStorage.hasOwnProperty(k)) lsSize += (localStorage[k]||'').length; }
+      const lsKB = (lsSize / 1024).toFixed(1);
+      if (lsSize > 4 * 1024 * 1024) { report.push({lvl:'🔴', msg:`저장소 과부하 (${lsKB}KB) - 정리 필요`}); score -= 15; }
+      else if (lsSize > 2 * 1024 * 1024) { report.push({lvl:'🟡', msg:`저장소 용량 주의 (${lsKB}KB)`}); score -= 5; }
+      else report.push({lvl:'🟢', msg:`저장소 정상 (${lsKB}KB)`});
+    } catch(e) { report.push({lvl:'🟡', msg:'저장소 접근 불가'}); }
+
+    // 6. JSON 손상 키 확인
+    const checkKeys = ['portAnalysis','newsCache','watchlist','assetPortfolio'];
+    let badKeys = [];
+    checkKeys.forEach(k => {
+      try { JSON.parse(localStorage.getItem(k) || 'null'); }
+      catch(e) { badKeys.push(k); }
+    });
+    if (badKeys.length > 0) { report.push({lvl:'🔴', msg:`손상된 데이터: ${badKeys.join(', ')}`}); score -= 20; }
+    else report.push({lvl:'🟢', msg:'저장 데이터 무결성 정상'});
+
+    // 7. 최근 오류 확인
+    const recentErrors = this.errors.filter(e => Date.now() - e.ts < 5 * 60 * 1000);
+    if (recentErrors.length > 3) { report.push({lvl:'🟡', msg:`최근 5분 오류 ${recentErrors.length}건`}); score -= 10; }
+    else if (recentErrors.length > 0) { report.push({lvl:'🟡', msg:`최근 오류 ${recentErrors.length}건`}); score -= 5; }
+    else report.push({lvl:'🟢', msg:'최근 오류 없음'});
+
+    return { score: Math.max(0, score), report };
+  },
+
+  // 손상 데이터 정리
+  cleanStorage() {
+    const keys = ['portAnalysis','newsCache','supplyCache','dartCache'];
+    let cleaned = 0;
+    keys.forEach(k => {
+      try { JSON.parse(localStorage.getItem(k) || 'null'); }
+      catch(e) { localStorage.removeItem(k); cleaned++; }
+    });
+    // 구버전 캐시 정리
+    try {
+      const pa = JSON.parse(localStorage.getItem('portAnalysis') || '{}');
+      const bad = Object.values(pa).some(a => !a.verdict || a.verdict === 'undefined');
+      if (bad) { localStorage.removeItem('portAnalysis'); cleaned++; }
+    } catch(e) { localStorage.removeItem('portAnalysis'); cleaned++; }
+    return cleaned;
+  },
+
+  // 완전 초기화 (최후 수단)
+  fullReset() {
+    if (!confirm('⚠️ 모든 설정과 캐시가 초기화됩니다. 계속할까요?')) return;
+    // 포트폴리오·관심종목 등 중요 데이터는 백업
+    const keep = {};
+    ['assetPortfolio','watchlist','pensionAccounts','dartKey'].forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v) keep[k] = v;
+    });
+    localStorage.clear();
+    // 중요 데이터 복원
+    Object.entries(keep).forEach(([k,v]) => localStorage.setItem(k, v));
+    notify('🔄 초기화 완료! 재시작합니다...', 'ok');
+    setTimeout(() => location.reload(), 1200);
+  }
+};
+
+// 전역 에러 캐치
+window.onerror = function(msg, src, line, col, err) {
+  HEALTH.log('crash', msg, `${src}:${line}`);
+  return false;
+};
+window.addEventListener('unhandledrejection', e => {
+  HEALTH.log('network', '비동기 오류', e.reason?.message || String(e.reason));
+});
+
+// render 함수 래핑 (오류 자동 감지)
+const _origRender = typeof render !== 'undefined' ? render : null;
+
+// rAlert에 진단 패널 추가 (나중에 inject)
+function showHealthPanel() {
+  const {score, report} = HEALTH.diagnose();
+  const scoreColor = score >= 80 ? '#2E7D32' : score >= 50 ? '#E65100' : '#C62828';
+  const scoreBg    = score >= 80 ? '#E8F5E9' : score >= 50 ? '#FFF3E0' : '#FFEBEE';
+
+  const existing = document.getElementById('health-modal');
+  if (existing) { existing.remove(); return; }
+
+  const el = document.createElement('div');
+  el.id = 'health-modal';
+  el.innerHTML = `
+  <div onclick="document.getElementById('health-modal').remove()"
+    style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000"></div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;
+    z-index:9001;max-height:80vh;overflow-y:auto;padding:20px 18px 40px">
+    <div style="text-align:center;margin-bottom:4px">
+      <div style="width:40px;height:4px;background:#E2E8F4;border-radius:2px;display:inline-block"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:900;color:#0F1D3A">🏥 앱 상태 진단</div>
+      <div style="background:${scoreBg};color:${scoreColor};border-radius:20px;
+        padding:6px 14px;font-size:20px;font-weight:900">${score}점</div>
+    </div>
+
+    <!-- 진단 결과 -->
+    <div style="margin-bottom:16px">
+      ${report.map(r=>`
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;
+        border-bottom:1px solid #F4F6FA">
+        <span style="font-size:14px;flex-shrink:0">${r.lvl}</span>
+        <span style="font-size:13px;color:#0F1D3A;line-height:1.5">${r.msg}</span>
+      </div>`).join('')}
+    </div>
+
+    <!-- 복구 버튼들 -->
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <button onclick="
+        const n=HEALTH.cleanStorage();
+        notify('🧹 손상 데이터 '+n+'개 정리됐어요','ok');
+        try{render()}catch(e){}
+        document.getElementById('health-modal').remove();
+        setTimeout(showHealthPanel,500)"
+        style="background:#E8F5E9;border:none;border-radius:12px;padding:13px;
+        font-size:13px;font-weight:700;color:#2E7D32;cursor:pointer;touch-action:manipulation">
+        🧹 손상 데이터 자동 정리
+      </button>
+      <button onclick="
+        S.exp=null;S.q='';S.tab='feed';
+        try{render();notify('✅ 화면 복구됐어요','ok')}catch(e){notify('❌ 복구 실패: '+e.message,'warn')}
+        document.getElementById('health-modal').remove()"
+        style="background:#E3F2FD;border:none;border-radius:12px;padding:13px;
+        font-size:13px;font-weight:700;color:#1565C0;cursor:pointer;touch-action:manipulation">
+        🔄 화면 강제 복구
+      </button>
+      <button onclick="HEALTH.fullReset()"
+        style="background:#FFF0F0;border:none;border-radius:12px;padding:13px;
+        font-size:13px;font-weight:700;color:#C62828;cursor:pointer;touch-action:manipulation">
+        ⚠️ 완전 초기화 (최후 수단)
+      </button>
+    </div>
+
+    <!-- 최근 오류 로그 -->
+    ${HEALTH.errors.length > 0 ? `
+    <div style="font-size:11px;font-weight:800;color:#94A3B8;margin-bottom:8px">최근 오류 로그</div>
+    ${HEALTH.errors.slice(0,5).map(e=>`
+    <div style="background:#F8F9FA;border-radius:8px;padding:8px 10px;margin-bottom:4px">
+      <div style="font-size:11px;color:#94A3B8">${e.time} · ${e.type}</div>
+      <div style="font-size:12px;color:#4A5A7A;margin-top:2px">${e.msg}</div>
+      ${e.detail?`<div style="font-size:10px;color:#94A3B8;margin-top:2px;word-break:break-all">${e.detail}</div>`:''}
+    </div>`).join('')}` : `
+    <div style="text-align:center;padding:12px;color:#94A3B8;font-size:13px">✅ 오류 로그 없음</div>`}
+  </div>`;
+  document.body.appendChild(el);
 }
 
 // PWA Service Worker + 자동 업데이트 감지
