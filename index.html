@@ -3223,66 +3223,166 @@ function rETFTab(port) {
     '레버리지·인버스': ETF_LIST.filter(e=>['레버리지','인버스'].includes(e.category)),
   };
 
+  // 총 평가 계산
+  let totalInvest = 0, totalCur = 0;
+  myETF.forEach(p => {
+    const pr = PRICE_BASE[p.id];
+    const cur = pr?.price || p.buyPrice;
+    totalInvest += p.buyPrice * p.qty;
+    totalCur    += cur * p.qty;
+  });
+  const totalPnl    = totalCur - totalInvest;
+  const totalPnlPct = totalInvest > 0 ? (totalPnl/totalInvest*100).toFixed(2) : 0;
+  const isPlus      = totalPnl >= 0;
+
   return `
-  <!-- 내 ETF 보유현황 -->
+  <!-- ── 내 ETF 요약 카드 ── -->
   ${myETF.length > 0 ? `
-  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
-    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">💹 내 ETF 현황</div>
-    ${myETF.map(p => {
-      const etf = ETF_LIST.find(e=>e.code===p.id);
+  <div style="background:linear-gradient(135deg,#1565C0 0%,#1E88E5 100%);
+    border-radius:20px;padding:20px;margin-bottom:14px;color:#fff;position:relative;overflow:hidden">
+    <div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;
+      background:rgba(255,255,255,0.07);border-radius:50%"></div>
+    <div style="position:absolute;right:20px;bottom:-30px;width:80px;height:80px;
+      background:rgba(255,255,255,0.05);border-radius:50%"></div>
+    <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px">💹 ETF 총 평가금액</div>
+    <div style="font-size:26px;font-weight:900;letter-spacing:-0.5px">
+      ${Math.round(totalCur).toLocaleString()}원
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+      <span style="font-size:13px;opacity:.8">투자원금 ${Math.round(totalInvest).toLocaleString()}원</span>
+      <span style="font-size:14px;font-weight:800;
+        background:${isPlus?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.15)'};
+        border-radius:20px;padding:3px 10px">
+        ${isPlus?'▲':'▼'} ${Math.abs(totalPnlPct)}%
+      </span>
+    </div>
+    <div style="font-size:12px;margin-top:4px;opacity:.9;font-weight:700">
+      ${isPlus?'+':''}${Math.round(totalPnl).toLocaleString()}원
+    </div>
+    <!-- 미니 바 차트 -->
+    <div style="display:flex;gap:3px;margin-top:14px;align-items:flex-end;height:36px">
+    ${myETF.slice(0,6).map(p=>{
       const pr = PRICE_BASE[p.id];
       const cur = pr?.price || p.buyPrice;
+      const pct = ((cur-p.buyPrice)/p.buyPrice*100);
+      const h = Math.min(Math.max(Math.abs(pct)*3+12, 10), 36);
+      return `<div style="flex:1;background:${pct>=0?'rgba(255,255,255,0.7)':'rgba(255,100,100,0.6)'};
+        border-radius:3px 3px 0 0;height:${h}px;min-width:8px" title="${p.name}"></div>`;
+    }).join('')}
+    </div>
+    <div style="font-size:10px;opacity:.6;margin-top:4px">${myETF.length}개 ETF 보유</div>
+  </div>
+
+  <!-- ── 보유 ETF 카드 목록 ── -->
+  <div style="margin-bottom:14px">
+    <div style="font-size:12px;font-weight:800;color:#4A5A7A;margin-bottom:8px;
+      display:flex;justify-content:space-between;align-items:center">
+      <span>📋 보유 현황</span>
+      <span style="font-size:10px;color:#94A3B8">${myETF.length}종목</span>
+    </div>
+    ${myETF.map(p => {
+      const etf = ETF_LIST.find(e=>e.code===p.id);
+      const pr  = PRICE_BASE[p.id];
+      const cur = pr?.price || p.buyPrice;
       const pnl = (cur - p.buyPrice) * p.qty;
-      const pnlPct = ((cur - p.buyPrice)/p.buyPrice*100).toFixed(2);
+      const pnlPct = ((cur - p.buyPrice)/p.buyPrice*100);
       const isPos = pnl >= 0;
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #F4F6FA">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#0F1D3A">${p.name}</div>
-          <div style="font-size:11px;color:#94A3B8">${etf?.region||''} · ${etf?.category||''} · ${p.qty}좌</div>
+      const weight = totalCur > 0 ? ((cur*p.qty)/totalCur*100).toFixed(1) : 0;
+      return `
+      <div style="background:#fff;border:1.5px solid ${isPos?'#E8F5E9':'#FFF0F0'};
+        border-radius:16px;padding:14px;margin-bottom:8px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:800;color:#0F1D3A">${p.name}</div>
+            <div style="font-size:11px;color:#94A3B8;margin-top:2px">
+              ${etf?.region||''} · ${etf?.category||''} · ${p.qty}좌 · 매수 ${p.buyPrice.toLocaleString()}원
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:16px;font-weight:900;
+              color:${isPos?'#E53935':'#1565C0'}">${isPos?'+':''}${pnlPct.toFixed(2)}%</div>
+            <div style="font-size:11px;color:${isPos?'#E53935':'#1565C0'};font-weight:700">
+              ${isPos?'+':''}${Math.round(pnl).toLocaleString()}원</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:14px;font-weight:800;color:${isPos?'#E53935':'#1565C0'}">${isPos?'+':''}${pnlPct}%</div>
-          <div style="font-size:11px;color:#94A3B8">${isPos?'+':''}${Math.round(pnl).toLocaleString()}원</div>
+        <!-- 비중 바 -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:4px;background:#F0F4FA;border-radius:2px">
+            <div style="height:4px;background:${isPos?'#43A047':'#1565C0'};border-radius:2px;
+              width:${weight}%;transition:width .4s ease"></div>
+          </div>
+          <span style="font-size:10px;color:#94A3B8;white-space:nowrap">비중 ${weight}%</span>
+          <button onclick="showETFAnalysis('${p.id}')"
+            style="background:#F0F4FF;border:1px solid #C7D4F0;border-radius:8px;
+            padding:4px 10px;font-size:11px;font-weight:700;color:#1565C0;cursor:pointer;
+            touch-action:manipulation">🤖 분석</button>
+          <button onclick="removeAsset('${p.id}')"
+            style="background:#FFF0F0;border:1px solid #FFCDD2;border-radius:8px;
+            padding:4px 8px;font-size:11px;color:#E53935;cursor:pointer;
+            touch-action:manipulation">✕</button>
         </div>
       </div>`;
     }).join('')}
     ${rRebalanceAdvice(myETF)}
-  </div>` : ''}
+  </div>` : `
+  <!-- 비어있을 때 -->
+  <div style="text-align:center;padding:30px 20px;background:#F4F6FA;border-radius:16px;margin-bottom:14px">
+    <div style="font-size:36px;margin-bottom:8px">💹</div>
+    <div style="font-size:14px;font-weight:700;color:#4A5A7A;margin-bottom:4px">아직 ETF가 없어요</div>
+    <div style="font-size:12px;color:#94A3B8">아래에서 ETF를 추가해보세요</div>
+  </div>`}
 
-  <!-- ETF 추가 -->
-  <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(21,101,192,0.06)">
-    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">📂 ETF 추가</div>
-    <div style="display:flex;flex-direction:column;gap:7px">
-      <select id="etf-sel" style="background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px 12px;font-size:13px;color:#0F1D3A;outline:none">
+  <!-- ── ETF 추가 폼 ── -->
+  <div style="background:#fff;border:1.5px solid #E2E8F4;border-radius:16px;padding:16px;margin-bottom:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+    <div style="font-size:13px;font-weight:800;color:#0F1D3A;margin-bottom:10px">➕ ETF 추가</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <select id="etf-sel" style="background:#F4F6FA;border:1.5px solid #E2E8F4;border-radius:12px;
+        padding:11px 14px;font-size:13px;color:#0F1D3A;width:100%">
         <option value="">ETF 선택</option>
         ${Object.entries(etfGroups).map(([grp,list])=>`
-          <optgroup label="── ${grp} ──">
-            ${list.map(e=>`<option value="${e.code}">${e.name} (보수${e.expense}%)</option>`).join('')}
-          </optgroup>`).join('')}
+        <optgroup label="── ${grp} ──">
+          ${list.map(e=>`<option value="${e.code}">${e.name} · 보수 ${e.expense}%</option>`).join('')}
+        </optgroup>`).join('')}
       </select>
-      <div style="display:flex;gap:6px">
-        <input id="etf-price" type="number" placeholder="매수가 (원)" style="flex:1;background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px;font-size:13px;outline:none">
-        <input id="etf-qty" type="number" placeholder="수량" style="flex:0.5;background:#F4F6FA;border:1px solid #E2E8F4;border-radius:10px;padding:10px;font-size:13px;outline:none">
-        <button onclick="addAsset('etf')" style="background:#1565C0;border:none;border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;font-weight:800">추가</button>
+      <div style="display:flex;gap:8px">
+        <input id="etf-price" type="number" placeholder="매수가 (원)"
+          style="flex:1;background:#F4F6FA;border:1.5px solid #E2E8F4;border-radius:12px;
+          padding:11px 14px;font-size:13px;color:#0F1D3A">
+        <input id="etf-qty" type="number" placeholder="수량"
+          style="width:90px;background:#F4F6FA;border:1.5px solid #E2E8F4;border-radius:12px;
+          padding:11px 14px;font-size:13px;color:#0F1D3A">
       </div>
+      <button onclick="addAsset('etf')"
+        style="width:100%;background:#1565C0;border:none;border-radius:12px;
+        padding:13px;font-size:14px;font-weight:800;color:#fff;cursor:pointer;
+        touch-action:manipulation">추가하기</button>
     </div>
   </div>
 
-  <!-- ETF 목록 -->
+  <!-- ── ETF 목록 (카드형) ── -->
   ${Object.entries(etfGroups).map(([grp,list])=>`
-  <div style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:800;color:#94A3B8;margin-bottom:6px;letter-spacing:1px">${grp}</div>
+  <div style="margin-bottom:16px">
+    <div style="font-size:11px;font-weight:800;color:#94A3B8;
+      letter-spacing:1.5px;margin-bottom:8px;padding-left:2px">${grp.toUpperCase()}</div>
     ${list.map(e=>`
-    <div style="background:#FFFFFF;border:1px solid #E2E8F4;border-radius:14px;padding:12px 14px;margin-bottom:6px;box-shadow:0 1px 6px rgba(21,101,192,0.05)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div style="font-size:13px;font-weight:800;color:#0F1D3A">${e.name}</div>
-          <div style="font-size:11px;color:#94A3B8;margin-top:2px">${e.desc} · 보수 ${e.expense}%</div>
-        </div>
-        <div style="display:flex;gap:5px;align-items:center">
-          <span style="font-size:10px;padding:3px 8px;border-radius:8px;font-weight:700;background:${e.region==='해외'?'rgba(21,101,192,0.1)':'rgba(229,57,53,0.08)'};color:${e.region==='해외'?'#1565C0':'#C62828'}">${e.region}</span>
-          <button onclick="showETFAnalysis('${e.code}')" style="background:#F0F4FF;border:1px solid #C7D4F0;border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;color:#1565C0">🤖 분석</button>
-        </div>
+    <div style="background:#fff;border:1.5px solid #E2E8F4;border-radius:14px;
+      padding:13px 14px;margin-bottom:6px;display:flex;justify-content:space-between;
+      align-items:center;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:800;color:#0F1D3A;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:2px">${e.desc} · 보수 ${e.expense}%</div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;margin-left:8px">
+        <span style="font-size:10px;padding:3px 8px;border-radius:8px;font-weight:700;
+          background:${e.region==='해외'?'#FFF8E1':'#E3F2FD'};
+          color:${e.region==='해외'?'#E65100':'#1565C0'}">${e.region}</span>
+        <button onclick="showETFAnalysis('${e.code}')"
+          style="background:#F0F4FF;border:1px solid #C7D4F0;border-radius:8px;
+          padding:5px 10px;font-size:11px;font-weight:700;color:#1565C0;cursor:pointer;
+          touch-action:manipulation">🤖 분석</button>
       </div>
     </div>`).join('')}
   </div>`).join('')}`;
@@ -3450,6 +3550,14 @@ function rRebalanceAdvice(myETF) {
 }
 
 /* ── 자산 추가 함수 ── */
+function removeAsset(id) {
+  let port = safeLS('assetPortfolio', []);
+  port = port.filter(p => p.id !== id);
+  safeSetLS('assetPortfolio', port);
+  notify('✅ 삭제됐어요', 'ok');
+  render();
+}
+
 function addAsset(type) {
   let id, name, buyPrice, qty;
   if (type === 'etf') {
