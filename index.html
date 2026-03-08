@@ -5784,12 +5784,6 @@ async function runPortfolioAI() {
   const port = S.portfolio || [];
   if (port.length === 0) { notify('⚠️ 포트폴리오에 종목을 먼저 추가하세요', 'warn'); return; }
 
-  // Gemini 키 확인
-  if (!getGeminiKey()) {
-    showGeminiKeyModal('runPortfolioAI');
-    return;
-  }
-
   S._portAILoading = true; render();
   notify('📊 AI 분석 중...', 'info');
 
@@ -5868,7 +5862,9 @@ ${items.map(i => [
 }`;
 
   try {
-    const raw = await geminiPortfolioFetch(prompt);
+    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:2000,system:"JSON만 응답. 다른 텍스트 없이 JSON 객체만 출력",messages:[{role:"user",content:prompt}]});
+    const data = await res.json();
+    const raw  = data.content?.map(c=>c.text||'').join('') || '';
 
     // JSON 추출
     let r;
@@ -5885,14 +5881,7 @@ ${items.map(i => [
 
   } catch(e) {
     S._portAILoading = false; render();
-    if (e.message === 'GEMINI_KEY_NOT_SET') {
-      showGeminiKeyModal('runPortfolioAI');
-    } else if (e.message?.includes('API_KEY_INVALID') || e.message?.includes('400')) {
-      notify('❌ Gemini API 키가 올바르지 않아요', 'error');
-      showGeminiKeyModal('runPortfolioAI');
-    } else {
-      notify('❌ AI 분석 실패: ' + e.message, 'error');
-    }
+    notify('❌ AI 분석 실패: ' + e.message, 'error');
   }
 }
 
