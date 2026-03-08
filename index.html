@@ -869,18 +869,21 @@ input,select{font-family:var(--body)}
   <script>
     // SW + 캐시 강제 초기화 (버전 업 시)
     const APP_VER = 'v12';
+    // SW 캐시 강제 초기화 (localStorage 보존)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => {
-          if (!r.scope.includes(APP_VER)) r.unregister();
-        });
+        regs.forEach(r => r.unregister());  // 모든 SW 해제
       });
     }
     if (window.caches) {
       caches.keys().then(keys => {
-        keys.forEach(k => {
-          if (!k.includes(APP_VER)) caches.delete(k);
-        });
+        keys.forEach(k => caches.delete(k));  // 모든 캐시 삭제
+      });
+    }
+    // SW 새로 등록
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=12&t=' + Date.now());
       });
     }
   </script>
@@ -7311,7 +7314,7 @@ function _buildHelpHTML() {
 
 // PWA Service Worker + 자동 업데이트 감지
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=12')
+  navigator.serviceWorker.register('./sw.js?v=12&t=' + Date.now())
     .then(reg => {
       console.log('[PWA] SW 등록 완료');
       // 새 SW 발견 시
