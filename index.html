@@ -5164,6 +5164,30 @@ function rMyStocks() {
 
   return `<div style="padding:12px 14px 100px">
 
+  <!-- ── AI 분석 3버튼 ── -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+    <button onclick="runPortfolioAI()"
+      style="background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff;border:none;
+      border-radius:14px;padding:12px 4px;font-size:11px;font-weight:800;cursor:pointer;
+      touch-action:manipulation;line-height:1.4">
+      ${S._portAILoading ? '<span style="animation:spin 1s linear infinite;display:inline-block">⟳</span>' : '📊'}
+      <br>포트폴리오<br>종합분석
+    </button>
+    <button onclick="runTop5AI()"
+      style="background:linear-gradient(135deg,#C62828,#B71C1C);color:#fff;border:none;
+      border-radius:14px;padding:12px 4px;font-size:11px;font-weight:800;cursor:pointer;
+      touch-action:manipulation;line-height:1.4">
+      ${S._top5Loading ? '<span style="animation:spin 1s linear infinite;display:inline-block">⟳</span>' : '🔥'}
+      <br>지금 사야할<br>TOP5
+    </button>
+    <button onclick="showMyTimingPicker()"
+      style="background:linear-gradient(135deg,#E65100,#BF360C);color:#fff;border:none;
+      border-radius:14px;padding:12px 4px;font-size:11px;font-weight:800;cursor:pointer;
+      touch-action:manipulation;line-height:1.4">
+      ⏱<br>종목 매수<br>타이밍
+    </button>
+  </div>
+
   <!-- ── 내 포트폴리오 요약 헤더 ── -->
   ${portItems.length > 0 ? `
   <div style="background:linear-gradient(135deg,#0F1D3A 0%,#1565C0 100%);
@@ -5276,16 +5300,24 @@ function rMyStocks() {
         </div>`).join('')}
       </div>
 
-      <!-- 보유 수익 (포트에 있으면) -->
-      ${pnl !== null ? `
+      <!-- 보유 수익 + 액션 버튼 -->
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid #F0F4FA;
         display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;color:#94A3B8">보유 ${portP.qty}주 · 평균 ${(portP.avgPrice||portP.buyPrice||0).toLocaleString()}원</span>
-        <span style="font-size:13px;font-weight:800;color:${pnl>=0?'#E53935':'#1565C0'}">
-          ${pnl>=0?'+':''}${Math.round(pnl).toLocaleString()}원
-          (${pnlPct>=0?'+':''}${pnlPct?.toFixed(2)}%)
-        </span>
-      </div>` : ''}
+        ${pnl !== null ? `
+        <div>
+          <div style="font-size:11px;color:#94A3B8">보유 ${portP.qty}주 · 평균 ${(portP.avgPrice||portP.buyPrice||0).toLocaleString()}원</div>
+          <div style="font-size:13px;font-weight:800;color:${pnl>=0?'#E53935':'#1565C0'}">
+            ${pnl>=0?'+':''}${Math.round(pnl).toLocaleString()}원 (${pnlPct>=0?'+':''}${pnlPct?.toFixed(2)}%)
+          </div>
+        </div>` : '<div></div>'}
+        <button data-timing-code="${item.code}"
+          onclick="event.stopPropagation();runBuyTiming(this.dataset.timingCode)"
+          style="background:#EEF4FF;border:1px solid #C7D4F0;border-radius:10px;
+          padding:6px 12px;font-size:11px;font-weight:700;color:#1565C0;
+          cursor:pointer;touch-action:manipulation;white-space:nowrap">
+          ⏱ 타이밍
+        </button>
+      </div>
     </div>`;
   }).join('')}
 
@@ -5413,6 +5445,535 @@ function showMyStockDetail(code) {
 function closeMyStockModal() {
   document.getElementById('my-stock-modal')?.remove();
   document.body.style.overflow = '';
+}
+
+function showMyTimingPicker() {
+  const myCodes = getMyStockList();
+  if (myCodes.length === 0) {
+    notify('⚠️ 내종목 탭에 종목을 먼저 추가하세요', 'warn'); return;
+  }
+  const el = document.createElement('div');
+  el.id = 'timing-picker';
+  el.innerHTML = `
+  <div onclick="document.getElementById('timing-picker').remove();document.body.style.overflow=''"
+    style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000"></div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;
+    z-index:9001;max-height:70vh;overflow-y:auto;padding:0 0 40px;animation:slideUp .25s ease">
+    <div style="text-align:center;padding:12px 0 4px">
+      <div style="width:40px;height:4px;background:#E2E8F4;border-radius:2px;display:inline-block"></div>
+    </div>
+    <div style="padding:14px 18px 10px;border-bottom:1px solid #F0F4FA">
+      <div style="font-size:15px;font-weight:900;color:#0F1D3A">⏱ 타이밍 분석할 종목 선택</div>
+    </div>
+    <div style="padding:12px 18px">
+      ${myCodes.map(code => {
+        const stock = gs(code) || ETF_LIST?.find(e=>e.code===code);
+        const name = stock?.name || code;
+        const pr = PRICE_BASE[code];
+        return `<div onclick="document.getElementById('timing-picker').remove();document.body.style.overflow='';runBuyTiming('${code}')"
+          style="display:flex;justify-content:space-between;align-items:center;
+          padding:12px 0;border-bottom:1px solid #F4F6FA;cursor:pointer;touch-action:manipulation">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#0F1D3A">${name}</div>
+            <div style="font-size:11px;color:#94A3B8">${code}</div>
+          </div>
+          <div style="text-align:right">
+            ${pr?.price ? `<div style="font-size:13px;font-weight:700">${pr.price.toLocaleString()}원</div>` : ''}
+            ${pr?.chg != null ? `<div style="font-size:11px;color:${pr.chg>=0?'#E53935':'#1565C0'};font-weight:700">${pr.chg>=0?'+':''}${pr.chg?.toFixed(2)}%</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+  document.getElementById('timing-picker')?.remove();
+  document.body.appendChild(el);
+  document.body.style.overflow = 'hidden';
+}
+
+
+// ══════════════════════════════════════════
+// 📊 3가지 AI 분석 엔진
+// ══════════════════════════════════════════
+
+// ── 1. 포트폴리오 종합 분석 ──
+async function runPortfolioAI() {
+  const port = S.portfolio || [];
+  if (port.length === 0) { notify('⚠️ 포트폴리오에 종목을 먼저 추가하세요', 'warn'); return; }
+
+  S._portAILoading = true; render();
+  notify('📊 포트폴리오 AI 분석 중...', 'info');
+
+  // 데이터 준비
+  const totalInvest = port.reduce((s,p) => s + (p.buyPrice||0)*(p.qty||1), 0);
+  const totalCur    = port.reduce((s,p) => {
+    const cur = PRICE_BASE[p.code]?.price || p.buyPrice;
+    return s + cur*(p.qty||1);
+  }, 0);
+
+  const items = port.map(p => {
+    const pr  = PRICE_BASE[p.code];
+    const cur = pr?.price || p.buyPrice;
+    const pnl = ((cur - p.buyPrice) / p.buyPrice * 100).toFixed(2);
+    const weight = (cur*(p.qty||1) / totalCur * 100).toFixed(1);
+    const stock = gs(p.code);
+    return `${stock?.name||p.code}(${p.code}): 매수가 ${p.buyPrice.toLocaleString()}원 / 현재가 ${cur.toLocaleString()}원 / 수익률 ${pnl}% / 비중 ${weight}% / 섹터 ${stock?.sector||'?'}`;
+  }).join('\n');
+
+  const prompt = `당신은 한국 주식 포트폴리오 전문 애널리스트입니다. 아래 포트폴리오를 분석하세요.
+
+[포트폴리오 현황]
+총 투자금: ${Math.round(totalInvest).toLocaleString()}원
+총 평가금: ${Math.round(totalCur).toLocaleString()}원
+총 수익률: ${((totalCur-totalInvest)/totalInvest*100).toFixed(2)}%
+
+[종목 상세]
+${items}
+
+다음 형식으로 JSON만 응답 (마크다운 없이):
+{
+  "totalReturn": "${((totalCur-totalInvest)/totalInvest*100).toFixed(2)}",
+  "riskLevel": "낮음|중간|높음",
+  "concentration": "종목집중도 평가 1문장",
+  "sectorBias": "섹터편중 평가 1문장",
+  "diversification": "분산수준 평가 1문장",
+  "topContributor": "수익 기여 최고 종목명",
+  "riskStock": "위험 종목명",
+  "strategy": "추가매수|차익실현|리밸런싱|관망",
+  "actions": ["행동1", "행동2", "행동3"],
+  "summary": "전체 요약 2문장"
+}`;
+
+  try {
+    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:800,system:"JSON만 응답",messages:[{role:"user",content:prompt}]});
+    const data = await res.json();
+    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    S.portfolioAI = JSON.parse(txt);
+    notify('✅ 포트폴리오 분석 완료!', 'ok');
+  } catch(e) {
+    // 폴백
+    const pnlPct = ((totalCur-totalInvest)/totalInvest*100).toFixed(2);
+    const topStock = port.reduce((best,p) => {
+      const cur = PRICE_BASE[p.code]?.price || p.buyPrice;
+      const r = (cur-p.buyPrice)/p.buyPrice;
+      return r > (best.r||0) ? {...p, r} : best;
+    }, {});
+    S.portfolioAI = {
+      totalReturn: pnlPct,
+      riskLevel: port.length <= 3 ? '높음' : port.length <= 6 ? '중간' : '낮음',
+      concentration: port.length <= 3 ? '종목 집중도 높음 — 리스크 분산 필요' : '적절한 분산 수준',
+      sectorBias: '섹터 분석을 위해 AI 연결이 필요합니다',
+      diversification: `${port.length}개 종목 보유`,
+      topContributor: gs(topStock.code)?.name || '-',
+      riskStock: '-',
+      strategy: parseFloat(pnlPct) > 10 ? '차익실현' : parseFloat(pnlPct) < -10 ? '리밸런싱' : '관망',
+      actions: ['포트폴리오 현황을 주기적으로 점검하세요', 'AI 연결 시 더 정밀한 분석이 가능합니다', '손절 기준을 미리 설정하세요'],
+      summary: `총 ${pnlPct}% 수익률. ${port.length}개 종목 보유 중.`
+    };
+    notify('📊 포트폴리오 분석 완료 (오프라인)', 'info');
+  }
+  S._portAILoading = false;
+  render();
+  showPortfolioAIResult();
+}
+
+function showPortfolioAIResult() {
+  const r = S.portfolioAI;
+  if (!r) return;
+  const riskColor = r.riskLevel==='높음' ? '#C62828' : r.riskLevel==='중간' ? '#E65100' : '#2E7D32';
+  const riskBg    = r.riskLevel==='높음' ? '#FFEBEE' : r.riskLevel==='중간' ? '#FFF3E0' : '#E8F5E9';
+  const stratColor= {추가매수:'#C62828',차익실현:'#1565C0',리밸런싱:'#E65100',관망:'#2E7D32'}[r.strategy]||'#1565C0';
+
+  const el = document.createElement('div');
+  el.id = 'portai-modal';
+  el.innerHTML = `
+  <div onclick="document.getElementById('portai-modal').remove();document.body.style.overflow=''"
+    style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000"></div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;
+    z-index:9001;max-height:90vh;overflow-y:auto;padding:0 0 50px;animation:slideUp .25s ease">
+    <div style="text-align:center;padding:12px 0 4px">
+      <div style="width:40px;height:4px;background:#E2E8F4;border-radius:2px;display:inline-block"></div>
+    </div>
+    <div style="padding:14px 18px;border-bottom:1px solid #F0F4FA;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:16px;font-weight:900;color:#0F1D3A">📊 포트폴리오 AI 분석</div>
+      <button onclick="document.getElementById('portai-modal').remove();document.body.style.overflow=''"
+        style="background:none;border:none;font-size:20px;color:#94A3B8;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px 18px">
+
+      <!-- 요약 카드 -->
+      <div style="background:linear-gradient(135deg,#0F1D3A,#1565C0);border-radius:16px;padding:16px;color:#fff;margin-bottom:14px">
+        <div style="font-size:11px;opacity:.7;margin-bottom:4px">총 수익률</div>
+        <div style="font-size:28px;font-weight:900">${parseFloat(r.totalReturn)>=0?'+':''}${r.totalReturn}%</div>
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+          <span style="background:${riskBg};color:${riskColor};border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800">
+            위험도: ${r.riskLevel}
+          </span>
+          <span style="background:rgba(255,255,255,0.2);color:#fff;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800">
+            → ${r.strategy}
+          </span>
+        </div>
+      </div>
+
+      <!-- 핵심 분석 -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:#94A3B8;margin-bottom:8px">핵심 분석</div>
+        ${[
+          ['📌 종목 집중도', r.concentration],
+          ['🏭 섹터 편중', r.sectorBias],
+          ['🔀 분산 수준', r.diversification],
+          ['⭐ 수익 기여', r.topContributor],
+          ['⚠️ 위험 종목', r.riskStock],
+        ].map(([label,val])=>`
+        <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #F4F6FA">
+          <span style="font-size:12px;color:#94A3B8;white-space:nowrap;width:80px">${label}</span>
+          <span style="font-size:12px;color:#0F1D3A;font-weight:600;flex:1">${val}</span>
+        </div>`).join('')}
+      </div>
+
+      <!-- 추천 행동 -->
+      <div style="background:${riskBg};border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:900;color:${stratColor};margin-bottom:8px">
+          추천 전략: ${r.strategy}
+        </div>
+        ${(r.actions||[]).map((a,i)=>`
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:800;color:${stratColor}">${i+1}</span>
+          <span style="font-size:12px;color:#0F1D3A;line-height:1.5">${a}</span>
+        </div>`).join('')}
+      </div>
+
+      <!-- 요약 -->
+      <div style="background:#F4F6FA;border-radius:12px;padding:12px">
+        <div style="font-size:12px;color:#4A5A7A;line-height:1.7">${r.summary}</div>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('portai-modal')?.remove();
+  document.body.appendChild(el);
+  document.body.style.overflow = 'hidden';
+}
+
+
+// ── 2. 종목 매수 타이밍 100점 분석 ──
+async function runBuyTiming(code) {
+  const stock = gs(code) || ETF_LIST?.find(e=>e.code===code);
+  const name  = stock?.name || code;
+  const pr    = PRICE_BASE[code];
+  const sup   = (window.SUPPLY_DATA || {})[code];
+  const news  = NEWS.filter(n=>n.code===code).slice(0,5);
+
+  if (!pr?.price) { notify('⚠️ 주가 데이터 없음 — 잠시 후 다시 시도하세요', 'warn'); return; }
+
+  S._timingLoading = S._timingLoading || {};
+  S._timingLoading[code] = true;
+  notify(`⏱ ${name} 매수 타이밍 분석 중...`, 'info');
+
+  const supCtx = sup ? `외국인 ${sup.foreign>=0?'+':''}${sup.foreign}주, 기관 ${sup.inst>=0?'+':''}${sup.inst}주` : '수급 데이터 없음';
+  const newsCtx = news.map(n=>`${n.title} (${n.sent})`).join(' | ') || '없음';
+  const chg = pr.chg || 0;
+  const highLowPos = pr.high && pr.low ?
+    ((pr.price - parseFloat(String(pr.low).replace(/,/g,''))) /
+     (parseFloat(String(pr.high).replace(/,/g,'')) - parseFloat(String(pr.low).replace(/,/g,''))) * 100).toFixed(0) : '?';
+
+  const prompt = `한국 주식 ${name}(${code}) 매수 타이밍 분석.
+
+현재가: ${pr.price.toLocaleString()}원 (전일대비 ${chg>=0?'+':''}${chg}%)
+오늘 고가: ${pr.high} / 저가: ${pr.low} / 시가: ${pr.open}
+고저가 위치: ${highLowPos}% (0%=저가, 100%=고가)
+수급: ${supCtx}
+최근 뉴스: ${newsCtx}
+
+점수 기준:
+- 모멘텀 25점: 최근 수익률, 추세
+- 수급 25점: 외국인+기관 매수 강도
+- 추세 20점: 이동평균 위치
+- 기술신호 20점: RSI, MACD, 거래량
+- 리스크 10점: 변동성, 고가권 여부
+
+JSON만 응답 (마크다운 없이):
+{
+  "score": 72,
+  "momentum": {"score":18,"label":"상승","detail":"최근 모멘텀 설명"},
+  "supply": {"score":20,"label":"강한매수","detail":"수급 설명"},
+  "trend": {"score":14,"label":"상승","detail":"추세 설명"},
+  "technical": {"score":14,"label":"매수신호","detail":"기술 지표 설명"},
+  "risk": {"score":6,"label":"중간","detail":"리스크 설명"},
+  "market": "상승|중립|하락",
+  "verdict": "강한매수|분할매수|관망|매수금지",
+  "targetReturn": "+15%",
+  "stopLoss": "-7%",
+  "strategy": "전략 2문장"
+}`;
+
+  let result;
+  try {
+    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,system:"JSON만 응답",messages:[{role:"user",content:prompt}]});
+    const data = await res.json();
+    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    result = JSON.parse(txt);
+  } catch(e) {
+    // 폴백 - 수급+기술 기반 간단 계산
+    let score = 50;
+    const supScore = sup ? ((sup.foreign>0?12:0) + (sup.inst>0?13:0)) : 0;
+    score += supScore;
+    score += chg > 0 ? 10 : chg < -2 ? -5 : 0;
+    score += highLowPos < 30 ? 8 : highLowPos > 80 ? -8 : 0;
+    score = Math.min(Math.max(score, 0), 100);
+    result = {
+      score,
+      momentum: {score:Math.round(score*0.25), label:chg>0?'상승':'하락', detail:`전일대비 ${chg}%`},
+      supply: {score:Math.round(supScore), label:supScore>15?'강한매수':supScore>5?'중립':'관망', detail:supCtx},
+      trend: {score:Math.round(score*0.2), label:'데이터부족', detail:'이동평균 데이터 없음'},
+      technical: {score:Math.round(score*0.2), label:highLowPos<30?'매수신호':'중립', detail:`고저가 위치 ${highLowPos}%`},
+      risk: {score:5, label:'중간', detail:'변동성 보통'},
+      market: '중립',
+      verdict: score>=70?'강한매수':score>=55?'분할매수':score>=40?'관망':'매수금지',
+      targetReturn: '+15%', stopLoss: '-7%',
+      strategy: `${name} 현재 점수 ${score}점. ${score>=55?'단계적 진입 고려':'시장 확인 후 진입'}.`
+    };
+  }
+
+  S._timingLoading[code] = false;
+  showTimingResult(name, code, result);
+}
+
+function showTimingResult(name, code, r) {
+  const verdictColor = {
+    '강한매수':'#C62828', '분할매수':'#E65100', '관망':'#2E7D32', '매수금지':'#1565C0'
+  }[r.verdict] || '#1565C0';
+  const verdictBg = {
+    '강한매수':'#FFEBEE', '분할매수':'#FFF3E0', '관망':'#E8F5E9', '매수금지':'#E3F2FD'
+  }[r.verdict] || '#E3F2FD';
+  const scoreColor = r.score>=70?'#C62828':r.score>=50?'#E65100':'#1565C0';
+
+  const el = document.createElement('div');
+  el.id = 'timing-modal';
+  el.innerHTML = `
+  <div onclick="document.getElementById('timing-modal').remove();document.body.style.overflow=''"
+    style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000"></div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;
+    z-index:9001;max-height:90vh;overflow-y:auto;padding:0 0 50px;animation:slideUp .25s ease">
+    <div style="text-align:center;padding:12px 0 4px">
+      <div style="width:40px;height:4px;background:#E2E8F4;border-radius:2px;display:inline-block"></div>
+    </div>
+    <div style="padding:14px 18px;border-bottom:1px solid #F0F4FA;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:#0F1D3A">⏱ 매수 타이밍 분석</div>
+        <div style="font-size:12px;color:#94A3B8">${name} · ${code}</div>
+      </div>
+      <button onclick="document.getElementById('timing-modal').remove();document.body.style.overflow=''"
+        style="background:none;border:none;font-size:20px;color:#94A3B8;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px 18px">
+
+      <!-- 점수 + 판단 -->
+      <div style="display:flex;gap:12px;margin-bottom:16px">
+        <div style="flex:1;background:linear-gradient(135deg,#0F1D3A,#1565C0);border-radius:16px;padding:16px;color:#fff;text-align:center">
+          <div style="font-size:11px;opacity:.7;margin-bottom:4px">투자 점수</div>
+          <div style="font-size:42px;font-weight:900;color:${r.score>=70?'#FF8A80':r.score>=50?'#FFD180':'#80D8FF'}">${r.score}</div>
+          <div style="font-size:11px;opacity:.7">/ 100점</div>
+        </div>
+        <div style="flex:1;background:${verdictBg};border-radius:16px;padding:16px;text-align:center;display:flex;flex-direction:column;justify-content:center">
+          <div style="font-size:11px;color:${verdictColor};font-weight:800;margin-bottom:6px">최종 판단</div>
+          <div style="font-size:20px;font-weight:900;color:${verdictColor}">${r.verdict}</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:6px">시장: ${r.market}</div>
+        </div>
+      </div>
+
+      <!-- 5가지 점수 -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:#94A3B8;margin-bottom:8px">점수 상세</div>
+        ${[
+          ['모멘텀', r.momentum, 25],
+          ['수급', r.supply, 25],
+          ['추세', r.trend, 20],
+          ['기술신호', r.technical, 20],
+          ['리스크', r.risk, 10],
+        ].map(([label, s, max]) => {
+          const pct = (s.score/max*100).toFixed(0);
+          const barColor = pct>=70?'#E53935':pct>=50?'#FF9800':'#1565C0';
+          return `
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:12px;font-weight:700;color:#0F1D3A">${label} <span style="color:#94A3B8;font-weight:400">${s.label}</span></span>
+              <span style="font-size:12px;font-weight:800;color:${barColor}">${s.score}/${max}</span>
+            </div>
+            <div style="height:6px;background:#F0F4FA;border-radius:3px">
+              <div style="height:6px;background:${barColor};border-radius:3px;width:${pct}%;transition:width .4s"></div>
+            </div>
+            <div style="font-size:11px;color:#94A3B8;margin-top:3px">${s.detail}</div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- 전략 -->
+      <div style="background:${verdictBg};border-radius:14px;padding:14px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:800;color:${verdictColor};margin-bottom:6px">추천 전략</div>
+        <div style="font-size:13px;color:#0F1D3A;line-height:1.6">${r.strategy}</div>
+        <div style="display:flex;gap:10px;margin-top:10px">
+          <div style="flex:1;background:#fff;border-radius:10px;padding:8px;text-align:center">
+            <div style="font-size:10px;color:#94A3B8">목표 수익률</div>
+            <div style="font-size:14px;font-weight:900;color:#E53935">${r.targetReturn}</div>
+          </div>
+          <div style="flex:1;background:#fff;border-radius:10px;padding:8px;text-align:center">
+            <div style="font-size:10px;color:#94A3B8">손절 기준</div>
+            <div style="font-size:14px;font-weight:900;color:#1565C0">${r.stopLoss}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('timing-modal')?.remove();
+  document.body.appendChild(el);
+  document.body.style.overflow = 'hidden';
+}
+
+
+// ── 3. 지금 사야 할 종목 TOP5 ──
+async function runTop5AI() {
+  S._top5Loading = true; render();
+  notify('🔍 전체 종목 분석 중... (30초 소요)', 'info');
+
+  // PRICE_BASE에서 데이터 있는 종목만
+  const candidates = Object.entries(PRICE_BASE)
+    .filter(([code, pr]) => pr.price && pr.chg != null)
+    .map(([code, pr]) => {
+      const stock = gs(code);
+      const sup   = (window.SUPPLY_DATA || {})[code];
+      const news  = NEWS.filter(n=>n.code===code);
+      const posNews = news.filter(n=>n.sent==='긍정').length;
+      const negNews = news.filter(n=>n.sent==='부정').length;
+      const supScore= sup ? (sup.foreign>0?1:0)+(sup.inst>0?1:0) : 0;
+      return {
+        code, name: stock?.name||code, sector: stock?.sector||'?',
+        price: pr.price, chg: pr.chg,
+        supScore, newsScore: posNews-negNews,
+        highLowPos: pr.high && pr.low ?
+          Math.round((pr.price - parseFloat(String(pr.low).replace(/,/g,''))) /
+          (parseFloat(String(pr.high).replace(/,/g,'')) - parseFloat(String(pr.low).replace(/,/g,''))) * 100) : 50
+      };
+    });
+
+  const prompt = `한국 주식 전문 애널리스트로서 오늘 가장 매수하기 좋은 종목 TOP5를 선정하세요.
+
+[전체 종목 현황 (${candidates.length}개)]
+${candidates.map(c =>
+  `${c.name}(${c.code}): 등락${c.chg>=0?'+':''}${c.chg}% / 수급${c.supScore>0?'강':'약'} / 뉴스${c.newsScore>0?'긍정':c.newsScore<0?'부정':'중립'} / 고저위치${c.highLowPos}%`
+).join('\n')}
+
+선정 기준: 수급강도 + 뉴스임팩트 + 기술적진입 + 모멘텀 + 리스크
+
+JSON만 응답 (마크다운 없이):
+{
+  "top5": [
+    {"rank":1,"code":"005930","name":"삼성전자","score":82,"reason":"선정 이유 1문장","verdict":"강한매수|분할매수","target":"+12%","stopLoss":"-7%"},
+    ...
+  ],
+  "marketComment": "오늘 시장 전반 코멘트 1문장",
+  "updatedAt": "오늘"
+}`;
+
+  let result;
+  try {
+    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:800,system:"JSON만 응답",messages:[{role:"user",content:prompt}]});
+    const data = await res.json();
+    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    result = JSON.parse(txt);
+  } catch(e) {
+    // 폴백 - 점수 기반 자동 선정
+    const scored = candidates.map(c => ({
+      ...c,
+      total: c.supScore*25 + c.newsScore*15 + (c.highLowPos<35?20:c.highLowPos>75?-10:5) + (c.chg>0?15:c.chg>-1?5:-5)
+    })).sort((a,b)=>b.total-a.total).slice(0,5);
+
+    result = {
+      top5: scored.map((c,i)=>({
+        rank: i+1, code: c.code, name: c.name,
+        score: Math.min(Math.max(50+c.total, 45), 95),
+        reason: `수급${c.supScore>0?'강세':'약세'}, 뉴스${c.newsScore>0?'긍정':'중립'}, 고저위치 ${c.highLowPos}%`,
+        verdict: c.total>30?'강한매수':'분할매수',
+        target: '+12%', stopLoss: '-7%'
+      })),
+      marketComment: '수급과 뉴스 기반 자동 선정 결과입니다. AI 연결 시 더 정밀한 분석이 가능합니다.',
+      updatedAt: new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'})
+    };
+  }
+  S.top5AI = result;
+  S._top5Loading = false;
+  render();
+  showTop5Result();
+}
+
+function showTop5Result() {
+  const r = S.top5AI;
+  if (!r) return;
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const verdictColor = v => v==='강한매수'?'#C62828':'#E65100';
+  const verdictBg    = v => v==='강한매수'?'#FFEBEE':'#FFF3E0';
+
+  const el = document.createElement('div');
+  el.id = 'top5-modal';
+  el.innerHTML = `
+  <div onclick="document.getElementById('top5-modal').remove();document.body.style.overflow=''"
+    style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000"></div>
+  <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;
+    z-index:9001;max-height:90vh;overflow-y:auto;padding:0 0 50px;animation:slideUp .25s ease">
+    <div style="text-align:center;padding:12px 0 4px">
+      <div style="width:40px;height:4px;background:#E2E8F4;border-radius:2px;display:inline-block"></div>
+    </div>
+    <div style="padding:14px 18px;border-bottom:1px solid #F0F4FA;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:#0F1D3A">🔥 지금 사야 할 TOP5</div>
+        <div style="font-size:11px;color:#94A3B8">${r.updatedAt} 기준</div>
+      </div>
+      <button onclick="document.getElementById('top5-modal').remove();document.body.style.overflow=''"
+        style="background:none;border:none;font-size:20px;color:#94A3B8;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px 18px">
+      <div style="background:#F4F6FA;border-radius:12px;padding:10px 12px;margin-bottom:14px;
+        font-size:12px;color:#4A5A7A">${r.marketComment}</div>
+      ${(r.top5||[]).map((item,i) => `
+      <div style="background:#fff;border:1.5px solid ${i===0?'#FFD700':'#E2E8F4'};
+        border-radius:16px;padding:14px;margin-bottom:10px;
+        ${i===0?'box-shadow:0 4px 16px rgba(255,215,0,0.2)':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:20px">${medals[i]}</span>
+            <div>
+              <div style="font-size:14px;font-weight:900;color:#0F1D3A">${item.name}</div>
+              <div style="font-size:11px;color:#94A3B8">${item.code}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:22px;font-weight:900;color:${i===0?'#E53935':'#1565C0'}">${item.score}점</div>
+            <div style="background:${verdictBg(item.verdict)};color:${verdictColor(item.verdict)};
+              border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;margin-top:2px">
+              ${item.verdict}
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#4A5A7A;line-height:1.6;margin-bottom:8px">${item.reason}</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;background:#FFF5F5;border-radius:8px;padding:6px;text-align:center">
+            <div style="font-size:10px;color:#94A3B8">목표</div>
+            <div style="font-size:13px;font-weight:800;color:#E53935">${item.target}</div>
+          </div>
+          <div style="flex:1;background:#EFF6FF;border-radius:8px;padding:6px;text-align:center">
+            <div style="font-size:10px;color:#94A3B8">손절</div>
+            <div style="font-size:13px;font-weight:800;color:#1565C0">${item.stopLoss}</div>
+          </div>
+          <button onclick="runBuyTiming('${item.code}');document.getElementById('top5-modal').remove();document.body.style.overflow=''"
+            style="flex:1;background:#EEF4FF;border:1px solid #C7D4F0;border-radius:8px;
+            font-size:11px;font-weight:700;color:#1565C0;cursor:pointer;touch-action:manipulation">
+            ⏱ 타이밍
+          </button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+  document.getElementById('top5-modal')?.remove();
+  document.body.appendChild(el);
+  document.body.style.overflow = 'hidden';
 }
 
 // PWA Service Worker + 자동 업데이트 감지
