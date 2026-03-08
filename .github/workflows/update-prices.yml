@@ -4,6 +4,8 @@ on:
   schedule:
     # 평일 장중 5분마다 (KST 09:00~15:35 = UTC 00:00~06:35)
     - cron: '*/5 0,1,2,3,4,5,6 * * 1-5'
+    # 평일 장 마감 후 퀀트 지표 1회 (KST 16:00 = UTC 07:00)
+    - cron: '0 7 * * 1-5'
   workflow_dispatch:
 
 jobs:
@@ -30,9 +32,11 @@ jobs:
           now = datetime.now(KST)
           total_min = now.hour * 60 + now.minute
           is_open = (now.weekday() < 5) and (9*60 <= total_min <= 15*60+35)
-          print(f"KST: {now.strftime('%Y-%m-%d %H:%M')} 장중: {is_open}")
+          is_quant = (now.weekday() < 5) and (now.hour == 16 and now.minute < 10)
+          print(f"KST: {now.strftime('%Y-%m-%d %H:%M')} 장중: {is_open} 퀀트: {is_quant}")
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"is_open={'true' if is_open else 'false'}\n")
+              f.write(f"is_quant={'true' if is_quant else 'false'}\n")
           PYEOF
 
       - name: Update prices & supply
@@ -45,11 +49,16 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python3 scripts/fetch_news.py
 
+      - name: Update quant indicators (장 마감 후 1회)
+        if: steps.market_check.outputs.is_quant == 'true'
+        run: python3 scripts/update_prices.py --quant
+
       - name: Commit and push
-        if: steps.market_check.outputs.is_open == 'true'
+        if: steps.market_check.outputs.is_open == 'true' || steps.market_check.outputs.is_quant == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add prices.json news.json supply.json analysis.json || true
+          git add prices.json news.json supply.json analysis.json quant.json || true
           git diff --staged --quiet || git commit -m "📊 Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
           git push
+
