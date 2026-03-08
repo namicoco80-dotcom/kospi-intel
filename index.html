@@ -5333,7 +5333,7 @@ function rMyStocks() {
       style="background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff;border:none;
       border-radius:14px;padding:12px 4px;font-size:11px;font-weight:800;cursor:pointer;
       touch-action:manipulation;line-height:1.6">
-      ${S._portAILoading?'⟳':'📊'}<br>포트폴리오<br>분석 (${getPortAIRemain()}회 남음)
+      ${S._portAILoading?'⟳':'📊'}<br>포트폴리오<br>종합분석
     </button>
     <button onclick="runTop5AI()"
       style="background:linear-gradient(135deg,#C62828,#B71C1C);color:#fff;border:none;
@@ -5790,15 +5790,8 @@ async function runPortfolioAI() {
     return;
   }
 
-  // 하루 3번 제한 확인
-  const remain = getPortAIRemain();
-  if (remain <= 0) {
-    notify('⚠️ 오늘 포트폴리오 분석 3회 모두 사용했어요. 내일 다시 시도해주세요!', 'warn');
-    return;
-  }
-
   S._portAILoading = true; render();
-  notify(`📊 AI 분석 중... (오늘 ${remain-1}회 남음)`, 'info');
+  notify('📊 AI 분석 중...', 'info');
 
   // 데이터 준비
   const totalInvest = port.reduce((s,p) => s + (p.buyPrice||0)*(p.qty||1), 0);
@@ -5875,7 +5868,6 @@ ${items.map(i => [
 }`;
 
   try {
-    incPortAIUsage();
     const raw = await geminiPortfolioFetch(prompt);
 
     // JSON 추출
@@ -5905,7 +5897,11 @@ ${items.map(i => [
 }
 
 
+// 전역 저장 (PDF 다운로드용)
+let currentReport = null, currentItems = [], currentPnl = 0;
+
 function showPortfolioAIResult(r, items, totalPnlPct) {
+  currentReport = r; currentItems = items; currentPnl = totalPnlPct;
   document.getElementById('portai-modal')?.remove();
   const statusColor = {'양호':'#2E7D32','중립':'#E65100','위험':'#C62828'}[r.summary?.status] || '#1565C0';
   const riskColor   = {'낮음':'#2E7D32','중간':'#E65100','높음':'#C62828'}[r.risk?.level] || '#64748B';
@@ -5999,8 +5995,22 @@ function showPortfolioAIResult(r, items, totalPnlPct) {
         <div style="font-size:13px;color:#fff;font-style:italic;line-height:1.7">"${r.quote}"</div>
       </div>` : ''}
 
+      <!-- PDF 리포트 출력 버튼 (하루 3번 제한) -->
+      <div style="margin-top:16px;background:#F8FAFF;border:1.5px solid #E2E8F4;border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:12px;color:#64748B;margin-bottom:8px">
+          📄 리포트 PDF 출력 · 오늘 <b style="color:#1565C0">${getPortAIRemain()}</b>회 남음
+        </div>
+        <button onclick="downloadPortfolioReport(currentReport, currentItems, currentPnl)"
+          ${getPortAIRemain()<=0?'disabled':''}
+          style="width:100%;background:${getPortAIRemain()>0?'linear-gradient(135deg,#1565C0,#0D47A1)':'#E2E8F4'};
+            color:${getPortAIRemain()>0?'#fff':'#94A3B8'};border:none;border-radius:12px;
+            padding:13px;font-size:14px;font-weight:800;cursor:${getPortAIRemain()>0?'pointer':'not-allowed'}">
+          ${getPortAIRemain()>0?'📄 PDF 리포트 저장':'⚠️ 오늘 출력 횟수 소진 (내일 초기화)'}
+        </button>
+      </div>
+
       <button onclick="document.getElementById('portai-modal').remove();document.body.style.overflow=''"
-        style="width:100%;margin-top:16px;background:#F4F6FA;border:none;border-radius:14px;
+        style="width:100%;margin-top:10px;background:#F4F6FA;border:none;border-radius:14px;
           padding:14px;font-size:14px;font-weight:700;color:#64748B;cursor:pointer">
         닫기
       </button>
@@ -7666,6 +7676,142 @@ function rBoard() {
   </div>`;
 }
 
+
+// ── 포트폴리오 리포트 PDF 다운로드 (하루 3번 제한) ──
+function downloadPortfolioReport(r, items, totalPnlPct) {
+  if (getPortAIRemain() <= 0) {
+    notify('⚠️ 오늘 PDF 출력 횟수(3회)를 모두 사용했어요', 'warn');
+    return;
+  }
+  incPortAIUsage();
+
+  const statusColor = {'양호':'#2E7D32','중립':'#E65100','위험':'#C62828'}[r.summary?.status] || '#1565C0';
+  const actionBg = {'매수':'#E8F5E9','보유':'#EFF6FF','부분매도':'#FFF3E0','관망':'#F4F6FA'};
+  const actionCl = {'매수':'#2E7D32','보유':'#1565C0','부분매도':'#E65100','관망':'#64748B'};
+  const trendIcon = {'상승':'▲','횡보':'→','하락':'▼'};
+  const today = new Date().toLocaleDateString('ko-KR');
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>KOSPI INTEL 투자 분석 리포트 ${today}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; color:#0F1D3A; padding:30px; font-size:13px; }
+  h1 { font-size:22px; font-weight:900; color:#0F1D3A; margin-bottom:4px; }
+  .sub { font-size:12px; color:#64748B; margin-bottom:24px; }
+  .section { margin-bottom:20px; }
+  .section-title { font-size:13px; font-weight:900; color:#64748B; margin-bottom:10px; padding-bottom:6px; border-bottom:1.5px solid #E2E8F4; }
+  .summary-box { background:${statusColor}15; border:2px solid ${statusColor}40; border-radius:10px; padding:14px; margin-bottom:6px; }
+  .summary-status { font-size:18px; font-weight:900; color:${statusColor}; }
+  .summary-line { font-size:13px; color:#334155; margin-top:4px; }
+  .stat-row { display:flex; gap:16px; margin-top:8px; font-size:12px; color:#64748B; }
+  .risk-box { background:#F8FAFF; border-radius:10px; padding:12px; }
+  .risk-level { font-weight:800; }
+  .stock-row { border:1px solid #E2E8F4; border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; }
+  .stock-name { font-size:13px; font-weight:800; flex:1; }
+  .stock-pnl { font-size:12px; }
+  .action-badge { padding:3px 10px; border-radius:6px; font-size:11px; font-weight:800; }
+  .strategy-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .strategy-box { background:#F8FAFF; border-radius:10px; padding:12px; }
+  .strategy-label { font-size:11px; font-weight:800; color:#1565C0; margin-bottom:6px; }
+  .confidence-bar { height:8px; background:#E2E8F4; border-radius:4px; margin-top:8px; }
+  .confidence-fill { height:8px; background:linear-gradient(90deg,#1565C0,#42A5F5); border-radius:4px; }
+  .quote-box { background:linear-gradient(135deg,#1A237E,#283593); border-radius:10px; padding:14px; color:#fff; text-align:center; font-style:italic; }
+  .footer { margin-top:30px; font-size:11px; color:#94A3B8; text-align:center; border-top:1px solid #E2E8F4; padding-top:12px; }
+  .improve-item { font-size:12px; color:#4A5A7A; margin-bottom:5px; }
+  @media print {
+    body { padding:20px; }
+    button { display:none !important; }
+  }
+</style>
+</head>
+<body>
+  <h1>📊 AI 투자 분석 리포트</h1>
+  <div class="sub">KOSPI INTEL · ${today} · AI 확신도 ${r.confidence||70}%</div>
+
+  <div class="section">
+    <div class="section-title">1️⃣ 포트폴리오 요약</div>
+    <div class="summary-box">
+      <div class="summary-status">${r.summary?.status}</div>
+      <div class="summary-line">${r.summary?.oneLine}</div>
+      <div class="stat-row">
+        <span>전체 손익 <b>${totalPnlPct}%</b></span>
+        <span>수익 <b>${items.filter(i=>parseFloat(i.pnlPct)>0).length}종목</b></span>
+        <span>손실 <b>${items.filter(i=>parseFloat(i.pnlPct)<=0).length}종목</b></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">2️⃣ 리스크 분석</div>
+    <div class="risk-box">
+      <span class="risk-level">리스크 수준: ${r.risk?.level}</span>
+      ${(r.risk?.points||[]).map(p=>`<div class="improve-item" style="margin-top:6px">• ${p}</div>`).join('')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">3️⃣ 종목별 AI 분석</div>
+    ${(r.stocks||[]).map(s=>`
+    <div class="stock-row">
+      <div class="stock-name">${trendIcon[s.trend]||''} ${s.name}</div>
+      <div class="stock-pnl">${(items.find(i=>i.code===s.code)?.pnlPct||0)}%</div>
+      <span class="action-badge" style="background:${actionBg[s.action]||'#F4F6FA'};color:${actionCl[s.action]||'#64748B'}">${s.action}</span>
+      <div style="font-size:11px;color:#64748B;flex:2">${s.reason}</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="section">
+    <div class="section-title">4️⃣ 포트폴리오 개선 제안</div>
+    ${(r.improve||[]).map(p=>`<div class="improve-item">• ${p}</div>`).join('')}
+  </div>
+
+  <div class="section">
+    <div class="section-title">5️⃣ 투자 전략</div>
+    <div class="strategy-grid">
+      <div class="strategy-box">
+        <div class="strategy-label">⚡ 단기 전략</div>
+        <div style="font-size:12px;color:#334155;line-height:1.7">${r.shortStrategy}</div>
+      </div>
+      <div class="strategy-box">
+        <div class="strategy-label">🌱 중장기 전략</div>
+        <div style="font-size:12px;color:#334155;line-height:1.7">${r.longStrategy}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">AI 분석 확신도</div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+      <span>확신도</span><b>${r.confidence||70}%</b>
+    </div>
+    <div class="confidence-bar">
+      <div class="confidence-fill" style="width:${r.confidence||70}%"></div>
+    </div>
+  </div>
+
+  ${r.quote ? `<div class="quote-box">"${r.quote}"</div>` : ''}
+
+  <div class="footer">
+    KOSPI INTEL · AI 분석은 투자 참고용이며 투자 손익의 책임은 본인에게 있습니다
+  </div>
+
+  <script>window.onload = function(){ window.print(); }<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (!win) {
+    notify('팝업이 차단됐어요. 팝업 허용 후 다시 시도해주세요', 'warn');
+    incPortAIUsage(); // 차감 취소
+    return;
+  }
+  notify('📄 PDF 저장 창이 열렸어요! 인쇄→PDF로 저장하세요', 'ok');
+}
 // PWA Service Worker + 자동 업데이트 감지
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js?v=12')
