@@ -2239,9 +2239,10 @@ function updateSentimentHistory() {
     hist.push({
       id: n.id,
       date: today,
-      sent: n.sent,
+      sent: n.sent || '중립',      // '긍정'/'부정'/'중립'
       title: (n.title||'').slice(0, 40),
-      impact: n.impactScore || 50,
+      impact: n.impactScore || n.impact || 50,
+      impactScore: n.impactScore || n.impact || 50,
       type: n.type
     });
     MEM.setSentHistory(n.code, hist);
@@ -2366,17 +2367,21 @@ function sentimentMiniChart(code) {
   if (hist.length < 2) return '';
 
   const bars = hist.map(h => {
-    // sent 값 정규화 (pos/긍정/positive → 빨강, neg/부정/negative → 파랑)
-    const s = (h.sent||'').toLowerCase();
-    const isPos = s==='긍정'||s==='pos'||s==='positive'||s==='good';
-    const isNeg = s==='부정'||s==='neg'||s==='negative'||s==='bad';
+    const s = h.sent || '';
+    const isPos = s==='긍정' || s==='pos' || s==='positive';
+    const isNeg = s==='부정' || s==='neg' || s==='negative';
     const color = isPos ? '#E53935' : isNeg ? '#1565C0' : '#94A3B8';
-    const height = Math.max(4, Math.round(((h.impactScore||h.impact||50)) / 100 * 24));
-    return `<div style="width:8px;height:${height}px;background:${color};border-radius:3px;flex-shrink:0;min-height:4px" title="${h.date||''} ${h.sent||''}"></div>`;
+    const imp   = h.impactScore || h.impact || 50;
+    const height = Math.max(6, Math.round(imp / 100 * 28));
+    return `<div style="width:9px;height:${height}px;background:${color};border-radius:3px 3px 0 0;flex-shrink:0" title="${h.date||''} ${s}"></div>`;
   }).join('');
 
-  const posCount = hist.filter(h=>h.sent==='긍정').length;
-  const trend = posCount > hist.length*0.6 ? '📈 긍정우세' : posCount < hist.length*0.4 ? '📉 부정우세' : '↔ 혼조';
+  // 디버그: 히스토리 첫 항목 sent 값 확인
+  if (hist.length > 0 && window._debug) console.log('[Sent] 히스토리 샘플:', hist[0]);
+
+  const posCount = hist.filter(h=>h.sent==='긍정'||h.sent==='pos'||h.sent==='positive').length;
+  const negCount = hist.filter(h=>h.sent==='부정'||h.sent==='neg'||h.sent==='negative').length;
+  const trend = posCount > hist.length*0.6 ? '📈 긍정우세' : negCount > hist.length*0.6 ? '📉 부정우세' : '↔ 혼조';
 
   return `<div style="margin-bottom:8px;padding:8px 10px;background:#F4F6FA;border-radius:10px;border:1px solid #E2E8F4">
     <div style="font-size:10px;color:#4A5A7A;font-weight:700;margin-bottom:5px">📊 뉴스 감성 히스토리 ${trend}</div>
@@ -5647,10 +5652,19 @@ JSON만 응답 (마크다운 없이):
   try {
     const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:800,system:"JSON만 응답",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
-    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
-    S.portfolioAI = JSON.parse(txt);
-    notify('✅ 포트폴리오 분석 완료!', 'ok');
+    const raw  = data.content?.map(c=>c.text||'').join('') || '';
+    // JSON 블록 추출 (```json ... ``` 또는 { ... } 직접)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    const txt = jsonMatch ? jsonMatch[0] : raw.replace(/```json|```/g,'').trim();
+    try {
+      S.portfolioAI = JSON.parse(txt);
+      notify('✅ 포트폴리오 분석 완료!', 'ok');
+    } catch(parseErr) {
+      console.error('[PortfolioAI] JSON 파싱 실패:', parseErr.message, '\n원본:', raw.slice(0,200));
+      throw parseErr; // 폴백으로
+    }
   } catch(e) {
+    console.error('[PortfolioAI] 오류:', e.message);
     // 폴백
     const pnlPct = ((totalCur-totalInvest)/totalInvest*100).toFixed(2);
     const topStock = port.reduce((best,p) => {
@@ -6460,7 +6474,9 @@ Analyze and respond in JSON only (no markdown):
     const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:1000,
       system:"JSON만 응답. 한국어로.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
-    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const raw6 = data.content?.map(c=>c.text||'').join('') || '';
+    const jm6  = raw6.match(/{[\s\S]*}/);
+    const txt  = jm6 ? jm6[0] : raw6.replace(/```json|```/g,'').trim();
     showTradeAnalysisResult(JSON.parse(txt), metrics);
   } catch(e) {
     // 폴백
@@ -6586,7 +6602,9 @@ Evaluate and respond in JSON only:
     const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:800,
       system:"JSON만 응답. 한국어로.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
-    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const raw3 = data.content?.map(c=>c.text||'').join('') || '';
+    const jm3  = raw3.match(/{[\s\S]*}/);
+    const txt  = jm3 ? jm3[0] : raw3.replace(/```json|```/g,'').trim();
     showStrategyEvalResult(JSON.parse(txt));
   } catch(e) {
     const cls = metrics.profitFactor>=1.5&&metrics.winRate>=55?'strong':metrics.profitFactor>=1?'moderate':metrics.winRate>=50?'unstable':'losing';
@@ -6720,7 +6738,9 @@ Analyze and respond in JSON only:
     const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:700,
       system:"JSON만 응답. 한국어로.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
-    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const raw4 = data.content?.map(c=>c.text||'').join('') || '';
+    const jm4  = raw4.match(/{[\s\S]*}/);
+    const txt  = jm4 ? jm4[0] : raw4.replace(/```json|```/g,'').trim();
     showPortfolioImproveResult(JSON.parse(txt));
   } catch(e) {
     showPortfolioImproveResult({
@@ -6819,7 +6839,9 @@ Respond in JSON only:
     const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:600,
       system:"JSON만 응답. 한국어로.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
-    const txt  = data.content?.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    const raw5 = data.content?.map(c=>c.text||'').join('') || '';
+    const jm5  = raw5.match(/{[\s\S]*}/);
+    const txt  = jm5 ? jm5[0] : raw5.replace(/```json|```/g,'').trim();
     showRiskMonitorResult(JSON.parse(txt));
   } catch(e) {
     const status = recentLosses>=4?'danger':recentLosses>=3?'caution':'safe';
