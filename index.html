@@ -5862,17 +5862,20 @@ ${items.map(i => [
 }`;
 
   try {
-    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:2000,system:"JSON만 응답. 다른 텍스트 없이 JSON 객체만 출력",messages:[{role:"user",content:prompt}]});
+    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:2000,system:"반드시 순수 JSON만 출력. 설명문구, 마크다운, 백틱(```) 절대 사용금지. { 로 시작해서 } 로 끝나는 JSON만.",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
     const raw  = data.content?.map(c=>c.text||'').join('') || '';
 
-    // JSON 추출
+    // JSON 추출 (강화된 파싱)
     let r;
     try {
-      const m = raw.match(/\{[\s\S]*\}/);
-      r = JSON.parse(m ? m[0] : raw);
+      // 백틱 코드블록 제거
+      let cleaned = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+      const m = cleaned.match(/\{[\s\S]*\}/);
+      r = JSON.parse(m ? m[0] : cleaned);
     } catch(e) {
-      throw new Error('AI 응답 파싱 실패');
+      console.error('[포트폴리오AI] 파싱실패 raw:', raw?.slice(0,300));
+      throw new Error('AI 응답 파싱 실패: ' + raw?.slice(0,100));
     }
 
     S._portAILoading = false;
