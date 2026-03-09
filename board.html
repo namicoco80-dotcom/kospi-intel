@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="게시판">
+<meta name="theme-color" content="#1565C0">
+<title>BOARD — GitHub Issues 게시판</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=JetBrains+Mono:wght@500;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg:    #F4F6FA;
+  --bg2:   #FFFFFF;
+  --bg3:   #EEF1F8;
+  --card:  #FFFFFF;
+  --bdr:   #E2E8F4;
+  --bdr2:  #C7D4F0;
+  --ink:   #0F1D3A;
+  --ink2:  #4A5A7A;
+  --ink3:  #94A3B8;
+  --blue:  #1565C0;
+  --blue2: #1976D2;
+  --sky:   #0288D1;
+  --red:   #E53935;
+  --green: #2E7D32;
+  --amber: #F57F17;
+  --mono:  'JetBrains Mono', monospace;
+  --body:  'Noto Sans KR', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg3)}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+button{cursor:pointer;font-family:var(--body)}
+input,textarea,select{font-family:var(--body)}
+a{color:var(--blue);text-decoration:none}
+
+/* ── 레이아웃 ── */
+#app{max-width:680px;margin:0 auto;min-height:100vh;padding-bottom:80px}
+
+/* ── 헤더 ── */
+.hdr{
+  background:var(--card);border-bottom:2px solid var(--blue);
+  padding:14px 18px 12px;position:sticky;top:0;z-index:60;
+  box-shadow:0 2px 12px rgba(21,101,192,.08);
+}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--blue),var(--sky));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.brand-text{}
+.brand-name{font-size:16px;font-weight:900;color:var(--ink);line-height:1.1}
+.brand-sub{font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:1px}
+.hdr-btns{display:flex;gap:6px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:9px;font-size:13px;font-weight:700;border:none;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue2)}
+.btn-ghost{background:var(--bg3);color:var(--ink2);border:1.5px solid var(--bdr)}
+.btn-ghost:hover{border-color:var(--bdr2);background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{background:#FEE2E2;color:var(--red);border:1.5px solid #FECACA}
+.btn-danger:hover{background:#FEE2E2}
+
+/* ── 탭 ── */
+.tabs{display:flex;gap:2px;overflow-x:auto;padding-bottom:1px}
+.tab{flex-shrink:0;padding:7px 14px;background:none;border:none;border-radius:7px;font-size:13px;font-weight:700;color:var(--ink3);transition:all .15s}
+.tab.on{background:rgba(21,101,192,.1);color:var(--blue)}
+
+/* ── 검색/필터 바 ── */
+.filter-bar{padding:12px 18px;background:var(--card);border-bottom:1px solid var(--bdr);display:flex;gap:8px;align-items:center}
+.search-wrap{flex:1;display:flex;align-items:center;gap:8px;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:10px;padding:0 13px;transition:border-color .2s}
+.search-wrap:focus-within{border-color:var(--blue)}
+.search-wrap input{background:none;border:none;outline:none;color:var(--ink);font-size:14px;flex:1;padding:9px 0}
+.search-wrap input::placeholder{color:var(--ink3)}
+.sort-sel{background:var(--bg3);border:1.5px solid var(--bdr);border-radius:9px;padding:8px 10px;font-size:13px;color:var(--ink2);outline:none}
+
+/* ── 게시글 목록 ── */
+.post-list{padding:12px 18px;display:flex;flex-direction:column;gap:8px}
+.post-card{
+  background:var(--card);border:1.5px solid var(--bdr);border-radius:14px;
+  padding:14px 16px;cursor:pointer;transition:all .18s;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.post-card:hover{border-color:var(--bdr2);box-shadow:0 4px 16px rgba(21,101,192,.1);transform:translateY(-1px)}
+.post-card.pinned{border-color:rgba(21,101,192,.4);background:rgba(21,101,192,.03)}
+.post-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.post-pin{font-size:13px;flex-shrink:0;margin-top:1px}
+.post-meta-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px}
+.label-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;border:1.5px solid}
+.post-title{font-size:15px;font-weight:800;color:var(--ink);line-height:1.45;flex:1}
+.post-body-preview{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.post-author{display:flex;align-items:center;gap:6px}
+.avatar{width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--bdr);flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.author-name{font-size:12px;color:var(--ink3);font-weight:600}
+.post-stats{display:flex;align-items:center;gap:10px}
+.stat-item{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--ink3);font-family:var(--mono)}
+
+/* ── 빈 상태 ── */
+.empty{text-align:center;padding:60px 20px;color:var(--ink3)}
+.empty-icon{font-size:44px;margin-bottom:13px}
+.empty-title{font-size:15px;font-weight:700;color:var(--ink2);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--ink3);line-height:1.6}
+
+/* ── 게시글 상세 ── */
+.detail-wrap{padding:14px 18px}
+.detail-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink3);background:none;border:none;margin-bottom:14px;padding:0}
+.detail-back:hover{color:var(--blue)}
+.detail-card{background:var(--card);border:1.5px solid var(--bdr);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:14px}
+.detail-hdr{padding:18px 18px 14px;border-bottom:1px solid var(--bdr)}
+.detail-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.detail-title{font-size:20px;font-weight:900;color:var(--ink);line-height:1.4;margin-bottom:12px}
+.detail-author-row{display:flex;align-items:center;justify-content:space-between}
+.detail-author{display:flex;align-items:center;gap:8px}
+.avatar-lg{width:30px;height:30px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--bdr);overflow:hidden}
+.avatar-lg img{width:100%;height:100%;object-fit:cover}
+.author-info{}
+.author-name-lg{font-size:13px;font-weight:700;color:var(--ink2)}
+.author-date{font-size:11px;color:var(--ink3);font-family:var(--mono);margin-top:1px}
+.detail-actions{display:flex;gap:6px}
+.detail-body{padding:18px;font-size:14px;color:var(--ink2);line-height:1.85;white-space:pre-wrap;word-break:break-word}
+.detail-body a{color:var(--blue)}
+.detail-stats{padding:12px 18px;border-top:1px solid var(--bdr);background:var(--bg3);display:flex;gap:14px}
+
+/* ── 댓글 ── */
+.comments-section{background:var(--card);border:1.5px solid var(--bdr);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.comments-hdr{padding:14px 18px;border-bottom:1px solid var(--bdr);font-size:14px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px}
+.comments-hdr .cnt{font-family:var(--mono);font-size:13px;color:var(--blue);background:rgba(21,101,192,.1);padding:2px 8px;border-radius:6px}
+.comment-item{padding:14px 18px;border-bottom:1px solid var(--bdr)}
+.comment-item:last-child{border-bottom:none}
+.comment-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.comment-author{display:flex;align-items:center;gap:7px}
+.comment-body{font-size:13px;color:var(--ink2);line-height:1.75;white-space:pre-wrap;word-break:break-word}
+.comment-write{padding:14px 18px;border-top:1px solid var(--bdr);background:var(--bg3)}
+.comment-textarea{width:100%;background:var(--card);border:1.5px solid var(--bdr);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--ink);outline:none;resize:vertical;min-height:80px;line-height:1.6;transition:border-color .2s}
+.comment-textarea:focus{border-color:var(--blue)}
+.comment-footer{display:flex;justify-content:flex-end;margin-top:8px}
+
+/* ── 글쓰기 폼 ── */
+.write-wrap{padding:14px 18px}
+.write-card{background:var(--card);border:1.5px solid var(--bdr);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.write-hdr{padding:16px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px}
+.write-hdr-title{font-size:16px;font-weight:900;color:var(--ink)}
+.write-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.form-group{}
+.form-label{font-size:12px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-input{width:100%;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--ink);outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--blue);background:var(--card)}
+.form-select{width:100%;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--ink);outline:none}
+.form-textarea{width:100%;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--ink);outline:none;resize:vertical;min-height:160px;line-height:1.7;transition:border-color .2s}
+.form-textarea:focus{border-color:var(--blue);background:var(--card)}
+.form-hint{font-size:11px;color:var(--ink3);margin-top:5px;line-height:1.5}
+.write-footer{padding:14px 18px;border-top:1px solid var(--bdr);background:var(--bg3);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.char-count{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+
+/* ── 설정 ── */
+.settings-wrap{padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.settings-card{background:var(--card);border:1.5px solid var(--bdr);border-radius:14px;overflow:hidden}
+.settings-section-title{padding:13px 16px;border-bottom:1px solid var(--bdr);font-size:13px;font-weight:800;color:var(--ink);background:var(--bg3)}
+.settings-row{padding:13px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.settings-row:last-child{border-bottom:none}
+.settings-label{font-size:13px;font-weight:700;color:var(--ink)}
+.settings-sub{font-size:11px;color:var(--ink3);margin-top:2px;line-height:1.5}
+.settings-input{flex:1;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--ink);outline:none;max-width:280px;font-family:var(--mono)}
+.settings-input:focus{border-color:var(--blue)}
+.settings-input.secret{letter-spacing:2px}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-dot.ok{background:var(--green)}
+.status-dot.err{background:var(--red)}
+.status-dot.none{background:var(--ink3)}
+
+/* ── 토스트 알림 ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  border-radius:22px;padding:10px 20px;z-index:300;
+  font-size:13px;font-weight:700;box-shadow:0 8px 28px rgba(0,0,0,.18);
+  white-space:nowrap;animation:slideUp .3s ease;border:1.5px solid;
+}
+.toast.ok{background:#E8F5E9;border-color:#A5D6A7;color:var(--green)}
+.toast.err{background:#FFEBEE;border-color:#EF9A9A;color:var(--red)}
+.toast.info{background:rgba(21,101,192,.1);border-color:rgba(21,101,192,.3);color:var(--blue)}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ── 로더 ── */
+.loader{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--ink3);font-size:14px}
+.spinner{width:20px;height:20px;border:2.5px solid var(--bdr);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── 페이지네이션 ── */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 18px}
+.page-btn{padding:7px 13px;border-radius:8px;font-size:13px;font-weight:700;border:1.5px solid var(--bdr);background:var(--card);color:var(--ink2);transition:all .15s}
+.page-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.page-info{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+
+/* ── 라벨 색상 정의 ── */
+.lbl-notice  {background:rgba(21,101,192,.1);color:#1565C0;border-color:rgba(21,101,192,.3)}
+.lbl-question{background:rgba(245,127,23,.1); color:#F57F17;border-color:rgba(245,127,23,.3)}
+.lbl-free    {background:rgba(46,125,50,.1);  color:#2E7D32;border-color:rgba(46,125,50,.3)}
+.lbl-bug     {background:rgba(229,57,53,.1);  color:#E53935;border-color:rgba(229,57,53,.3)}
+.lbl-idea    {background:rgba(92,107,192,.1); color:#5C6BC0;border-color:rgba(92,107,192,.3)}
+.lbl-default {background:var(--bg3);          color:var(--ink3);border-color:var(--bdr)}
+
+/* ── 모바일 하단 여백 ── */
+@media(max-width:480px){
+  .hdr{padding:11px 14px 10px}
+  .post-list,.detail-wrap,.write-wrap,.settings-wrap{padding:10px 14px}
+  .filter-bar{padding:10px 14px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════
+   ① 설정 — GitHub 레포 정보
+   → Settings 탭에서 직접 입력하거나
+     아래 기본값을 수정해서 사용
+══════════════════════════════════════════ */
+const CFG_KEY = 'board_config_v1';
+
+function loadCfg() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+    return {
+      owner:  saved.owner  || '',
+      repo:   saved.repo   || '',
+      token:  saved.token  || '',
+      // 게시판에 사용할 라벨 목록 (GitHub에 미리 생성 필요)
+      labels: saved.labels || ['공지','질문','자유','아이디어','버그'],
+      perPage: saved.perPage || 20,
+    };
+  } catch(e) { return {owner:'',repo:'',token:'',labels:['공지','질문','자유','아이디어','버그'],perPage:20}; }
+}
+function saveCfg(cfg) {
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+let CFG = loadCfg();
+
+/* ══════════════════════════════════════════
+   ② GitHub API 헬퍼
+══════════════════════════════════════════ */
+const API = 'https://api.github.com';
+
+function ghHeaders(withAuth = false) {
+  const h = { 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' };
+  if (withAuth && CFG.token) h['Authorization'] = `token ${CFG.token}`;
+  return h;
+}
+
+function repoBase() {
+  return `${API}/repos/${CFG.owner}/${CFG.repo}`;
+}
+
+// 라벨 → CSS 클래스
+const LABEL_CLASS = {
+  '공지':'lbl-notice','notice':'lbl-notice',
+  '질문':'lbl-question','question':'lbl-question',
+  '자유':'lbl-free','free':'lbl-free',
+  '버그':'lbl-bug','bug':'lbl-bug',
+  '아이디어':'lbl-idea','idea':'lbl-idea',
+};
+function labelClass(name) {
+  return LABEL_CLASS[name] || 'lbl-default';
+}
+
+// 날짜 포맷
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60)   return '방금 전';
+  if (diff < 3600) return `${Math.floor(diff/60)}분 전`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}시간 전`;
+  if (diff < 86400*7) return `${Math.floor(diff/86400)}일 전`;
+  return d.toLocaleDateString('ko-KR', {year:'numeric',month:'short',day:'numeric'});
+}
+
+// 본문 미리보기 (마크다운 기본 제거)
+function stripMd(txt) {
+  return (txt||'').replace(/#{1,6}\s/g,'').replace(/\*\*/g,'').replace(/\*/g,'').replace(/`/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').trim();
+}
+
+/* API 호출 */
+async function ghFetch(url, opts = {}) {
+  const r = await fetch(url, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${r.status}`);
+  }
+  // Link 헤더에서 다음 페이지 파악
+  const link = r.headers.get('Link') || '';
+  const data = await r.json();
+  return { data, link };
+}
+
+/* ══════════════════════════════════════════
+   ③ 상태
+══════════════════════════════════════════ */
+let S = {
+  view:   'list',   // list | detail | write | settings
+  tab:    '전체',
+  q:      '',
+  sort:   'created', // created | updated | comments
+  page:   1,
+  hasNext: false,
+  hasPrev: false,
+
+  posts:    [],
+  total:    0,
+  loading:  false,
+
+  detail:   null,
+  comments: [],
+  commLoading: false,
+
+  // 글쓰기
+  form: { title:'', body:'', label:'' },
+
+  // 댓글 입력
+  commentDraft: '',
+
+  // 설정 임시값
+  cfgDraft: { ...CFG },
+
+  // 알림
+  toast: null,
+  toastTimer: null,
+};
+
+/* ══════════════════════════════════════════
+   ④ API 액션
+══════════════════════════════════════════ */
+
+/* 게시글 목록 */
+async function fetchPosts() {
+  if (!CFG.owner || !CFG.repo) { render(); return; }
+  S.loading = true; render();
+  try {
+    let url = `${repoBase()}/issues?state=open&per_page=${CFG.perPage}&page=${S.page}&sort=${S.sort}&direction=desc`;
+    if (S.tab !== '전체') url += `&labels=${encodeURIComponent(S.tab)}`;
+    const { data, link } = await ghFetch(url, { headers: ghHeaders() });
+    S.posts   = data;
+    S.hasNext = link.includes('rel="next"');
+    S.hasPrev = S.page > 1;
+  } catch(e) {
+    toast(`목록 로드 실패: ${e.message}`, 'err');
+  }
+  S.loading = false; render();
+}
+
+/* 게시글 상세 */
+async function fetchDetail(number) {
+  S.loading = true; render();
+  try {
+    const { data } = await ghFetch(`${repoBase()}/issues/${number}`, { headers: ghHeaders() });
+    S.detail = data;
+    S.view = 'detail';
+    fetchComments(number);
+  } catch(e) {
+    toast(`상세 로드 실패: ${e.message}`, 'err');
+  }
+  S.loading = false; render();
+}
+
+/* 댓글 목록 */
+async function fetchComments(number) {
+  S.commLoading = true; render();
+  try {
+    const { data } = await ghFetch(`${repoBase()}/issues/${number}/comments?per_page=100`, { headers: ghHeaders() });
+    S.comments = data;
+  } catch(e) {
+    toast(`댓글 로드 실패: ${e.message}`, 'err');
+  }
+  S.commLoading = false; render();
+}
+
+/* 글 작성 */
+async function submitPost() {
+  if (!CFG.token) { toast('토큰이 없습니다. 설정에서 입력해주세요.', 'err'); return; }
+  const { title, body, label } = S.form;
+  if (!title.trim()) { toast('제목을 입력해주세요.', 'err'); return; }
+  if (!body.trim())  { toast('내용을 입력해주세요.', 'err'); return; }
+  S.loading = true; render();
+  try {
+    const payload = { title: title.trim(), body: body.trim() };
+    if (label) payload.labels = [label];
+    const { data } = await ghFetch(`${repoBase()}/issues`, {
+      method: 'POST',
+      headers: ghHeaders(true),
+      body: JSON.stringify(payload),
+    });
+    S.form = { title:'', body:'', label:'' };
+    toast('글이 등록되었습니다! 🎉', 'ok');
+    S.view = 'list';
+    S.page = 1;
+    await fetchPosts();
+  } catch(e) {
+    toast(`등록 실패: ${e.message}`, 'err');
+  }
+  S.loading = false; render();
+}
+
+/* 댓글 작성 */
+async function submitComment() {
+  if (!CFG.token)           { toast('토큰이 없습니다.', 'err'); return; }
+  if (!S.commentDraft.trim()) { toast('댓글을 입력해주세요.', 'err'); return; }
+  const number = S.detail?.number;
+  if (!number) return;
+  const body = S.commentDraft.trim();
+  S.commentDraft = '';
+  try {
+    await ghFetch(`${repoBase()}/issues/${number}/comments`, {
+      method: 'POST',
+      headers: ghHeaders(true),
+      body: JSON.stringify({ body }),
+    });
+    toast('댓글이 등록되었습니다.', 'ok');
+    await fetchComments(number);
+  } catch(e) {
+    toast(`댓글 실패: ${e.message}`, 'err');
+  }
+}
+
+/* 글 닫기(삭제 대신 — GitHub API는 Issue 삭제 불가) */
+async function closePost(number) {
+  if (!CFG.token) { toast('토큰이 없습니다.', 'err'); return; }
+  if (!confirm('이 게시글을 닫으시겠습니까? (복구 가능)')) return;
+  try {
+    await ghFetch(`${repoBase()}/issues/${number}`, {
+      method: 'PATCH',
+      headers: ghHeaders(true),
+      body: JSON.stringify({ state: 'closed' }),
+    });
+    toast('게시글이 닫혔습니다.', 'ok');
+    S.view = 'list';
+    await fetchPosts();
+  } catch(e) {
+    toast(`닫기 실패: ${e.message}`, 'err');
+  }
+}
+
+/* 레포 연결 테스트 */
+async function testConnection() {
+  const { owner, repo, token } = S.cfgDraft;
+  if (!owner || !repo) { toast('Owner와 Repo를 입력해주세요.', 'err'); return; }
+  toast('연결 테스트 중...', 'info');
+  try {
+    const h = { 'Accept': 'application/vnd.github.v3+json' };
+    if (token) h['Authorization'] = `token ${token}`;
+    const r = await fetch(`${API}/repos/${owner}/${repo}`, { headers: h });
+    const d = await r.json();
+    if (r.ok) {
+      toast(`✅ 연결 성공! "${d.full_name}" (${d.private ? '비공개' : '공개'})`, 'ok');
+    } else {
+      toast(`❌ ${d.message}`, 'err');
+    }
+  } catch(e) {
+    toast(`연결 실패: ${e.message}`, 'err');
+  }
+}
+
+/* 설정 저장 */
+function saveSettings() {
+  CFG = { ...S.cfgDraft };
+  saveCfg(CFG);
+  S.view = 'list';
+  S.page = 1;
+  toast('설정 저장 완료!', 'ok');
+  fetchPosts();
+}
+
+/* 토스트 */
+function toast(msg, type = 'info') {
+  if (S.toastTimer) clearTimeout(S.toastTimer);
+  S.toast = { msg, type };
+  render();
+  S.toastTimer = setTimeout(() => { S.toast = null; render(); }, 3500);
+}
+
+/* ══════════════════════════════════════════
+   ⑤ 렌더링
+══════════════════════════════════════════ */
+
+function labelBadge(labels) {
+  if (!labels || !labels.length) return '';
+  return labels.map(l =>
+    `<span class="label-badge ${labelClass(l.name)}">${l.name}</span>`
+  ).join('');
+}
+
+function avatarEl(user, size = 'sm') {
+  const cls = size === 'lg' ? 'avatar-lg' : 'avatar';
+  const img = user?.avatar_url ? `<img src="${user.avatar_url}" alt="${user.login}" loading="lazy">` : '';
+  return `<div class="${cls}">${img}</div>`;
+}
+
+/* ── 목록 뷰 ── */
+function renderList() {
+  const cfg_ok = CFG.owner && CFG.repo;
+
+  const tabs = ['전체', ...CFG.labels];
+  const tabsHtml = tabs.map(t =>
+    `<button class="tab${S.tab===t?' on':''}" onclick="setTab('${t}')">${t}</button>`
+  ).join('');
+
+  const filterBar = `
+    <div class="filter-bar">
+      <div class="search-wrap">
+        <span style="color:var(--ink3);font-size:16px">🔍</span>
+        <input placeholder="검색..." value="${S.q}" id="search-inp" oninput="S.q=this.value">
+      </div>
+      <select class="sort-sel" onchange="setSort(this.value)">
+        <option value="created"  ${S.sort==='created'  ?'selected':''}>최신순</option>
+        <option value="updated"  ${S.sort==='updated'  ?'selected':''}>업데이트순</option>
+        <option value="comments" ${S.sort==='comments' ?'selected':''}>댓글순</option>
+      </select>
+    </div>`;
+
+  let bodyHtml = '';
+
+  if (!cfg_ok) {
+    bodyHtml = `
+      <div class="empty">
+        <div class="empty-icon">⚙️</div>
+        <div class="empty-title">설정이 필요합니다</div>
+        <div class="empty-sub">우측 상단 설정 버튼을 눌러<br>GitHub Owner와 Repo를 입력해주세요.</div>
+        <br>
+        <button class="btn btn-primary" onclick="setView('settings')" style="margin:0 auto">설정하기</button>
+      </div>`;
+  } else if (S.loading) {
+    bodyHtml = `<div class="loader"><div class="spinner"></div> 불러오는 중...</div>`;
+  } else {
+    const filtered = S.q
+      ? S.posts.filter(p => p.title.includes(S.q) || (p.body||'').includes(S.q))
+      : S.posts;
+
+    if (!filtered.length) {
+      bodyHtml = `
+        <div class="empty">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">${S.q ? '검색 결과가 없습니다' : '게시글이 없습니다'}</div>
+          <div class="empty-sub">${S.q ? `"${S.q}"에 대한 결과 없음` : '첫 글을 작성해보세요!'}</div>
+        </div>`;
+    } else {
+      const cards = filtered.map(p => {
+        const isPinned = (p.labels||[]).some(l => l.name === '공지' || l.name === 'notice');
+        const preview = stripMd(p.body);
+        return `
+          <div class="post-card${isPinned?' pinned':''}" onclick="openDetail(${p.number})">
+            <div class="post-top">
+              ${isPinned ? '<span class="post-pin">📌</span>' : ''}
+              <div style="flex:1">
+                <div class="post-meta-row">
+                  ${labelBadge(p.labels)}
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">#${p.number}</span>
+                </div>
+                <div class="post-title">${escHtml(p.title)}</div>
+              </div>
+            </div>
+            ${preview ? `<div class="post-body-preview">${escHtml(preview)}</div>` : ''}
+            <div class="post-footer">
+              <div class="post-author">
+                ${avatarEl(p.user)}
+                <span class="author-name">${p.user?.login || '익명'}</span>
+                <span style="color:var(--ink3);font-size:11px">·</span>
+                <span style="font-size:12px;color:var(--ink3)">${fmtDate(p.created_at)}</span>
+              </div>
+              <div class="post-stats">
+                ${p.comments > 0 ? `<span class="stat-item">💬 ${p.comments}</span>` : ''}
+                ${p.reactions?.total_count > 0 ? `<span class="stat-item">❤️ ${p.reactions.total_count}</span>` : ''}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      const pagination = `
+        <div class="pagination">
+          <button class="page-btn" onclick="changePage(-1)" ${!S.hasPrev?'disabled':''}>← 이전</button>
+          <span class="page-info">페이지 ${S.page}</span>
+          <button class="page-btn" onclick="changePage(1)" ${!S.hasNext?'disabled':''}>다음 →</button>
+        </div>`;
+
+      bodyHtml = `<div class="post-list">${cards}</div>${pagination}`;
+    }
+  }
+
+  return `
+    <div class="hdr">
+      <div class="hdr-top">
+        <div class="brand">
+          <div class="brand-icon">📋</div>
+          <div class="brand-text">
+            <div class="brand-name">BOARD</div>
+            <div class="brand-sub">${CFG.owner && CFG.repo ? `${CFG.owner}/${CFG.repo}` : 'GitHub Issues 게시판'}</div>
+          </div>
+        </div>
+        <div class="hdr-btns">
+          ${CFG.token ? `<button class="btn btn-primary btn-sm" onclick="setView('write')">✏️ 글쓰기</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="setView('settings')">⚙️</button>
+          <button class="btn btn-ghost btn-sm" onclick="refresh()">🔄</button>
+        </div>
+      </div>
+      <div class="tabs">${tabsHtml}</div>
+    </div>
+    ${filterBar}
+    ${bodyHtml}`;
+}
+
+/* ── 상세 뷰 ── */
+function renderDetail() {
+  const p = S.detail;
+  if (!p) return `<div class="loader"><div class="spinner"></div></div>`;
+
+  const canClose = !!CFG.token;
+
+  const commentsList = S.commLoading
+    ? `<div class="loader"><div class="spinner"></div> 댓글 로딩중...</div>`
+    : S.comments.length === 0
+      ? `<div style="padding:20px 18px;text-align:center;color:var(--ink3);font-size:13px">첫 댓글을 남겨보세요!</div>`
+      : S.comments.map(c => `
+          <div class="comment-item">
+            <div class="comment-top">
+              <div class="comment-author">
+                ${avatarEl(c.user)}
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:var(--ink2)">${c.user?.login || '익명'}</div>
+                  <div style="font-size:11px;color:var(--ink3);font-family:var(--mono)">${fmtDate(c.created_at)}</div>
+                </div>
+              </div>
+            </div>
+            <div class="comment-body">${escHtml(c.body || '')}</div>
+          </div>`
+        ).join('');
+
+  const commentWrite = CFG.token ? `
+    <div class="comment-write">
+      <textarea class="comment-textarea" placeholder="댓글을 입력하세요..." id="comment-inp"
+        oninput="S.commentDraft=this.value">${escHtml(S.commentDraft)}</textarea>
+      <div class="comment-footer">
+        <button class="btn btn-primary btn-sm" onclick="submitComment()">댓글 등록</button>
+      </div>
+    </div>` : `
+    <div style="padding:13px 18px;text-align:center;font-size:12px;color:var(--ink3)">
+      댓글 작성은 토큰 설정 후 가능합니다.
+    </div>`;
+
+  return `
+    <div class="hdr">
+      <div class="hdr-top">
+        <div class="brand">
+          <div class="brand-icon">📋</div>
+          <div class="brand-text">
+            <div class="brand-name">BOARD</div>
+            <div class="brand-sub">${CFG.owner}/${CFG.repo}</div>
+          </div>
+        </div>
+        <div class="hdr-btns">
+          <button class="btn btn-ghost btn-sm" onclick="goList()">← 목록</button>
+          ${canClose ? `<button class="btn btn-danger btn-sm" onclick="closePost(${p.number})">닫기</button>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="detail-wrap">
+      <div class="detail-card">
+        <div class="detail-hdr">
+          <div class="detail-meta">
+            ${labelBadge(p.labels)}
+            <span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">#${p.number}</span>
+          </div>
+          <div class="detail-title">${escHtml(p.title)}</div>
+          <div class="detail-author-row">
+            <div class="detail-author">
+              ${avatarEl(p.user, 'lg')}
+              <div class="author-info">
+                <div class="author-name-lg">${p.user?.login || '익명'}</div>
+                <div class="author-date">${fmtDate(p.created_at)}</div>
+              </div>
+            </div>
+            <a href="${p.html_url}" target="_blank" class="btn btn-ghost btn-sm">GitHub↗</a>
+          </div>
+        </div>
+        <div class="detail-body">${escHtml(p.body || '(내용 없음)')}</div>
+        <div class="detail-stats">
+          <span class="stat-item">💬 댓글 ${p.comments}</span>
+          <span class="stat-item" style="color:var(--ink3);font-size:12px">${new Date(p.created_at).toLocaleString('ko-KR')}</span>
+          ${p.updated_at !== p.created_at ? `<span class="stat-item" style="color:var(--ink3);font-size:12px">수정: ${fmtDate(p.updated_at)}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="comments-section">
+        <div class="comments-hdr">
+          💬 댓글 <span class="cnt">${p.comments}</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="fetchComments(${p.number})">🔄</button>
+        </div>
+        ${commentsList}
+        ${commentWrite}
+      </div>
+    </div>`;
+}
+
+/* ── 글쓰기 뷰 ── */
+function renderWrite() {
+  const labelOptions = CFG.labels.map(l =>
+    `<option value="${l}" ${S.form.label===l?'selected':''}>${l}</option>`
+  ).join('');
+  const bodyLen = (S.form.body || '').length;
+
+  return `
+    <div class="hdr">
+      <div class="hdr-top">
+        <div class="brand">
+          <div class="brand-icon">✏️</div>
+          <div class="brand-text">
+            <div class="brand-name">글쓰기</div>
+            <div class="brand-sub">${CFG.owner}/${CFG.repo}</div>
+          </div>
+        </div>
+        <div class="hdr-btns">
+          <button class="btn btn-ghost btn-sm" onclick="goList()">← 취소</button>
+        </div>
+      </div>
+    </div>
+    <div class="write-wrap">
+      <div class="write-card">
+        <div class="write-hdr">
+          <div class="write-hdr-title">새 게시글 작성</div>
+        </div>
+        <div class="write-body">
+          <div class="form-group">
+            <div class="form-label">카테고리</div>
+            <select class="form-select" onchange="S.form.label=this.value">
+              <option value="">선택 안함</option>
+              ${labelOptions}
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">제목 <span style="color:var(--red)">*</span></div>
+            <input class="form-input" placeholder="제목을 입력하세요" value="${escHtml(S.form.title)}"
+              id="write-title" oninput="S.form.title=this.value" maxlength="200">
+          </div>
+          <div class="form-group">
+            <div class="form-label">내용 <span style="color:var(--red)">*</span></div>
+            <textarea class="form-textarea" placeholder="내용을 입력하세요&#10;&#10;Markdown 형식을 지원합니다."
+              id="write-body" oninput="S.form.body=this.value;updateCharCount()">${escHtml(S.form.body)}</textarea>
+            <div class="form-hint">GitHub Issues에 저장됩니다. Markdown 문법 사용 가능.</div>
+          </div>
+        </div>
+        <div class="write-footer">
+          <span class="char-count" id="char-count">${bodyLen} 자</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="goList()">취소</button>
+            <button class="btn btn-primary" onclick="submitPost()" ${S.loading?'disabled':''}>
+              ${S.loading ? '등록 중...' : '✅ 등록'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── 설정 뷰 ── */
+function renderSettings() {
+  const { owner, repo, token, labels, perPage } = S.cfgDraft;
+  const isConfigured = CFG.owner && CFG.repo;
+  const tokenStatus = token
+    ? `<span class="status-dot ok"></span><span style="font-size:12px;color:var(--green)">입력됨</span>`
+    : `<span class="status-dot none"></span><span style="font-size:12px;color:var(--ink3)">미입력 (읽기전용)</span>`;
+
+  return `
+    <div class="hdr">
+      <div class="hdr-top">
+        <div class="brand">
+          <div class="brand-icon">⚙️</div>
+          <div class="brand-text">
+            <div class="brand-name">설정</div>
+            <div class="brand-sub">GitHub 연동 구성</div>
+          </div>
+        </div>
+        <div class="hdr-btns">
+          ${isConfigured ? `<button class="btn btn-ghost btn-sm" onclick="goList()">← 취소</button>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="settings-wrap">
+
+      <!-- GitHub 레포 설정 -->
+      <div class="settings-card">
+        <div class="settings-section-title">📂 GitHub 레포지토리</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Owner</div>
+            <div class="settings-sub">GitHub 계정명 또는 조직명</div>
+          </div>
+          <input class="settings-input" placeholder="namicoco80-dotcom"
+            value="${escHtml(owner)}" oninput="S.cfgDraft.owner=this.value" spellcheck="false">
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Repository</div>
+            <div class="settings-sub">게시판으로 사용할 레포 이름</div>
+          </div>
+          <input class="settings-input" placeholder="board"
+            value="${escHtml(repo)}" oninput="S.cfgDraft.repo=this.value" spellcheck="false">
+        </div>
+        <div class="settings-row">
+          <div style="flex:1">
+            <button class="btn btn-ghost btn-sm" onclick="testConnection()">🔌 연결 테스트</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 토큰 설정 -->
+      <div class="settings-card">
+        <div class="settings-section-title">🔑 Personal Access Token (쓰기 권한)</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">PAT</div>
+            <div class="settings-sub">Settings → Developer settings → Tokens<br>권한: <code>public_repo</code> 또는 <code>repo</code></div>
+          </div>
+        </div>
+        <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <input class="settings-input secret" style="max-width:100%;width:100%" 
+            type="password" placeholder="ghp_xxxxxxxxxxxx"
+            value="${escHtml(token)}" oninput="S.cfgDraft.token=this.value" spellcheck="false">
+          <div style="display:flex;align-items:center;gap:6px">${tokenStatus}</div>
+          <div style="font-size:11px;color:var(--ink3);line-height:1.6">
+            ⚠️ 토큰은 localStorage에만 저장됩니다. 공용 기기에서는 주의하세요.<br>
+            토큰이 없으면 글 목록 읽기만 가능합니다. (60req/hr)
+          </div>
+        </div>
+      </div>
+
+      <!-- 게시판 설정 -->
+      <div class="settings-card">
+        <div class="settings-section-title">📋 게시판 설정</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">카테고리 라벨</div>
+            <div class="settings-sub">쉼표로 구분 · GitHub Labels에 미리 생성 필요</div>
+          </div>
+        </div>
+        <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <input class="settings-input" style="max-width:100%;width:100%"
+            placeholder="공지, 질문, 자유, 아이디어, 버그"
+            value="${escHtml((labels||[]).join(', '))}"
+            oninput="S.cfgDraft.labels=this.value.split(',').map(s=>s.trim()).filter(Boolean)">
+          <div style="font-size:11px;color:var(--ink3)">예: 공지, 질문, 자유, 아이디어, 버그</div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">페이지당 게시글 수</div>
+          </div>
+          <select class="settings-input" style="max-width:120px"
+            onchange="S.cfgDraft.perPage=Number(this.value)">
+            ${[10,20,30,50].map(n=>`<option value="${n}" ${perPage===n?'selected':''}>${n}개</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- GitHub Labels 안내 -->
+      <div class="settings-card">
+        <div class="settings-section-title">💡 GitHub Labels 생성 방법</div>
+        <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <div style="font-size:13px;color:var(--ink2);line-height:1.8">
+            1. GitHub 레포 → <strong>Issues</strong> → <strong>Labels</strong><br>
+            2. <strong>New label</strong> 클릭<br>
+            3. 위 카테고리 라벨 이름 그대로 생성<br>
+            <br>
+            <a href="https://github.com/${owner||'owner'}/${repo||'repo'}/labels" target="_blank" class="btn btn-ghost btn-sm">
+              Labels 페이지 열기 ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 저장 버튼 -->
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1;padding:13px" onclick="saveSettings()">
+          💾 설정 저장
+        </button>
+      </div>
+
+    </div>`;
+}
+
+/* ══════════════════════════════════════════
+   ⑥ 유틸
+══════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function updateCharCount() {
+  const el = document.getElementById('char-count');
+  if (el) el.textContent = `${(S.form.body||'').length} 자`;
+}
+
+/* ══════════════════════════════════════════
+   ⑦ 액션
+══════════════════════════════════════════ */
+function setView(v) { S.view = v; render(); }
+function goList()   { S.view = 'list'; render(); }
+
+function setTab(t) {
+  S.tab = t; S.page = 1;
+  fetchPosts();
+}
+function setSort(s) {
+  S.sort = s; S.page = 1;
+  fetchPosts();
+}
+function changePage(d) {
+  S.page = Math.max(1, S.page + d);
+  fetchPosts();
+}
+function refresh() {
+  fetchPosts();
+  toast('새로고침 중...', 'info');
+}
+function openDetail(number) {
+  S.detail = null;
+  S.comments = [];
+  S.commentDraft = '';
+  fetchDetail(number);
+}
+
+/* ══════════════════════════════════════════
+   ⑧ 메인 렌더
+══════════════════════════════════════════ */
+function render() {
+  let html = '';
+  if      (S.view === 'list')     html = renderList();
+  else if (S.view === 'detail')   html = renderDetail();
+  else if (S.view === 'write')    html = renderWrite();
+  else if (S.view === 'settings') html = renderSettings();
+
+  // 토스트
+  if (S.toast) {
+    html += `<div class="toast ${S.toast.type}">${S.toast.msg}</div>`;
+  }
+
+  document.getElementById('app').innerHTML = html;
+
+  // 포커스 복원
+  if (S.view === 'write') {
+    const t = document.getElementById('write-title');
+    const b = document.getElementById('write-body');
+    if (t && !S.form.title) t.focus();
+    if (b && S.form.title && !S.form.body) b.focus();
+  }
+  if (S.view === 'detail') {
+    const ci = document.getElementById('comment-inp');
+    if (ci && S.commentDraft) ci.value = S.commentDraft;
+  }
+}
+
+/* ══════════════════════════════════════════
+   ⑨ 초기화
+══════════════════════════════════════════ */
+function init() {
+  S.cfgDraft = { ...CFG };
+  render();
+  if (CFG.owner && CFG.repo) {
+    fetchPosts();
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
