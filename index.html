@@ -896,6 +896,16 @@ input,select{font-family:var(--body)}
 </style>
   <script>
     const APP_VER = 'v13';
+    // 기존 SW 전부 강제 제거
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+      });
+    }
+    // 캐시 전부 삭제
+    if (window.caches) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
   </script>
 </head>
 <body>
@@ -7513,35 +7523,7 @@ function rBoard() {
 
 
 // PWA Service Worker + 자동 업데이트 감지
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js?v=13')
-    .then(reg => {
-      console.log('[PWA] SW 등록 완료');
-      // 새 SW 발견 시
-      reg.addEventListener('updatefound', () => {
-        const newSW = reg.installing;
-        newSW.addEventListener('statechange', () => {
-          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-            showUpdateToast();
-          }
-        });
-      });
-      // 앱 포커스 시 업데이트 체크 (1시간에 1번만)
-      let _lastSWCheck = 0;
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && Date.now() - _lastSWCheck > 3600000) {
-          _lastSWCheck = Date.now();
-          reg.update();
-        }
-      });
-    })
-    .catch(e => console.warn('[PWA] SW 실패:', e));
-
-  // 새 버전 활성화 메시지 수신
-  navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data?.type === 'NEW_VERSION') showUpdateToast();
-  });
-}
+// SW 비활성화 (캐시 문제로 임시 제거)
 
 function showUpdateToast() {
   // 이미 떠있으면 스킵
