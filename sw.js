@@ -1,4 +1,4 @@
-const CACHE = 'kospi-intel-v12';
+const CACHE = 'kospi-intel-v13';
 const ASSETS = ['./', './index.html', './prices.json', './news.json', './supply.json', './analysis.json'];
 
 self.addEventListener('install', e => {
