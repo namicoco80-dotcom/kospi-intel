@@ -289,8 +289,10 @@ def update_news():
     new_items = fetch_all_news(old_ids)
     log.info(f"신규 수집: {len(new_items)}건")
 
-    today_str = datetime.now(KST).strftime("%Y-%m-%d")
-    kept_old  = [n for n in old_news if n.get("collectedAt", "")[:10] == today_str]
+    # 최근 3일치 뉴스 보존 (하루만 유지하면 장외 실행 시 뉴스 전부 사라짐)
+    from datetime import timedelta
+    cutoff = (datetime.now(KST) - timedelta(days=3)).strftime("%Y-%m-%d")
+    kept_old  = [n for n in old_news if n.get("collectedAt", "")[:10] >= cutoff]
     merged    = new_items + kept_old
 
     seen = set()
@@ -367,3 +369,4 @@ if __name__ == "__main__":
     except Exception as e:
         log.critical(f"치명적 오류: {e}", exc_info=True)
         sys.exit(2)
+
