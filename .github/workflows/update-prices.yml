@@ -25,43 +25,15 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Check market hours
-        id: market_check
-        run: |
-          python3 -c "
-          import os
-          from datetime import datetime, timezone, timedelta
-          KST = timezone(timedelta(hours=9))
-          now = datetime.now(KST)
-          total_min = now.hour * 60 + now.minute
-          is_open = (now.weekday() < 5) and (9*60 <= total_min <= 15*60+35)
-          is_quant = (now.weekday() < 5) and (now.hour == 16 and now.minute < 10)
-          print(f'KST: {now.strftime(\"%Y-%m-%d %H:%M\")} open={is_open} quant={is_quant}')
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f'is_open={str(is_open).lower()}\n')
-              f.write(f'is_quant={str(is_quant).lower()}\n')
-          "
-
       - name: Update prices & supply
-        if: steps.market_check.outputs.is_open == 'true' || github.event_name == 'workflow_dispatch'
         run: python3 scripts/update_prices.py
 
       - name: Update news & AI analysis
-        if: steps.market_check.outputs.is_open == 'true' || github.event_name == 'workflow_dispatch'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python3 scripts/fetch_news.py
 
-      - name: Update quant indicators
-        if: steps.market_check.outputs.is_quant == 'true' || github.event_name == 'workflow_dispatch'
-        run: python3 scripts/update_prices.py --quant
-
-      - name: Update fundamentals & 5day supply
-        if: steps.market_check.outputs.is_quant == 'true' || github.event_name == 'workflow_dispatch'
-        run: python3 scripts/fetch_fundamental.py
-
       - name: Commit and push
-        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
