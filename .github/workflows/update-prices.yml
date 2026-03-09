@@ -25,12 +25,11 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Check market hours (KST 09:00~15:35)
+      - name: Check market hours
         id: market_check
-        env:
-          EVENT_NAME: ${{ github.event_name }}
         run: |
-          python3 - << 'PYEOF'
+          EVENT="${{ github.event_name }}"
+          python3 -c "
           import os
           from datetime import datetime, timezone, timedelta
           KST = timezone(timedelta(hours=9))
@@ -38,12 +37,12 @@ jobs:
           total_min = now.hour * 60 + now.minute
           is_open = (now.weekday() < 5) and (9*60 <= total_min <= 15*60+35)
           is_quant = (now.weekday() < 5) and (now.hour == 16 and now.minute < 10)
-          is_manual = os.environ.get('EVENT_NAME') == 'workflow_dispatch'
-          print(f"KST: {now.strftime('%Y-%m-%d %H:%M')} ìž¥ì¤‘: {is_open} í€€íŠ¸: {is_quant} ìˆ˜ë™: {is_manual}")
+          is_manual = '${EVENT}' == 'workflow_dispatch'
+          print(f'KST: {now.strftime(\"%Y-%m-%d %H:%M\")} open={is_open} quant={is_quant} manual={is_manual}')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"is_open={'true' if (is_open or is_manual) else 'false'}\n")
-              f.write(f"is_quant={'true' if (is_quant or is_manual) else 'false'}\n")
-          PYEOF
+              f.write(f'is_open={str(is_open or is_manual).lower()}\n')
+              f.write(f'is_quant={str(is_quant or is_manual).lower()}\n')
+          "
 
       - name: Update prices & supply
         if: steps.market_check.outputs.is_open == 'true'
@@ -55,11 +54,11 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python3 scripts/fetch_news.py
 
-      - name: Update quant indicators (ìž¥ ë§ˆê° í›„ 1íšŒ)
+      - name: Update quant indicators
         if: steps.market_check.outputs.is_quant == 'true'
         run: python3 scripts/update_prices.py --quant
 
-      - name: Update fundamentals & 5day supply (ìž¥ ë§ˆê° í›„ 1íšŒ)
+      - name: Update fundamentals & 5day supply
         if: steps.market_check.outputs.is_quant == 'true'
         run: python3 scripts/fetch_fundamental.py
 
@@ -69,5 +68,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add prices.json news.json supply.json analysis.json quant.json fundamental.json supply5.json || true
-          git diff --staged --quiet || git commit -m "ðŸ“Š Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
+          git diff --staged --quiet || git commit -m "Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
           git push
