@@ -10,10 +10,11 @@ KOSPI 주가 + 수급 + 퀀트 지표 자동 수집기 (46종목)
 """
 
 import json, logging, sys, time, urllib.request, urllib.error, re
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 BASE_DIR     = Path(__file__).resolve().parent.parent
+KST          = timezone(timedelta(hours=9))  # 한국 표준시
 PRICES_FILE  = BASE_DIR / "prices.json"
 SUPPLY_FILE  = BASE_DIR / "supply.json"
 QUANT_FILE   = BASE_DIR / "quant.json"
@@ -101,7 +102,7 @@ def _entry(price, prev, high, low, open_, vol, src):
         "price": price, "chg": chg, "basePrice": prev or price,
         "high": str(high), "low": str(low), "open": str(open_),
         "vol": _vol(vol), "dataSource": src,
-        "updatedAt": datetime.now().isoformat(timespec="seconds"),
+        "updatedAt": datetime.now(KST).isoformat(timespec="seconds"),
     }
 
 def fetch_naver(code):
@@ -231,7 +232,7 @@ def fetch_supply_naver(code):
     return {
         "foreign": foreign, "inst": inst, "retail": retail,
         "f5": ["+"] * 5, "i5": ["+"] * 5,
-        "updatedAt": datetime.now().isoformat(timespec="seconds"),
+        "updatedAt": datetime.now(KST).isoformat(timespec="seconds"),
         "dataSource": "live" if (foreign != 0 or inst != 0) else "default",
     }
 
@@ -354,7 +355,7 @@ def calc_quant_score(code, price_data, hist_data, supply_data):
             "macdRsi": cond3,
             "momentum": cond_mom,
         },
-        "updatedAt": datetime.now().isoformat(timespec="seconds"),
+        "updatedAt": datetime.now(KST).isoformat(timespec="seconds"),
     }
 
 # ── 메인 실행 ──
@@ -404,7 +405,7 @@ def update_supply():
         else:
             new[code] = {"foreign": 0, "inst": 0, "retail": 0,
                          "f5": ["+"] * 5, "i5": ["+"] * 5,
-                         "updatedAt": datetime.now().isoformat(timespec="seconds"),
+                         "updatedAt": datetime.now(KST).isoformat(timespec="seconds"),
                          "dataSource": "default"}
         time.sleep(0.3)
     if _atomic_save(SUPPLY_FILE, new):
