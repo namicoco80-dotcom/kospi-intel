@@ -38,10 +38,12 @@ jobs:
           total_min = now.hour * 60 + now.minute
           is_open = (now.weekday() < 5) and (9*60 <= total_min <= 15*60+35)
           is_quant = (now.weekday() < 5) and (now.hour == 16 and now.minute < 10)
-          print(f"KST: {now.strftime('%Y-%m-%d %H:%M')} 장중: {is_open} 퀀트: {is_quant}")
+          # 수동 실행 시 무조건 실행
+          is_manual = os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch'
+          print(f"KST: {now.strftime('%Y-%m-%d %H:%M')} 장중: {is_open} 퀀트: {is_quant} 수동: {is_manual}")
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"is_open={'true' if is_open else 'false'}\n")
-              f.write(f"is_quant={'true' if is_quant else 'false'}\n")
+              f.write(f"is_open={'true' if (is_open or is_manual) else 'false'}\n")
+              f.write(f"is_quant={'true' if (is_quant or is_manual) else 'false'}\n")
           PYEOF
 
       - name: Update prices & supply
@@ -70,5 +72,3 @@ jobs:
           git add prices.json news.json supply.json analysis.json quant.json fundamental.json supply5.json || true
           git diff --staged --quiet || git commit -m "📊 Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
           git push
-
-          
