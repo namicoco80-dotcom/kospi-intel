@@ -89,6 +89,11 @@ for code, meta in STOCK_META.items():
             KEYWORD_MAP[kw] = code
 
 NAVER_RSS = {
+    code: f"https://finance.naver.com/item/news_news.naver?code={code}&rss=true&isRss=true"
+    for code in STOCK_META
+}
+# 폴백 URL (구버전)
+NAVER_RSS_FALLBACK = {
     code: f"https://finance.naver.com/item/news.nhn?code={code}&mode=rss"
     for code in STOCK_META
 }
@@ -246,6 +251,9 @@ def fetch_all_news(old_ids):
 
     for code, url in NAVER_RSS.items():
         raws = fetch_rss(url)
+        # 폴백: 새 URL 실패 시 구버전 시도
+        if not raws:
+            raws = fetch_rss(NAVER_RSS_FALLBACK[code])
         added = 0
         for raw in raws[:5]:
             title = raw["title"]
@@ -289,10 +297,9 @@ def update_news():
     new_items = fetch_all_news(old_ids)
     log.info(f"신규 수집: {len(new_items)}건")
 
-    # 최근 3일치 뉴스 보존 (하루만 유지하면 장외 실행 시 뉴스 전부 사라짐)
-    from datetime import timedelta
-    cutoff = (datetime.now(KST) - timedelta(days=3)).strftime("%Y-%m-%d")
-    kept_old  = [n for n in old_news if n.get("collectedAt", "")[:10] >= cutoff]
+    # 최근 3일치 뉴스 보존 (당일만 유지하면 장외 실행 시 뉴스 전부 사라짐)
+    cutoff   = (datetime.now(KST) - timedelta(days=3)).strftime("%Y-%m-%d")
+    kept_old = [n for n in old_news if n.get("collectedAt", "")[:10] >= cutoff]
     merged    = new_items + kept_old
 
     seen = set()
@@ -369,4 +376,3 @@ if __name__ == "__main__":
     except Exception as e:
         log.critical(f"치명적 오류: {e}", exc_info=True)
         sys.exit(2)
-
