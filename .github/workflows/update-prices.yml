@@ -2,9 +2,7 @@ name: Update KOSPI Data
 
 on:
   schedule:
-    # 평일 장중 5분마다 (KST 09:00~15:35 = UTC 00:00~06:35)
     - cron: '*/5 0,1,2,3,4,5,6 * * 1-5'
-    # 평일 장 마감 후 퀀트 지표 1회 (KST 16:00 = UTC 07:00)
     - cron: '0 7 * * 1-5'
   workflow_dispatch:
 
@@ -29,6 +27,8 @@ jobs:
 
       - name: Check market hours (KST 09:00~15:35)
         id: market_check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           python3 - << 'PYEOF'
           import os
@@ -38,9 +38,8 @@ jobs:
           total_min = now.hour * 60 + now.minute
           is_open = (now.weekday() < 5) and (9*60 <= total_min <= 15*60+35)
           is_quant = (now.weekday() < 5) and (now.hour == 16 and now.minute < 10)
-          # 수동 실행 시 무조건 실행
-          is_manual = os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch'
-          print(f"KST: {now.strftime('%Y-%m-%d %H:%M')} 장중: {is_open} 퀀트: {is_quant} 수동: {is_manual}")
+          is_manual = os.environ.get('EVENT_NAME') == 'workflow_dispatch'
+          print(f"KST: {now.strftime('%Y-%m-%d %H:%M')} ìž¥ì¤‘: {is_open} í€€íŠ¸: {is_quant} ìˆ˜ë™: {is_manual}")
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"is_open={'true' if (is_open or is_manual) else 'false'}\n")
               f.write(f"is_quant={'true' if (is_quant or is_manual) else 'false'}\n")
@@ -56,11 +55,11 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python3 scripts/fetch_news.py
 
-      - name: Update quant indicators (장 마감 후 1회)
+      - name: Update quant indicators (ìž¥ ë§ˆê° í›„ 1íšŒ)
         if: steps.market_check.outputs.is_quant == 'true'
         run: python3 scripts/update_prices.py --quant
 
-      - name: Update fundamentals & 5day supply (장 마감 후 1회)
+      - name: Update fundamentals & 5day supply (ìž¥ ë§ˆê° í›„ 1íšŒ)
         if: steps.market_check.outputs.is_quant == 'true'
         run: python3 scripts/fetch_fundamental.py
 
@@ -70,5 +69,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add prices.json news.json supply.json analysis.json quant.json fundamental.json supply5.json || true
-          git diff --staged --quiet || git commit -m "📊 Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
+          git diff --staged --quiet || git commit -m "ðŸ“Š Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
           git push
