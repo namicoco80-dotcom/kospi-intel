@@ -1,0 +1,2716 @@
+{
+  "005930": {
+    "code": "005930",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+223.1%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "73%",
+        "high52w": 218000,
+        "low52w": 53000,
+        "label": "고가권73%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 48.89,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI48.89 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:23"
+  },
+  "000660": {
+    "code": "000660",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+344.9%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "72%",
+        "high52w": 1099000,
+        "low52w": 164800,
+        "label": "고가권72%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 44.08,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI44.08 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:23"
+  },
+  "373220": {
+    "code": "373220",
+    "total": 49,
+    "grade": "C",
+    "scores": {
+      "momentum": 14,
+      "high52": 5,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+2.9%",
+        "label": "상승",
+        "real": true
+      },
+      "high52": {
+        "val": "37%",
+        "high52w": 514000,
+        "low52w": 268000,
+        "label": "고가권37%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 40.05,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI40.05 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:24"
+  },
+  "207940": {
+    "code": "207940",
+    "total": 42,
+    "grade": "C",
+    "scores": {
+      "momentum": 10,
+      "high52": 2,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "-5.2%",
+        "label": "하락",
+        "real": true
+      },
+      "high52": {
+        "val": "14%",
+        "high52w": 1965000,
+        "low52w": 1516000,
+        "label": "고가권14%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 37.03,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI37.03 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": false
+    },
+    "updatedAt": "2026-03-09T07:16:25"
+  },
+  "005380": {
+    "code": "005380",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+156.8%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "66%",
+        "high52w": 674000,
+        "low52w": 177500,
+        "label": "고가권66%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 47.88,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI47.88 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:25"
+  },
+  "000270": {
+    "code": "000270",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+56.5%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "58%",
+        "high52w": 206000,
+        "low52w": 82000,
+        "label": "고가권58%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 45.78,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI45.78 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:26"
+  },
+  "005490": {
+    "code": "005490",
+    "total": 57,
+    "grade": "C",
+    "scores": {
+      "momentum": 18,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+8.2%",
+        "label": "상승",
+        "real": true
+      },
+      "high52": {
+        "val": "57%",
+        "high52w": 413000,
+        "low52w": 233500,
+        "label": "고가권57%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 42.68,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI42.68 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:26"
+  },
+  "068270": {
+    "code": "068270",
+    "total": 61,
+    "grade": "B",
+    "scores": {
+      "momentum": 22,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+20.6%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "57%",
+        "high52w": 248500,
+        "low52w": 145962,
+        "label": "고가권57%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 50.38,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI50.38 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:27"
+  },
+  "105560": {
+    "code": "105560",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+81.7%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "73%",
+        "high52w": 168800,
+        "low52w": 70500,
+        "label": "고가권73%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 48.77,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI48.77 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:28"
+  },
+  "055550": {
+    "code": "055550",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+94.1%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "72%",
+        "high52w": 106000,
+        "low52w": 43600,
+        "label": "고가권72%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 46.1,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI46.1 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:28"
+  },
+  "086790": {
+    "code": "086790",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+82.0%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "70%",
+        "high52w": 131300,
+        "low52w": 52200,
+        "label": "고가권70%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 44.7,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI44.7 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:29"
+  },
+  "316140": {
+    "code": "316140",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+95.8%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "64%",
+        "high52w": 40800,
+        "low52w": 15370,
+        "label": "고가권64%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 46.87,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI46.87 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:30"
+  },
+  "138040": {
+    "code": "138040",
+    "total": 42,
+    "grade": "C",
+    "scores": {
+      "momentum": 10,
+      "high52": 2,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "-6.8%",
+        "label": "하락",
+        "real": true
+      },
+      "high52": {
+        "val": "22%",
+        "high52w": 146200,
+        "low52w": 101500,
+        "label": "고가권22%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 42.67,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI42.67 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": false
+    },
+    "updatedAt": "2026-03-09T07:16:30"
+  },
+  "000810": {
+    "code": "000810",
+    "total": 57,
+    "grade": "C",
+    "scores": {
+      "momentum": 22,
+      "high52": 5,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+19.7%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "49%",
+        "high52w": 630000,
+        "low52w": 327500,
+        "label": "고가권49%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 43.36,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI43.36 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:31"
+  },
+  "012330": {
+    "code": "012330",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+58.2%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "59%",
+        "high52w": 529000,
+        "low52w": 234500,
+        "label": "고가권59%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 42.8,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI42.8 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:32"
+  },
+  "047810": {
+    "code": "047810",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+107.8%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "81%",
+        "high52w": 197600,
+        "low52w": 72200,
+        "label": "고가권81%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 49.87,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI49.87 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:32"
+  },
+  "064350": {
+    "code": "064350",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+132.9%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "79%",
+        "high52w": 249000,
+        "low52w": 90400,
+        "label": "고가권79%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 45.87,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI45.87 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:33"
+  },
+  "010140": {
+    "code": "010140",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+96.5%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "83%",
+        "high52w": 31850,
+        "low52w": 12720,
+        "label": "고가권83%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 49.98,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI49.98 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:33"
+  },
+  "042660": {
+    "code": "042660",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+55.0%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "70%",
+        "high52w": 149900,
+        "low52w": 62500,
+        "label": "고가권70%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 41.06,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI41.06 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:34"
+  },
+  "267250": {
+    "code": "267250",
+    "total": 73,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 12
+    },
+    "details": {
+      "momentum": {
+        "val": "+244.2%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "85%",
+        "high52w": 298000,
+        "low52w": 66900,
+        "label": "고가권85%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 55.31,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI55.31 MACD중립",
+        "label": "매수신호",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:35"
+  },
+  "009830": {
+    "code": "009830",
+    "total": 73,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 12
+    },
+    "details": {
+      "momentum": {
+        "val": "+142.8%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "80%",
+        "high52w": 58500,
+        "low52w": 18410,
+        "label": "고가권80%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 60.81,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI60.81 MACD중립",
+        "label": "매수신호",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:35"
+  },
+  "086520": {
+    "code": "086520",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+173.0%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "86%",
+        "high52w": 185000,
+        "low52w": 38350,
+        "label": "고가권86%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 47.05,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI47.05 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:36"
+  },
+  "096770": {
+    "code": "096770",
+    "total": 44,
+    "grade": "C",
+    "scores": {
+      "momentum": 5,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "-12.9%",
+        "label": "하락",
+        "real": true
+      },
+      "high52": {
+        "val": "64%",
+        "high52w": 139200,
+        "low52w": 81100,
+        "label": "고가권64%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 51.32,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI51.32 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": false
+    },
+    "updatedAt": "2026-03-09T07:16:36"
+  },
+  "017670": {
+    "code": "017670",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+37.6%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "70%",
+        "high52w": 86500,
+        "low52w": 50700,
+        "label": "고가권70%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 48.02,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI48.02 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:37"
+  },
+  "030200": {
+    "code": "030200",
+    "total": 61,
+    "grade": "B",
+    "scores": {
+      "momentum": 22,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+23.3%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "58%",
+        "high52w": 68900,
+        "low52w": 46350,
+        "label": "고가권58%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 53.27,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI53.27 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:38"
+  },
+  "128940": {
+    "code": "128940",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+106.8%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "65%",
+        "high52w": 626000,
+        "low52w": 215000,
+        "label": "고가권65%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 49.89,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI49.89 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:38"
+  },
+  "000100": {
+    "code": "000100",
+    "total": 34,
+    "grade": "D",
+    "scores": {
+      "momentum": 2,
+      "high52": 2,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "-20.0%",
+        "label": "하락",
+        "real": true
+      },
+      "high52": {
+        "val": "9%",
+        "high52w": 135800,
+        "low52w": 92400,
+        "label": "고가권9%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 36.3,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI36.3 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": false
+    },
+    "updatedAt": "2026-03-09T07:16:39"
+  },
+  "326030": {
+    "code": "326030",
+    "total": 42,
+    "grade": "C",
+    "scores": {
+      "momentum": 10,
+      "high52": 2,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "-4.1%",
+        "label": "하락",
+        "real": true
+      },
+      "high52": {
+        "val": "18%",
+        "high52w": 140700,
+        "low52w": 88500,
+        "label": "고가권18%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 39.53,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI39.53 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": false
+    },
+    "updatedAt": "2026-03-09T07:16:39"
+  },
+  "097950": {
+    "code": "097950",
+    "total": 37,
+    "grade": "D",
+    "scores": {
+      "momentum": 2,
+      "high52": 2,
+      "supply": 10,
+      "value": 12,
+      "technical": 11
+    },
+    "details": {
+      "momentum": {
+        "val": "-26.6%",
+        "label": "하락",
+        "real": true
+      },
+      "high52": {
+        "val": "0%",
+        "high52w": 269500,
+        "low52w": 190000,
+        "label": "고가권0%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 28.7,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "과매도",
+        "macd_signal": "중립",
+        "val": "RSI28.7 MACD중립",
+        "label": "과매도반등",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": false
+    },
+    "updatedAt": "2026-03-09T07:16:40"
+  },
+  "271560": {
+    "code": "271560",
+    "total": 61,
+    "grade": "B",
+    "scores": {
+      "momentum": 22,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+17.1%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "64%",
+        "high52w": 141000,
+        "low52w": 99300,
+        "label": "고가권64%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 53.11,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI53.11 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:41"
+  },
+  "004170": {
+    "code": "004170",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+95.4%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "74%",
+        "high52w": 376500,
+        "low52w": 135400,
+        "label": "고가권74%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 44.81,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI44.81 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:41"
+  },
+  "139480": {
+    "code": "139480",
+    "total": 53,
+    "grade": "C",
+    "scores": {
+      "momentum": 18,
+      "high52": 5,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+9.2%",
+        "label": "상승",
+        "real": true
+      },
+      "high52": {
+        "val": "38%",
+        "high52w": 127600,
+        "low52w": 71200,
+        "label": "고가권38%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 48.01,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI48.01 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:42"
+  },
+  "032640": {
+    "code": "032640",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+39.8%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "59%",
+        "high52w": 17810,
+        "low52w": 10250,
+        "label": "고가권59%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 38.78,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI38.78 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:42"
+  },
+  "004020": {
+    "code": "004020",
+    "total": 61,
+    "grade": "B",
+    "scores": {
+      "momentum": 22,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+24.4%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "61%",
+        "high52w": 46500,
+        "low52w": 21700,
+        "label": "고가권61%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 54.75,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI54.75 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:43"
+  },
+  "010950": {
+    "code": "010950",
+    "total": 73,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 12
+    },
+    "details": {
+      "momentum": {
+        "val": "+106.9%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "86%",
+        "high52w": 141300,
+        "low52w": 50400,
+        "label": "고가권86%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 63.17,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI63.17 MACD중립",
+        "label": "매수신호",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:44"
+  },
+  "036570": {
+    "code": "036570",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+31.3%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "70%",
+        "high52w": 247500,
+        "low52w": 135800,
+        "label": "고가권70%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 50.01,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI50.01 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:44"
+  },
+  "251270": {
+    "code": "251270",
+    "total": 68,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 12
+    },
+    "details": {
+      "momentum": {
+        "val": "+31.2%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "58%",
+        "high52w": 68000,
+        "low52w": 37500,
+        "label": "고가권58%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 55.51,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI55.51 MACD중립",
+        "label": "매수신호",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:45"
+  },
+  "051910": {
+    "code": "051910",
+    "total": 61,
+    "grade": "B",
+    "scores": {
+      "momentum": 22,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+21.5%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "50%",
+        "high52w": 419500,
+        "low52w": 182400,
+        "label": "고가권50%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 44.55,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI44.55 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:46"
+  },
+  "006400": {
+    "code": "006400",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+80.1%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "75%",
+        "high52w": 466000,
+        "low52w": 160200,
+        "label": "고가권75%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 48.9,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI48.9 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:46"
+  },
+  "035720": {
+    "code": "035720",
+    "total": 53,
+    "grade": "C",
+    "scores": {
+      "momentum": 18,
+      "high52": 5,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+11.0%",
+        "label": "상승",
+        "real": true
+      },
+      "high52": {
+        "val": "41%",
+        "high52w": 70400,
+        "low52w": 36450,
+        "label": "고가권41%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 38.84,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI38.84 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:47"
+  },
+  "035420": {
+    "code": "035420",
+    "total": 52,
+    "grade": "C",
+    "scores": {
+      "momentum": 14,
+      "high52": 5,
+      "supply": 10,
+      "value": 12,
+      "technical": 11
+    },
+    "details": {
+      "momentum": {
+        "val": "+1.6%",
+        "label": "상승",
+        "real": true
+      },
+      "high52": {
+        "val": "37%",
+        "high52w": 290500,
+        "low52w": 176900,
+        "label": "고가권37%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 29.99,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "과매도",
+        "macd_signal": "중립",
+        "val": "RSI29.99 MACD중립",
+        "label": "과매도반등",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:47"
+  },
+  "028260": {
+    "code": "028260",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+121.4%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "64%",
+        "high52w": 360000,
+        "low52w": 108300,
+        "label": "고가권64%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 39.58,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI39.58 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:48"
+  },
+  "066570": {
+    "code": "066570",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+44.5%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "59%",
+        "high52w": 146700,
+        "low52w": 64700,
+        "label": "고가권59%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 52.47,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI52.47 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:49"
+  },
+  "034020": {
+    "code": "034020",
+    "total": 69,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 14,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+266.5%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "88%",
+        "high52w": 106300,
+        "low52w": 20650,
+        "label": "고가권88%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 50.36,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI50.36 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:49"
+  },
+  "012450": {
+    "code": "012450",
+    "total": 76,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 17,
+      "supply": 10,
+      "value": 12,
+      "technical": 12
+    },
+    "details": {
+      "momentum": {
+        "val": "+104.3%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "94%",
+        "high52w": 1481000,
+        "low52w": 627000,
+        "label": "신고가근접",
+        "breakout": false,
+        "near": true,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 56.32,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI56.32 MACD중립",
+        "label": "매수신호",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": true,
+      "foreignBuy": false,
+      "macdRsi": true,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:50"
+  },
+  "010130": {
+    "code": "010130",
+    "total": 64,
+    "grade": "B",
+    "scores": {
+      "momentum": 25,
+      "high52": 9,
+      "supply": 10,
+      "value": 12,
+      "technical": 8
+    },
+    "details": {
+      "momentum": {
+        "val": "+92.5%",
+        "label": "강한상승",
+        "real": true
+      },
+      "high52": {
+        "val": "65%",
+        "high52w": 2115000,
+        "low52w": 653000,
+        "label": "고가권65%",
+        "breakout": false,
+        "near": false,
+        "real": true
+      },
+      "supply": {
+        "val": "외인+0 기관+0",
+        "label": "중립",
+        "foreign": 0,
+        "inst": 0,
+        "real": true
+      },
+      "value": {
+        "val": "PBR/ROE 데이터없음",
+        "label": "미수집",
+        "real": false
+      },
+      "technical": {
+        "rsi": 40.73,
+        "macd": null,
+        "signal": null,
+        "macd_hist": null,
+        "rsi_signal": "중립",
+        "macd_signal": "중립",
+        "val": "RSI40.73 MACD중립",
+        "label": "중립",
+        "real": true
+      }
+    },
+    "autoBuy": false,
+    "conds": {
+      "high52near": false,
+      "foreignBuy": false,
+      "macdRsi": false,
+      "momentum": true
+    },
+    "updatedAt": "2026-03-09T07:16:50"
+  }
+}
