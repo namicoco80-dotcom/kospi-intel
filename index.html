@@ -5785,103 +5785,44 @@ async function runPortfolioAI() {
   if (port.length === 0) { notify('⚠️ 포트폴리오에 종목을 먼저 추가하세요', 'warn'); return; }
 
   S._portAILoading = true; render();
-  notify('📊 AI 분석 중...', 'info');
+  notify('📊 포트폴리오 AI 분석 중...', 'info');
 
-  // 데이터 준비
   const totalInvest = port.reduce((s,p) => s + (p.buyPrice||0)*(p.qty||1), 0);
   const totalCur    = port.reduce((s,p) => {
     const cur = PRICE_BASE[p.code]?.price || p.buyPrice;
     return s + cur*(p.qty||1);
   }, 0);
-  const totalPnlPct = totalInvest > 0 ? ((totalCur-totalInvest)/totalInvest*100).toFixed(1) : 0;
 
   const items = port.map(p => {
     const pr  = PRICE_BASE[p.code];
     const cur = pr?.price || p.buyPrice;
     const pnl = ((cur - p.buyPrice)/p.buyPrice*100).toFixed(1);
     const sig = calcSignal(p.code);
-    const fund = (typeof FUND_DATA !== 'undefined') ? FUND_DATA[p.code] : null;
-    const sup  = (typeof SUPPLY5_DATA !== 'undefined') ? SUPPLY5_DATA[p.code] : null;
-    return {
-      name: p.name, code: p.code,
-      qty: p.qty, buyPrice: p.buyPrice, curPrice: cur,
-      pnlPct: pnl,
-      score: sig?.total || 0,
-      momentum: sig?.momentum || 0,
-      high52: sig?.high52 || 0,
-      macd: pr?.macd || null,
-      rsi: pr?.rsi || null,
-      pbr: fund?.pbr || null,
-      foreignBuy: sup?.consecutive_buy || 0,
-      sector: p.sector || '기타'
-    };
+    return { name:p.name, code:p.code, qty:p.qty, buyPrice:p.buyPrice, curPrice:cur, pnlPct:pnl, score:sig?.total||0, sector:p.sector||'기타' };
   });
 
-  const profitCnt = items.filter(i => parseFloat(i.pnlPct) > 0).length;
-  const lossCnt   = items.length - profitCnt;
+  const prompt = `당신은 KOSPI 투자 전문가입니다. 아래 포트폴리오를 분석해서 JSON으로만 응답하세요.
 
-  const prompt = `당신은 전문 주식 애널리스트이자 포트폴리오 전략가입니다.
-아래 KOSPI 포트폴리오를 분석하여 투자 리포트를 작성하세요.
+포트폴리오: 총투자 ${(totalInvest/10000).toFixed(0)}만원, 평가 ${(totalCur/10000).toFixed(0)}만원
+종목: ${items.map(i=>i.name+'('+i.pnlPct+'%, 퀀트'+i.score+'점)').join(', ')}
 
-[포트폴리오 현황]
-총 투자: ${(totalInvest/10000).toFixed(0)}만원 | 평가: ${(totalCur/10000).toFixed(0)}만원 | 손익: ${totalPnlPct}%
-수익종목: ${profitCnt}개 | 손실종목: ${lossCnt}개
-
-[종목별 데이터]
-${items.map(i => [
-  '종목: ' + i.name + '(' + i.code + ')',
-  '- 매수가: ' + (i.buyPrice?.toLocaleString()||'') + '원 | 현재가: ' + (i.curPrice?.toLocaleString()||'') + '원 | 손익: ' + i.pnlPct + '%',
-  '- 퀀트점수: ' + i.score + '점 | RSI: ' + (i.rsi||'N/A') + ' | MACD: ' + (i.macd||'N/A'),
-  '- PBR: ' + (i.pbr||'N/A') + ' | 외국인연속매수: ' + i.foreignBuy + '일 | 섹터: ' + (i.sector||'기타')
-].join('\n')).join('\n\n')}
-
-다음 형식으로 JSON만 응답하세요 (다른 텍스트 없이):
-{
-  "summary": {
-    "status": "양호|중립|위험",
-    "oneLine": "포트폴리오 한줄 요약"
-  },
-  "risk": {
-    "level": "낮음|중간|높음",
-    "points": ["리스크 포인트1", "리스크 포인트2"]
-  },
-  "stocks": [
-    {
-      "code": "종목코드",
-      "name": "종목명",
-      "trend": "상승|횡보|하락",
-      "action": "매수|보유|부분매도|관망",
-      "reason": "간단한 이유 (1~2문장)"
-    }
-  ],
-  "improve": ["개선제안1", "개선제안2", "개선제안3"],
-  "shortStrategy": "단기 전략 (2~3문장)",
-  "longStrategy": "중장기 전략 (2~3문장)",
-  "confidence": 75,
-  "quote": "워런 버핏 스타일 명언 한 문장"
-}`;
+반드시 아래 JSON 형식만 출력 (백틱/설명 금지):
+{"verdict":"보유유지|리밸런싱|차익실현|추가매수","summary":"2문장 요약","stocks":[{"code":"종목코드","action":"매수|보유|매도|관망","reason":"이유"}],"quote":"버핏 명언"}`;
 
   try {
-    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:2000,system:"반드시 순수 JSON만 출력. 설명문구, 마크다운, 백틱(```) 절대 사용금지. { 로 시작해서 } 로 끝나는 JSON만.",messages:[{role:"user",content:prompt}]});
+    const res  = await aiApiFetch({model:"claude-sonnet-4-20250514",max_tokens:800,system:"JSON만 응답",messages:[{role:"user",content:prompt}]});
     const data = await res.json();
     const raw  = data.content?.map(c=>c.text||'').join('') || '';
-
-    // JSON 추출 (강화된 파싱)
     let r;
     try {
-      // 백틱 코드블록 제거
-      let cleaned = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+      const cleaned = raw.replace(/```json/g,'').replace(/```/g,'').trim();
       const m = cleaned.match(/\{[\s\S]*\}/);
       r = JSON.parse(m ? m[0] : cleaned);
-    } catch(e) {
-      console.error('[포트폴리오AI] 파싱실패 raw:', raw?.slice(0,300));
-      throw new Error('AI 응답 파싱 실패: ' + raw?.slice(0,100));
-    }
+    } catch(e) { throw new Error('AI 응답 파싱 실패'); }
 
     S._portAILoading = false;
-    showPortfolioAIResult(r, items, totalPnlPct);
+    showPortfolioAIResult(r, items, ((totalCur-totalInvest)/totalInvest*100).toFixed(1));
     render();
-
   } catch(e) {
     S._portAILoading = false; render();
     notify('❌ AI 분석 실패: ' + e.message, 'error');
@@ -5889,21 +5830,20 @@ ${items.map(i => [
 }
 
 
-// 전역 저장 (PDF 다운로드용)
-let currentReport = null, currentItems = [], currentPnl = 0;
-
 function showPortfolioAIResult(r, items, totalPnlPct) {
-  currentReport = r; currentItems = items; currentPnl = totalPnlPct;
-  document.getElementById('portai-modal')?.remove();
-  const statusColor = {'양호':'#2E7D32','중립':'#E65100','위험':'#C62828'}[r.summary?.status] || '#1565C0';
-  const riskColor   = {'낮음':'#2E7D32','중간':'#E65100','높음':'#C62828'}[r.risk?.level] || '#64748B';
-  const actionStyle = {
-    '매수':    'background:#E8F5E9;color:#2E7D32',
-    '보유':    'background:#EFF6FF;color:#1565C0',
-    '부분매도':'background:#FFF3E0;color:#E65100',
-    '관망':    'background:#F4F6FA;color:#64748B',
-  };
-  const trendIcon = {'상승':'📈','횡보':'➡️','하락':'📉'};
+  const vd = {
+    '보유유지': {bg:'linear-gradient(135deg,#E8F5E9,#C8E6C9)',accent:'#2E7D32'},
+    '리밸런싱': {bg:'linear-gradient(135deg,#FFF8E1,#FFECB3)',accent:'#F57F17'},
+    '차익실현': {bg:'linear-gradient(135deg,#FFF3E0,#FFE0B2)',accent:'#E65100'},
+    '추가매수': {bg:'linear-gradient(135deg,#E3F2FD,#BBDEFB)',accent:'#1565C0'},
+  }[r.verdict] || {bg:'linear-gradient(135deg,#F4F6FA,#E2E8F4)',accent:'#64748B'};
+
+  const actionBadge = a => ({
+    '매수':'<span style="background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800">매수</span>',
+    '보유':'<span style="background:#EFF6FF;color:#1565C0;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800">보유</span>',
+    '매도':'<span style="background:#FFF3E0;color:#E65100;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800">매도</span>',
+    '관망':'<span style="background:#F4F6FA;color:#64748B;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800">관망</span>',
+  }[a] || a);
 
   const el = document.createElement('div');
   el.id = 'portai-modal';
@@ -5911,104 +5851,37 @@ function showPortfolioAIResult(r, items, totalPnlPct) {
   <div onclick="document.getElementById('portai-modal').remove();document.body.style.overflow=''"
     style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000"></div>
   <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:22px 22px 0 0;
-    z-index:9001;max-height:90vh;overflow-y:auto;padding-bottom:40px">
-
-    <!-- 핸들 -->
+    z-index:9001;max-height:88vh;overflow-y:auto;padding-bottom:40px">
     <div style="text-align:center;padding:12px 0 4px">
       <div style="width:40px;height:4px;background:#E2E8F4;border-radius:2px;display:inline-block"></div>
     </div>
-
-    <!-- 헤더 -->
-    <div style="padding:14px 18px 12px;border-bottom:1px solid #F0F4FA">
-      <div style="font-size:16px;font-weight:900;color:#0F1D3A">📊 AI 투자 분석 리포트</div>
-      <div style="font-size:12px;color:#94A3B8;margin-top:2px">${new Date().toLocaleDateString('ko-KR')} · AI 확신도 ${r.confidence||70}%</div>
+    <div style="padding:14px 18px;border-bottom:1px solid #F0F4FA">
+      <div style="font-size:15px;font-weight:900;color:#0F1D3A">📊 포트폴리오 AI 분석</div>
     </div>
-
     <div style="padding:16px 18px">
-
-      <!-- 1. 포트폴리오 요약 -->
-      <div style="background:${statusColor}15;border:1.5px solid ${statusColor}40;border-radius:14px;padding:14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:${statusColor};margin-bottom:6px">1️⃣ 포트폴리오 요약</div>
-        <div style="font-size:15px;font-weight:800;color:#0F1D3A;margin-bottom:4px">${r.summary?.status || '분석중'}</div>
-        <div style="font-size:13px;color:#4A5A7A">${r.summary?.oneLine || ''}</div>
-        <div style="font-size:12px;color:#94A3B8;margin-top:6px">전체 손익 ${totalPnlPct}% · ${items.filter(i=>parseFloat(i.pnlPct)>0).length}종목 수익 / ${items.filter(i=>parseFloat(i.pnlPct)<=0).length}종목 손실</div>
+      <div style="background:${vd.bg};border-radius:14px;padding:16px;margin-bottom:14px;text-align:center">
+        <div style="font-size:20px;font-weight:900;color:${vd.accent};margin-bottom:6px">${r.verdict}</div>
+        <div style="font-size:13px;color:#334155;line-height:1.6">${r.summary}</div>
       </div>
-
-      <!-- 2. 리스크 -->
-      <div style="background:#F8FAFF;border-radius:14px;padding:14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#64748B;margin-bottom:8px">2️⃣ 리스크 분석 · <span style="color:${riskColor}">${r.risk?.level||'중간'}</span></div>
-        ${(r.risk?.points||[]).map(p=>`<div style="font-size:12px;color:#4A5A7A;margin-bottom:4px">• ${p}</div>`).join('')}
+      <div style="font-size:11px;font-weight:800;color:#64748B;margin-bottom:8px">종목별 의견</div>
+      ${(r.stocks||[]).map(s => {
+        const item = items.find(i=>i.code===s.code)||{};
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#F8FAFF;border-radius:10px;margin-bottom:6px">
+          <div style="flex:1;font-size:13px;font-weight:700;color:#0F1D3A">${item.name||s.code}</div>
+          ${actionBadge(s.action)}
+          <div style="font-size:11px;color:#64748B;flex:2">${s.reason}</div>
+        </div>`;
+      }).join('')}
+      <div style="background:linear-gradient(135deg,#1A237E,#283593);border-radius:12px;padding:14px;margin-top:12px;text-align:center">
+        <div style="font-size:10px;color:rgba(255,255,255,.6);margin-bottom:6px">💬 버핏이라면</div>
+        <div style="font-size:12px;color:#fff;font-style:italic;line-height:1.6">"${r.quote||getBuffettQuote('hold')}"</div>
       </div>
-
-      <!-- 3. 종목별 분석 -->
-      <div style="font-size:11px;font-weight:800;color:#64748B;margin-bottom:8px">3️⃣ 종목별 AI 분석</div>
-      ${(r.stocks||[]).map(s=>`
-      <div style="background:#fff;border:1px solid #E2E8F4;border-radius:12px;padding:12px 14px;margin-bottom:8px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div style="font-size:13px;font-weight:800;color:#0F1D3A">${trendIcon[s.trend]||''} ${s.name}</div>
-          <span style="padding:3px 10px;border-radius:8px;font-size:11px;font-weight:800;${actionStyle[s.action]||'background:#F4F6FA;color:#64748B'}">${s.action}</span>
-        </div>
-        <div style="font-size:12px;color:#4A5A7A;line-height:1.6">${s.reason}</div>
-      </div>`).join('')}
-
-      <!-- 4. 개선 제안 -->
-      <div style="background:#FFF8E1;border-radius:14px;padding:14px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:800;color:#E65100;margin-bottom:8px">4️⃣ 포트폴리오 개선 제안</div>
-        ${(r.improve||[]).map(p=>`<div style="font-size:12px;color:#4A5A7A;margin-bottom:4px">• ${p}</div>`).join('')}
-      </div>
-
-      <!-- 5. 단기/중장기 전략 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div style="background:#EFF6FF;border-radius:12px;padding:12px">
-          <div style="font-size:10px;font-weight:800;color:#1565C0;margin-bottom:6px">⚡ 단기 전략</div>
-          <div style="font-size:11px;color:#0F1D3A;line-height:1.6">${r.shortStrategy||''}</div>
-        </div>
-        <div style="background:#F0FFF4;border-radius:12px;padding:12px">
-          <div style="font-size:10px;font-weight:800;color:#2E7D32;margin-bottom:6px">🌱 중장기 전략</div>
-          <div style="font-size:11px;color:#0F1D3A;line-height:1.6">${r.longStrategy||''}</div>
-        </div>
-      </div>
-
-      <!-- AI 확신도 바 -->
-      <div style="background:#F4F6FA;border-radius:12px;padding:12px;margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-          <span style="font-size:11px;font-weight:800;color:#64748B">AI 분석 확신도</span>
-          <span style="font-size:13px;font-weight:900;color:#1565C0">${r.confidence||70}%</span>
-        </div>
-        <div style="height:6px;background:#E2E8F4;border-radius:3px">
-          <div style="height:6px;background:linear-gradient(90deg,#1565C0,#42A5F5);border-radius:3px;width:${r.confidence||70}%"></div>
-        </div>
-      </div>
-
-      <!-- 버핏 명언 -->
-      ${r.quote ? `
-      <div style="background:linear-gradient(135deg,#1A237E,#283593);border-radius:14px;padding:14px;text-align:center">
-        <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,0.6);margin-bottom:8px">💬 오늘의 투자 명언</div>
-        <div style="font-size:13px;color:#fff;font-style:italic;line-height:1.7">"${r.quote}"</div>
-      </div>` : ''}
-
-      <!-- PDF 리포트 출력 버튼 (하루 3번 제한) -->
-      <div style="margin-top:16px;background:#F8FAFF;border:1.5px solid #E2E8F4;border-radius:14px;padding:14px;text-align:center">
-        <div style="font-size:12px;color:#64748B;margin-bottom:8px">
-          📄 리포트 PDF 출력 · 오늘 <b style="color:#1565C0">${getPortAIRemain()}</b>회 남음
-        </div>
-        <button onclick="downloadPortfolioReport(currentReport, currentItems, currentPnl)"
-          ${getPortAIRemain()<=0?'disabled':''}
-          style="width:100%;background:${getPortAIRemain()>0?'linear-gradient(135deg,#1565C0,#0D47A1)':'#E2E8F4'};
-            color:${getPortAIRemain()>0?'#fff':'#94A3B8'};border:none;border-radius:12px;
-            padding:13px;font-size:14px;font-weight:800;cursor:${getPortAIRemain()>0?'pointer':'not-allowed'}">
-          ${getPortAIRemain()>0?'📄 PDF 리포트 저장':'⚠️ 오늘 출력 횟수 소진 (내일 초기화)'}
-        </button>
-      </div>
-
       <button onclick="document.getElementById('portai-modal').remove();document.body.style.overflow=''"
-        style="width:100%;margin-top:10px;background:#F4F6FA;border:none;border-radius:14px;
-          padding:14px;font-size:14px;font-weight:700;color:#64748B;cursor:pointer">
-        닫기
-      </button>
+        style="width:100%;margin-top:14px;background:#F4F6FA;border:none;border-radius:14px;
+          padding:14px;font-size:14px;font-weight:700;color:#64748B;cursor:pointer">닫기</button>
     </div>
   </div>`;
-
+  document.getElementById('portai-modal')?.remove();
   document.body.appendChild(el);
   document.body.style.overflow = 'hidden';
 }
@@ -7474,73 +7347,74 @@ function _buildHelpHTML() {
 
 
 // ══════════════════════════════════════════════
-// 💬 게시판 (Persistent Shared Storage)
+// 💬 게시판 (JSONBin.io 공개 저장소)
 // ══════════════════════════════════════════════
 
-const BOARD_MAX = 100;       // 최대 글 수
-const BOARD_KEY = 'board_posts';
-const BOARD_FILTER_KEY = 'board_filter';
+let _boardCache = null;
+let _boardFilter = 'all';
 
-// 게시판 상태
-let _boardFilter = 'all';  // all | free | stock
-let _boardNick   = '';     // 닉네임 캐시
+function getBoardWorkerUrl() {
+  try { return localStorage.getItem('cf_worker_url') || AI_API_URL; } catch(e) { return AI_API_URL; }
+}
 
 function getBoardNick() {
-  if (_boardNick) return _boardNick;
-  try { _boardNick = localStorage.getItem('board_nick') || ''; } catch(e) {}
-  return _boardNick;
+  try { return localStorage.getItem('board_nick') || ''; } catch(e) { return ''; }
 }
 function saveBoardNick(n) {
-  _boardNick = n;
   try { localStorage.setItem('board_nick', n); } catch(e) {}
 }
-
-// 게시글 로드 (shared storage)
-async function loadBoardPosts() {
-  try {
-    const res = await window.storage.list('board:');
-    if (!res || !res.keys) return [];
-    const posts = [];
-    for (const key of res.keys.slice(-BOARD_MAX)) {
-      try {
-        const r = await window.storage.get(key, true);
-        if (r?.value) posts.push(JSON.parse(r.value));
-      } catch(e) {}
-    }
-    return posts.sort((a,b) => b.ts - a.ts);
-  } catch(e) { return []; }
-}
-
-// 게시글 저장
-async function saveBoardPost(post) {
-  const key = 'board:' + post.id;
-  await window.storage.set(key, JSON.stringify(post), true);
-}
-
-// 좋아요 토글
 function getLikedPosts() {
   try { return JSON.parse(localStorage.getItem('board_liked') || '[]'); } catch(e) { return []; }
 }
-function toggleLike(postId) {
-  const liked = getLikedPosts();
-  const idx = liked.indexOf(postId);
-  if (idx >= 0) liked.splice(idx, 1);
-  else liked.push(postId);
-  try { localStorage.setItem('board_liked', JSON.stringify(liked)); } catch(e) {}
-  return idx < 0; // true = 좋아요 추가됨
+
+async function fetchBoardPosts() {
+  try {
+    const url = getBoardWorkerUrl();
+    if (!url) return _boardCache || [];
+    const res = await fetch(url + '?action=board_get');
+    if (!res.ok) throw new Error('fetch fail');
+    const data = await res.json();
+    _boardCache = data.posts || [];
+    return _boardCache;
+  } catch(e) {
+    return _boardCache || [];
+  }
 }
 
-// 글 작성
+async function saveBoardPost(post) {
+  const url = getBoardWorkerUrl();
+  if (!url) throw new Error('Worker URL 없음');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'board_post', post })
+  });
+  if (!res.ok) throw new Error('저장 실패');
+  const data = await res.json();
+  _boardCache = data.posts || null;
+}
+
+async function updateBoardLike(postId, delta) {
+  const url = getBoardWorkerUrl();
+  if (!url) return;
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'board_like', postId, delta })
+  });
+}
+
 async function submitBoardPost() {
-  const nickEl = document.getElementById('board-nick');
-  const textEl = document.getElementById('board-text');
-  const typeEl = document.getElementById('board-type');
+  const nickEl  = document.getElementById('board-nick');
+  const textEl  = document.getElementById('board-text');
+  const typeEl  = document.getElementById('board-type');
   const stockEl = document.getElementById('board-stock');
+  const btn     = document.getElementById('board-submit-btn');
   if (!nickEl || !textEl) return;
 
-  const nick = nickEl.value.trim();
-  const text = textEl.value.trim();
-  const type = typeEl?.value || 'free';
+  const nick  = nickEl.value.trim();
+  const text  = textEl.value.trim();
+  const type  = typeEl?.value || 'free';
   const stock = stockEl?.value.trim() || '';
 
   if (!nick) { notify('닉네임을 입력해주세요', 'warn'); nickEl.focus(); return; }
@@ -7548,71 +7422,71 @@ async function submitBoardPost() {
   if (text.length > 300) { notify('300자 이내로 작성해주세요', 'warn'); return; }
 
   saveBoardNick(nick);
-
-  const post = {
-    id: Date.now() + Math.random().toString(36).slice(2,6),
-    nick, text, type, stock,
-    ts: Date.now(),
-    likes: 0,
-    time: new Date().toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
-  };
-
-  const btn = document.getElementById('board-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = '게시 중...'; }
 
   try {
+    const post = {
+      id: Date.now() + '_' + Math.random().toString(36).slice(2,5),
+      nick, text, type, stock, likes: 0,
+      ts: Date.now(),
+      time: new Date().toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
+    };
     await saveBoardPost(post);
     textEl.value = '';
     if (stockEl) stockEl.value = '';
-    notify('✅ 게시글이 등록됐어요!', 'ok');
+    notify('✅ 게시글 등록!', 'ok');
     renderBoardTab();
   } catch(e) {
-    notify('❌ 게시 실패: ' + e.message, 'error');
+    notify('❌ 게시 실패. 잠시 후 다시 시도해주세요', 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '게시하기 ✈️'; }
   }
 }
 
-// 좋아요 클릭
 async function boardLike(postId) {
-  const added = toggleLike(postId);
-  // storage에서 해당 글 업데이트
+  const liked = getLikedPosts();
+  const isLiked = liked.includes(postId);
+  if (isLiked) {
+    liked.splice(liked.indexOf(postId), 1);
+  } else {
+    liked.push(postId);
+  }
+  try { localStorage.setItem('board_liked', JSON.stringify(liked)); } catch(e) {}
+
   try {
-    const r = await window.storage.get('board:' + postId, true);
-    if (r?.value) {
-      const post = JSON.parse(r.value);
-      post.likes = (post.likes || 0) + (added ? 1 : -1);
-      if (post.likes < 0) post.likes = 0;
-      await window.storage.set('board:' + postId, JSON.stringify(post), true);
-    }
+    await updateBoardLike(postId, isLiked ? -1 : 1);
+    _boardCache = null; // 캐시 무효화
   } catch(e) {}
   renderBoardTab();
 }
 
-// 게시판 탭 렌더링
+function setBoardFilter(f) {
+  _boardFilter = f;
+  renderBoardTab();
+}
+
 async function renderBoardTab() {
   const wrap = document.getElementById('board-content');
   if (!wrap) return;
-  wrap.innerHTML = '<div style="text-align:center;padding:30px;color:#94A3B8">불러오는 중...</div>';
+  wrap.innerHTML = '<div style="text-align:center;padding:30px;color:#94A3B8;font-size:13px">불러오는 중... ⏳</div>';
 
-  const posts = await loadBoardPosts();
+  const posts = await fetchBoardPosts();
   const liked = getLikedPosts();
   const filtered = _boardFilter === 'all' ? posts
-    : _boardFilter === 'free'  ? posts.filter(p => p.type === 'free')
-    : posts.filter(p => p.type === 'stock');
+    : posts.filter(p => p.type === _boardFilter);
+  const sorted = [...filtered].sort((a,b) => b.ts - a.ts);
 
   const typeStyle = {
     free:  { bg:'#EFF6FF', color:'#1565C0', label:'💬 자유' },
     stock: { bg:'#F0FFF4', color:'#2E7D32', label:'📈 종목' },
   };
 
-  wrap.innerHTML = filtered.length === 0
-    ? '<div style="text-align:center;padding:40px;color:#94A3B8">아직 게시글이 없어요<br>첫 글을 남겨보세요! 😊</div>'
-    : filtered.map(p => {
+  wrap.innerHTML = sorted.length === 0
+    ? '<div style="text-align:center;padding:40px;color:#94A3B8;font-size:13px">아직 게시글이 없어요<br>첫 글을 남겨보세요! 😊</div>'
+    : sorted.map(p => {
         const ts = typeStyle[p.type] || typeStyle.free;
         const isLiked = liked.includes(p.id);
-        return `
-        <div class="board-post">
+        return `<div class="board-post">
           <div class="board-post-hdr">
             <span class="board-post-nick">${p.nick}</span>
             <span class="board-post-type" style="background:${ts.bg};color:${ts.color}">${ts.label}</span>
@@ -7629,16 +7503,9 @@ async function renderBoardTab() {
       }).join('');
 }
 
-function setBoardFilter(f) {
-  _boardFilter = f;
-  renderBoardTab();
-}
-
 function rBoard() {
   const nick = getBoardNick();
-  return `
-  <div class="board-wrap">
-    <!-- 글쓰기 -->
+  return `<div class="board-wrap">
     <div class="board-write">
       <div style="font-size:13px;font-weight:900;color:#0F1D3A;margin-bottom:10px">✏️ 글 남기기</div>
       <div class="board-write-top">
@@ -7653,157 +7520,17 @@ function rBoard() {
       <textarea id="board-text" class="board-text-inp" placeholder="의견을 남겨주세요 (300자 이내)" maxlength="300"></textarea>
       <button id="board-submit-btn" class="board-submit" onclick="submitBoardPost()">게시하기 ✈️</button>
     </div>
-
-    <!-- 필터 -->
     <div class="board-filter">
       <button class="board-ftab ${_boardFilter==='all'?'on':''}" onclick="setBoardFilter('all')">전체</button>
       <button class="board-ftab ${_boardFilter==='free'?'on':''}" onclick="setBoardFilter('free')">💬 자유토론</button>
       <button class="board-ftab ${_boardFilter==='stock'?'on':''}" onclick="setBoardFilter('stock')">📈 종목토론</button>
     </div>
-
-    <!-- 게시글 목록 -->
     <div id="board-content">
-      <div style="text-align:center;padding:30px;color:#94A3B8">불러오는 중...</div>
+      <div style="text-align:center;padding:30px;color:#94A3B8;font-size:13px">탭을 열면 자동 로드돼요</div>
     </div>
   </div>`;
 }
 
-
-// ── 포트폴리오 리포트 PDF 다운로드 (하루 3번 제한) ──
-function downloadPortfolioReport(r, items, totalPnlPct) {
-  if (getPortAIRemain() <= 0) {
-    notify('⚠️ 오늘 PDF 출력 횟수(3회)를 모두 사용했어요', 'warn');
-    return;
-  }
-  incPortAIUsage();
-
-  const statusColor = {'양호':'#2E7D32','중립':'#E65100','위험':'#C62828'}[r.summary?.status] || '#1565C0';
-  const actionBg = {'매수':'#E8F5E9','보유':'#EFF6FF','부분매도':'#FFF3E0','관망':'#F4F6FA'};
-  const actionCl = {'매수':'#2E7D32','보유':'#1565C0','부분매도':'#E65100','관망':'#64748B'};
-  const trendIcon = {'상승':'▲','횡보':'→','하락':'▼'};
-  const today = new Date().toLocaleDateString('ko-KR');
-
-  const html = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<title>KOSPI INTEL 투자 분석 리포트 ${today}</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; color:#0F1D3A; padding:30px; font-size:13px; }
-  h1 { font-size:22px; font-weight:900; color:#0F1D3A; margin-bottom:4px; }
-  .sub { font-size:12px; color:#64748B; margin-bottom:24px; }
-  .section { margin-bottom:20px; }
-  .section-title { font-size:13px; font-weight:900; color:#64748B; margin-bottom:10px; padding-bottom:6px; border-bottom:1.5px solid #E2E8F4; }
-  .summary-box { background:${statusColor}15; border:2px solid ${statusColor}40; border-radius:10px; padding:14px; margin-bottom:6px; }
-  .summary-status { font-size:18px; font-weight:900; color:${statusColor}; }
-  .summary-line { font-size:13px; color:#334155; margin-top:4px; }
-  .stat-row { display:flex; gap:16px; margin-top:8px; font-size:12px; color:#64748B; }
-  .risk-box { background:#F8FAFF; border-radius:10px; padding:12px; }
-  .risk-level { font-weight:800; }
-  .stock-row { border:1px solid #E2E8F4; border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; }
-  .stock-name { font-size:13px; font-weight:800; flex:1; }
-  .stock-pnl { font-size:12px; }
-  .action-badge { padding:3px 10px; border-radius:6px; font-size:11px; font-weight:800; }
-  .strategy-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .strategy-box { background:#F8FAFF; border-radius:10px; padding:12px; }
-  .strategy-label { font-size:11px; font-weight:800; color:#1565C0; margin-bottom:6px; }
-  .confidence-bar { height:8px; background:#E2E8F4; border-radius:4px; margin-top:8px; }
-  .confidence-fill { height:8px; background:linear-gradient(90deg,#1565C0,#42A5F5); border-radius:4px; }
-  .quote-box { background:linear-gradient(135deg,#1A237E,#283593); border-radius:10px; padding:14px; color:#fff; text-align:center; font-style:italic; }
-  .footer { margin-top:30px; font-size:11px; color:#94A3B8; text-align:center; border-top:1px solid #E2E8F4; padding-top:12px; }
-  .improve-item { font-size:12px; color:#4A5A7A; margin-bottom:5px; }
-  @media print {
-    body { padding:20px; }
-    button { display:none !important; }
-  }
-</style>
-</head>
-<body>
-  <h1>📊 AI 투자 분석 리포트</h1>
-  <div class="sub">KOSPI INTEL · ${today} · AI 확신도 ${r.confidence||70}%</div>
-
-  <div class="section">
-    <div class="section-title">1️⃣ 포트폴리오 요약</div>
-    <div class="summary-box">
-      <div class="summary-status">${r.summary?.status}</div>
-      <div class="summary-line">${r.summary?.oneLine}</div>
-      <div class="stat-row">
-        <span>전체 손익 <b>${totalPnlPct}%</b></span>
-        <span>수익 <b>${items.filter(i=>parseFloat(i.pnlPct)>0).length}종목</b></span>
-        <span>손실 <b>${items.filter(i=>parseFloat(i.pnlPct)<=0).length}종목</b></span>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">2️⃣ 리스크 분석</div>
-    <div class="risk-box">
-      <span class="risk-level">리스크 수준: ${r.risk?.level}</span>
-      ${(r.risk?.points||[]).map(p=>`<div class="improve-item" style="margin-top:6px">• ${p}</div>`).join('')}
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">3️⃣ 종목별 AI 분석</div>
-    ${(r.stocks||[]).map(s=>`
-    <div class="stock-row">
-      <div class="stock-name">${trendIcon[s.trend]||''} ${s.name}</div>
-      <div class="stock-pnl">${(items.find(i=>i.code===s.code)?.pnlPct||0)}%</div>
-      <span class="action-badge" style="background:${actionBg[s.action]||'#F4F6FA'};color:${actionCl[s.action]||'#64748B'}">${s.action}</span>
-      <div style="font-size:11px;color:#64748B;flex:2">${s.reason}</div>
-    </div>`).join('')}
-  </div>
-
-  <div class="section">
-    <div class="section-title">4️⃣ 포트폴리오 개선 제안</div>
-    ${(r.improve||[]).map(p=>`<div class="improve-item">• ${p}</div>`).join('')}
-  </div>
-
-  <div class="section">
-    <div class="section-title">5️⃣ 투자 전략</div>
-    <div class="strategy-grid">
-      <div class="strategy-box">
-        <div class="strategy-label">⚡ 단기 전략</div>
-        <div style="font-size:12px;color:#334155;line-height:1.7">${r.shortStrategy}</div>
-      </div>
-      <div class="strategy-box">
-        <div class="strategy-label">🌱 중장기 전략</div>
-        <div style="font-size:12px;color:#334155;line-height:1.7">${r.longStrategy}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">AI 분석 확신도</div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-      <span>확신도</span><b>${r.confidence||70}%</b>
-    </div>
-    <div class="confidence-bar">
-      <div class="confidence-fill" style="width:${r.confidence||70}%"></div>
-    </div>
-  </div>
-
-  ${r.quote ? `<div class="quote-box">"${r.quote}"</div>` : ''}
-
-  <div class="footer">
-    KOSPI INTEL · AI 분석은 투자 참고용이며 투자 손익의 책임은 본인에게 있습니다
-  </div>
-
-  <script>window.onload = function(){ window.print(); }<\/script>
-</body>
-</html>`;
-
-  const blob = new Blob([html], { type: 'text/html' });
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url, '_blank');
-  if (!win) {
-    notify('팝업이 차단됐어요. 팝업 허용 후 다시 시도해주세요', 'warn');
-    incPortAIUsage(); // 차감 취소
-    return;
-  }
-  notify('📄 PDF 저장 창이 열렸어요! 인쇄→PDF로 저장하세요', 'ok');
-}
 // PWA Service Worker + 자동 업데이트 감지
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js?v=12')
