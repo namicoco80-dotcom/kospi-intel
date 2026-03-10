@@ -1,4 +1,4 @@
-me: Update KOSPI Data
+name: Update KOSPI Data
 
 on:
   schedule:
