@@ -1830,6 +1830,53 @@ function getMarketStatus() {
    prices.json 과 함께 앱 시작 시 한 번, 이후 5분마다 갱신
    ════════════════════════════════════════════════ */
 async function fetchNewsJson() {
+  // Worker RSS 프록시 우선, 실패시 news.json 폴백
+  try {
+    const workerUrl = getWorkerUrl();
+    if (workerUrl) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch(workerUrl + '?action=news', { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(t);
+      if (r.ok) {
+        const ct = r.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const data = await r.json();
+          const items = data.news || [];
+          if (items.length > 0) {
+            // Worker 뉴스를 NEWS 배열 형식으로 변환
+            const converted = items.map((n, i) => ({
+              id: n.id || ('w_' + i),
+              title: n.title,
+              link: n.link || '#',
+              pubDate: n.pubDate || '',
+              source: n.source || '뉴스',
+              body: n.desc || '',
+              code: '000000',
+              urgency: 3,
+              type: 'news',
+              collectedAt: new Date().toISOString().slice(0,10),
+            }));
+            // 기존 NEWS에 없는 것만 추가
+            let added = 0;
+            const existIds = new Set(NEWS.map(n => n.title));
+            for (const item of converted) {
+              if (!existIds.has(item.title)) {
+                NEWS.unshift(item);
+                added++;
+              }
+            }
+            if (NEWS.length > 200) NEWS.splice(200);
+            return added;
+          }
+        }
+      }
+    }
+  } catch(e) {
+    console.warn('Worker 뉴스 실패, news.json 폴백:', e.message);
+  }
+
+  // 폴백: news.json
   const urls = ['./news.json', window.location.pathname.replace(/\/[^\/]*$/, '') + '/news.json'];
   for (const url of [...new Set(urls)]) {
     try {
@@ -1838,37 +1885,23 @@ async function fetchNewsJson() {
       const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
       clearTimeout(t);
       if (!r.ok) continue;
-      const json = await r.json();
-      if (!Array.isArray(json) || json.length === 0) continue;
-      // 기존 판단/팩트체크 결과 유지 (id 기준 merge)
-      const existingMap = {};
-      NEWS.forEach(n => { existingMap[n.id] = n; });
-      NEWS = json.map(n => {
-        const ex = existingMap[n.id];
-        if (!ex) return n;
-        // 사용자가 이미 분석한 항목 보존
-        return {
-          ...n,
-          score:      ex.score      ?? n.score,
-          verdict:    ex.verdict    ?? n.verdict,
-          detail:     ex.detail     ?? n.detail,
-          dartResult: ex.dartResult ?? n.dartResult,
-          judgment:   ex.judgment   ?? n.judgment,
-          aiSummary:  ex.aiSummary  ?? n.aiSummary,
-          aiKeywords: ex.aiKeywords ?? n.aiKeywords,
-        };
-      });
-      _newsLoaded = true;
-      console.log(`[News] news.json 로드 완료: ${NEWS.length}건 (${url})`);
-      setTimeout(() => runMarketLearning(), 100);       // 임팩트+감성+테마+주가패턴
-      setTimeout(() => restoreAnalysisToNews(), 400);
-      setTimeout(() => autoAddNewStocks(), 700);
-      setTimeout(() => autoTranslateEnglish(), 1300);
-      return NEWS.length;
+      const ct = r.headers.get('content-type') || '';
+      if (!ct.includes('json') && !ct.includes('text')) continue;
+      const arr = await r.json();
+      if (!Array.isArray(arr) || arr.length === 0) continue;
+      const existIds = new Set(NEWS.map(n => n.id));
+      let added = 0;
+      for (const item of arr) {
+        if (!existIds.has(item.id)) { NEWS.push(item); added++; }
+      }
+      NEWS.sort((a,b) => (b.urgency||5)-(a.urgency||5));
+      if (NEWS.length > 200) NEWS.splice(200);
+      return added;
     } catch(e) { /* 다음 URL 시도 */ }
   }
   return 0;
 }
+
 
 async function fetchSupplyJson() {
   const urls = ['./supply.json', window.location.pathname.replace(/\/[^\/]*$/, '') + '/supply.json'];
