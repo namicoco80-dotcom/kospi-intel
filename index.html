@@ -1840,6 +1840,11 @@ async function runAISummary(id) {
    ⑦ 투자판단 HTML
 ══════════════════════════════════════════════ */
 function judgeHTML(j) {
+  if (!j || !j.verdict) return "";
+  j.short = j.short || {signal:"관망", reason:""};
+  j.mid   = j.mid   || {signal:"관망", reason:""};
+  j.long  = j.long  || {signal:"관망", reason:""};
+  j.factors = j.factors || [];
   const T = {
     "강력매수":{bg:"linear-gradient(135deg,#E8F5E9,#C8E6C9)",accent:"#2E7D32"},
     "매수":{bg:"linear-gradient(135deg,#E8F5E9,#DCEDC8)",accent:"#388E3C"},
@@ -4195,7 +4200,8 @@ function closeCardModal() {
 
 // AI 분석 후 모달 자동 갱신
 function refreshCardModal(id) {
-  const item = NEWS.find(n => n.id === id);
+  id = String(id);
+  const item = NEWS.find(n => String(n.id) === id);
   if (item && document.getElementById('card-modal-root')) {
     showCardModal(item);
   }
@@ -4250,6 +4256,8 @@ const HEALTH = {
 
       if (type === 'crash') {
         // 전체 크래시 → 최소 상태로 복구
+        // 모달이 열려있으면 먼저 닫기
+        try { closeCardModal(); } catch(e) {}
         const app = document.getElementById('app');
         if (app) {
           app.innerHTML = `
