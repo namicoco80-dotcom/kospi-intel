@@ -150,7 +150,12 @@ def calc_impact(item_type, sources, sent):
 
 def fetch_rss(url, timeout=8):
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/rss+xml, application/xml, text/xml, */*",
+            "Accept-Language": "ko-KR,ko;q=0.9",
+            "Referer": "https://finance.naver.com/",
+        })
         with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read()
         root = ET.fromstring(raw)
@@ -167,7 +172,7 @@ def fetch_rss(url, timeout=8):
                 result.append({"title": title, "body": desc, "link": link, "pubDate": pub})
         return result
     except Exception as e:
-        log.debug(f"RSS 실패: {url[:60]}… {e}")
+        log.warning(f"RSS 실패: {url[:60]} → {e}")
         return []
 
 def parse_time(pub_date):
