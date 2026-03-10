@@ -104,6 +104,10 @@ SECTOR_RSS = [
     ("바이오",  "https://rss.hankyung.com/board/medical.xml"),
     ("자동차",  "https://rss.hankyung.com/board/industrial.xml"),
     ("방산",   "https://rss.hankyung.com/board/politics.xml"),
+    ("증권",   "https://rss.hankyung.com/board/securities.xml"),
+    ("경제",   "https://rss.hankyung.com/board/economy.xml"),
+    ("산업",   "https://rss.hankyung.com/board/industry.xml"),
+    ("금융",   "https://rss.hankyung.com/board/finance.xml"),
 ]
 
 def _get_html(url, timeout=8):
@@ -294,19 +298,8 @@ def fetch_all_news(old_ids):
     uid_counter = int(datetime.now().timestamp() * 1000)
     seen_titles = set()
 
-    for code, url in NAVER_NEWS_URL.items():
-        raws = fetch_naver_news(code)
-        added = 0
-        for raw in raws[:5]:
-            title = raw["title"]
-            if title in seen_titles: continue
-            seen_titles.add(title)
-            item = build_news_item(raw, code, uid_counter)
-            uid_counter += 1
-            items.append(item)
-            added += 1
-        if added: log.info(f"  [{code}] {STOCK_META[code]['name']}: {added}건")
-        time.sleep(0.2)
+    # 네이버 종목별 뉴스 (차단 이슈로 스킵, 한경 섹터 RSS로 대체)
+    log.info("종목별 뉴스: 한경 RSS 섹터 뉴스로 수집")
 
     for sector_name, url in SECTOR_RSS:
         raws = fetch_rss(url)
