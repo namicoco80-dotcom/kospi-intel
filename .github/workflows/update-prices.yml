@@ -1,43 +1,47 @@
-name: auto_update
+name: Update KOSPI Data
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: '*/5 0,1,2,3,4,5,6 * * 1-5'
+    - cron: '0 7 * * 1-5'
   workflow_dispatch:
 
+concurrency:
+  group: kospi-update
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
 jobs:
-  run-script:
+  update:
     runs-on: ubuntu-latest
-
     steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: python setup
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
+      - name: Install dependencies
+        run: pip install requests
 
-    - name: install packages
-      run: |
-        pip install requests feedparser
+      - name: Update prices & supply
+        run: python3 scripts/update_prices.py
 
-    - name: run script
-      run: |
-        python3 scripts/fetch_news.py
+      - name: Gemini market summary
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python3 scripts/fetch_news.py
 
-    - name: commit
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions@github.com"
-
-        git add .
-
-        git commit -m "auto update $(date '+%Y-%m-%d %H:%M')" || echo "no changes"
-
-        git pull origin main --rebase
-
-        git push
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add prices.json supply.json analysis.json quant.json fundamental.json supply5.json || true
+          git diff --staged --quiet || git commit -m "Auto update $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
+          git push
