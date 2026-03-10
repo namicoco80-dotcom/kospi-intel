@@ -93,13 +93,9 @@ for code, meta in STOCK_META.items():
         if kw not in KEYWORD_MAP:
             KEYWORD_MAP[kw] = code
 
-NAVER_RSS = {
-    code: f"https://finance.naver.com/item/news_news.naver?code={code}&rss=true&isRss=true"
-    for code in STOCK_META
-}
-# 폴백 URL (구버전)
-NAVER_RSS_FALLBACK = {
-    code: f"https://finance.naver.com/item/news.nhn?code={code}&mode=rss"
+# 네이버 금융 뉴스 URL (HTML 파싱)
+NAVER_NEWS_URL = {
+    code: f"https://finance.naver.com/item/news_news.naver?code={code}&page=1&sm=title_entity_id.basic&clusterId="
     for code in STOCK_META
 }
 
@@ -152,6 +148,39 @@ def detect_themes(title, body, code):
 def calc_impact(item_type, sources, sent):
     base = {"official":80,"news":65,"analyst":60,"rumor":50}.get(item_type, 55)
     return min(base + min(sources*3,15) + (8 if sent=="긍정" else 5 if sent=="부정" else 0), 99)
+
+
+def fetch_naver_news(code, timeout=8):
+    """네이버 금융 종목 뉴스 HTML 파싱"""
+    url = f"https://finance.naver.com/item/news_news.naver?code={code}&page=1"
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://finance.naver.com/",
+            "Accept-Language": "ko-KR,ko;q=0.9",
+        }
+        if HAS_REQUESTS:
+            r = req_lib.get(url, headers=headers, timeout=timeout)
+            r.raise_for_status()
+            html = r.text
+        else:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                html = resp.read().decode("euc-kr", errors="replace")
+
+        results = []
+        # 뉴스 제목 파싱
+        pattern = r'<td class="title"><a[^>]+title="([^"]+)"[^>]+href="([^"]+)"'
+        matches = re.findall(pattern, html)
+        for title, link in matches[:5]:
+            title = html_mod.unescape(title).strip()
+            if title:
+                full_link = "https://finance.naver.com" + link if link.startswith("/") else link
+                results.append({"title": title, "body": "", "link": full_link, "pubDate": ""})
+        return results
+    except Exception as e:
+        log.error(f"네이버 뉴스 실패 [{code}]: {type(e).__name__}: {e}")
+        return []
 
 def fetch_rss(url, timeout=8):
     try:
@@ -265,11 +294,8 @@ def fetch_all_news(old_ids):
     uid_counter = int(datetime.now().timestamp() * 1000)
     seen_titles = set()
 
-    for code, url in NAVER_RSS.items():
-        raws = fetch_rss(url)
-        # 폴백: 새 URL 실패 시 구버전 시도
-        if not raws:
-            raws = fetch_rss(NAVER_RSS_FALLBACK[code])
+    for code, url in NAVER_NEWS_URL.items():
+        raws = fetch_naver_news(code)
         added = 0
         for raw in raws[:5]:
             title = raw["title"]
