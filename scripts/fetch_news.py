@@ -93,21 +93,13 @@ for code, meta in STOCK_META.items():
         if kw not in KEYWORD_MAP:
             KEYWORD_MAP[kw] = code
 
-# 네이버 금융 뉴스 URL (HTML 파싱)
-NAVER_NEWS_URL = {
-    code: f"https://finance.naver.com/item/news_news.naver?code={code}&page=1&sm=title_entity_id.basic&clusterId="
-    for code in STOCK_META
-}
+# 네이버 RSS 차단으로 종목별 뉴스 수집 제거
 
 SECTOR_RSS = [
-    ("반도체", "https://rss.hankyung.com/board/it.xml"),
-    ("바이오",  "https://rss.hankyung.com/board/medical.xml"),
-    ("자동차",  "https://rss.hankyung.com/board/industrial.xml"),
-    ("방산",   "https://rss.hankyung.com/board/politics.xml"),
-    ("증권",   "https://rss.hankyung.com/board/securities.xml"),
-    ("경제",   "https://rss.hankyung.com/board/economy.xml"),
-    ("산업",   "https://rss.hankyung.com/board/industry.xml"),
-    ("금융",   "https://rss.hankyung.com/board/finance.xml"),
+    ("Google증시",  "https://news.google.com/rss/search?q=stock+market&hl=ko&gl=KR&ceid=KR:ko"),
+    ("GoogleKOSPI", "https://news.google.com/rss/search?q=KOSPI&hl=ko&gl=KR&ceid=KR:ko"),
+    ("매일경제",    "https://www.mk.co.kr/rss/50200011/"),
+    ("Bloomberg",   "https://feeds.bloomberg.com/markets/news.rss"),
 ]
 
 def _get_html(url, timeout=8):
@@ -153,38 +145,6 @@ def calc_impact(item_type, sources, sent):
     base = {"official":80,"news":65,"analyst":60,"rumor":50}.get(item_type, 55)
     return min(base + min(sources*3,15) + (8 if sent=="긍정" else 5 if sent=="부정" else 0), 99)
 
-
-def fetch_naver_news(code, timeout=8):
-    """네이버 금융 종목 뉴스 HTML 파싱"""
-    url = f"https://finance.naver.com/item/news_news.naver?code={code}&page=1"
-    try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://finance.naver.com/",
-            "Accept-Language": "ko-KR,ko;q=0.9",
-        }
-        if HAS_REQUESTS:
-            r = req_lib.get(url, headers=headers, timeout=timeout)
-            r.raise_for_status()
-            html = r.text
-        else:
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                html = resp.read().decode("euc-kr", errors="replace")
-
-        results = []
-        # 뉴스 제목 파싱
-        pattern = r'<td class="title"><a[^>]+title="([^"]+)"[^>]+href="([^"]+)"'
-        matches = re.findall(pattern, html)
-        for title, link in matches[:5]:
-            title = html_mod.unescape(title).strip()
-            if title:
-                full_link = "https://finance.naver.com" + link if link.startswith("/") else link
-                results.append({"title": title, "body": "", "link": full_link, "pubDate": ""})
-        return results
-    except Exception as e:
-        log.error(f"네이버 뉴스 실패 [{code}]: {type(e).__name__}: {e}")
-        return []
 
 def fetch_rss(url, timeout=8):
     try:
@@ -298,12 +258,12 @@ def fetch_all_news(old_ids):
     uid_counter = int(datetime.now().timestamp() * 1000)
     seen_titles = set()
 
-    # 네이버 종목별 뉴스 (차단 이슈로 스킵, 한경 섹터 RSS로 대체)
-    log.info("종목별 뉴스: 한경 RSS 섹터 뉴스로 수집")
+    log.info("종목별 뉴스: Google/매일경제/Bloomberg RSS로 수집")
 
     for sector_name, url in SECTOR_RSS:
         raws = fetch_rss(url)
-        for raw in raws[:3]:
+        log.info(f"  [{sector_name}] {len(raws)}건 수집")
+        for raw in raws[:20]:
             title = raw["title"]
             if title in seen_titles: continue
             seen_titles.add(title)
