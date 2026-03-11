@@ -49,5 +49,5 @@ jobs:
           git add data/public/
           git diff --staged --quiet && echo "변경 없음" && exit 0
           git commit -m "📊 데이터 자동 업데이트 $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
-          git pull --no-rebase -X ours origin main
+          git pull --rebase origin main
           git push
