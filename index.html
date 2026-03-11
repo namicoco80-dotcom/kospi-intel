@@ -126,14 +126,6 @@ const SRC = {
   rumor:   {label:"찌라시",color:"#ef4444",icon:"🔥"},
   analyst: {label:"리포트",color:"#D4AF5A",icon:"📊"},
 };
-const SOURCES = [
-  {id:"tg_반도체",name:"반도체 텔레그램",type:"텔레그램",total:42,confirmed:28,recent:[1,1,0,1,1,0,0,1,1,0,1,1,1,0,1],rumorsToday:3},
-  {id:"dc_주식",name:"DC 주식갤",type:"커뮤니티",total:87,confirmed:31,recent:[0,1,0,0,1,0,1,0,0,1,0,0,1,0,0],rumorsToday:7},
-  {id:"yt_주식왕",name:"주식왕 유튜브",type:"유튜브",total:23,confirmed:16,recent:[1,1,1,0,1,1,1,0,1,1,0,1,1,1,0],rumorsToday:1},
-  {id:"tg_바이오",name:"바이오 인사이더",type:"텔레그램",total:34,confirmed:19,recent:[1,0,1,1,0,0,1,1,0,1,0,0,1,0,1],rumorsToday:2},
-  {id:"blog_증권",name:"증권분석 블로그",type:"블로그",total:18,confirmed:14,recent:[1,1,1,1,0,1,1,0,1,1,1,1,0,1,1],rumorsToday:0},
-  {id:"tg_IT",name:"IT섹터 채널",type:"텔레그램",total:29,confirmed:12,recent:[0,0,1,0,0,1,0,0,0,1,0,1,0,0,0],rumorsToday:4},
-];
 
 /* ══ 뉴스 데이터 — news.json 에서 동적 로드 ══
    news.json 이 없거나 로드 실패 시 빈 배열로 시작.
@@ -954,8 +946,33 @@ function getMarketStatus() {
    📦 fetchAllData() — news.json / supply.json 로드
    prices.json 과 함께 앱 시작 시 한 번, 이후 5분마다 갱신
    ════════════════════════════════════════════════ */
+// 뉴스 아이템 필수 필드 보정
+function normalizeNewsItem(n, idx) {
+  const stableId = n.id || ('w_' + Math.abs((n.title||'').split('').reduce((a,ch)=>((a<<5)-a+ch.charCodeAt(0))|0,0)).toString(36) + '_' + idx);
+  return {
+    id:           stableId,
+    title:        n.title || '(제목없음)',
+    link:         n.link || '#',
+    pubDate:      n.pubDate || '',
+    source:       n.source || '뉴스',
+    body:         n.desc || n.body || '',
+    code:         n.code || '000000',
+    urgency:      n.urgency || 3,
+    type:         n.type || 'news',
+    sent:         n.sent || '중립',
+    sources:      n.sources || 1,
+    speed:        n.speed || '보통',
+    impactScore:  n.impactScore || 50,
+    themes:       n.themes || [],
+    relStocks:    n.relStocks || [],
+    spreadHistory:n.spreadHistory || [],
+    time:         n.time || new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
+    collectedAt:  n.collectedAt || new Date().toISOString().slice(0,10),
+  };
+}
+
 async function fetchNewsJson() {
-  // Worker RSS 프록시 우선, 실패시 news.json 폴백
+  // 1) Worker RSS 프록시 시도
   try {
     const workerUrl = getWorkerUrl();
     if (workerUrl) {
@@ -964,65 +981,50 @@ async function fetchNewsJson() {
       const r = await fetch(workerUrl + '?action=news', { signal: ctrl.signal, cache: 'no-store' });
       clearTimeout(t);
       if (r.ok) {
-        const ct = r.headers.get('content-type') || '';
-        if (ct.includes('application/json')) {
-          const data = await r.json();
-          const items = data.news || [];
-          if (items.length > 0) {
-            // Worker 뉴스를 NEWS 배열 형식으로 변환
-            const converted = items.map((n, i) => ({
-              id: n.id || ('w_' + i),
-              title: n.title,
-              link: n.link || '#',
-              pubDate: n.pubDate || '',
-              source: n.source || '뉴스',
-              body: n.desc || '',
-              code: '000000',
-              urgency: 3,
-              type: 'news',
-              collectedAt: new Date().toISOString().slice(0,10),
-            }));
-            // 기존 NEWS에 없는 것만 추가
-            let added = 0;
-            const existIds = new Set(NEWS.map(n => n.title));
-            for (const item of converted) {
-              if (!existIds.has(item.title)) {
-                NEWS.unshift(item);
-                added++;
-              }
+        const data = await r.json().catch(() => null);
+        const items = (data && (data.news || data.items || (Array.isArray(data) ? data : []))) || [];
+        if (items.length > 0) {
+          const existTitles = new Set(NEWS.map(n => n.title));
+          let added = 0;
+          items.forEach((n, i) => {
+            const item = normalizeNewsItem(n, i);
+            if (!existTitles.has(item.title)) {
+              NEWS.unshift(item);
+              existTitles.add(item.title);
+              added++;
             }
-            if (NEWS.length > 200) NEWS.splice(200);
-            return added;
-          }
+          });
+          if (NEWS.length > 200) NEWS.splice(200);
+          if (added > 0) { console.log('[News] Worker에서', added, '건 로드'); return added; }
         }
       }
     }
   } catch(e) {
-    console.warn('Worker 뉴스 실패, news.json 폴백:', e.message);
+    console.warn('[News] Worker 실패:', e.message);
   }
 
-  // 폴백: news.json
-  const urls = ['./news.json', window.location.pathname.replace(/\/[^\/]*$/, '') + '/news.json'];
-  for (const url of [...new Set(urls)]) {
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 5000);
-      const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
-      clearTimeout(t);
-      if (!r.ok) continue;
-      const ct = r.headers.get('content-type') || '';
-      if (!ct.includes('json') && !ct.includes('text')) continue;
-      const arr = await r.json();
-      if (!Array.isArray(arr) || arr.length === 0) continue;
-      const existIds = new Set(NEWS.map(n => n.id));
-      let added = 0;
-      for (const item of arr) {
-        if (!existIds.has(item.id)) { NEWS.push(item); added++; }
+  // 2) news.json 폴백
+  try {
+    const r = await fetch('./news.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const arr = await r.json();
+    if (!Array.isArray(arr) || arr.length === 0) throw new Error('빈 배열');
+    const existIds = new Set(NEWS.map(n => String(n.id)));
+    let added = 0;
+    arr.forEach((n, i) => {
+      const item = normalizeNewsItem(n, i);
+      if (!existIds.has(String(item.id))) {
+        NEWS.push(item);
+        existIds.add(String(item.id));
+        added++;
       }
-      NEWS.sort((a,b) => (b.urgency||5)-(a.urgency||5));
-      if (NEWS.length > 200) NEWS.splice(200);
-      return added;
-    } catch(e) { /* 다음 URL 시도 */ }
+    });
+    NEWS.sort((a,b) => (b.urgency||3)-(a.urgency||3));
+    if (NEWS.length > 200) NEWS.splice(200);
+    console.log('[News] news.json에서', added, '건 로드 (전체', arr.length, '건)');
+    return added;
+  } catch(e) {
+    console.warn('[News] news.json 실패:', e.message);
   }
   return 0;
 }
@@ -1898,7 +1900,8 @@ function judgeHTML(j) {
    ⑧ CARD HTML
 ══════════════════════════════════════════════ */
 function cardHTML(item) {
-  const stock=gs(item.code), src=SRC[item.type], v=vdStyle(item.verdict);
+  if (!item || !item.title) return '';
+  const stock=gs(item.code), src=SRC[item.type]||SRC['news'], v=vdStyle(item.verdict);
   const isE=S.exp===item.id, isA=S.ana[item.id], isDartF=S.dartF[item.id], isJ=S.judging[item.id];
   const isAiF = S.aiSumF[item.id];
   const iColor = impactColor(item.impactScore||50);
@@ -2152,66 +2155,6 @@ function rHeatmap() {
   </div>`;
 }
 
-/* ── 출처 탭 ── */
-function rSources() {
-  return `<div class="srctab">
-    ${SOURCES.map(src=>{
-      const pct = Math.round(src.confirmed/src.total*100);
-      const col = pct>=70?"#22c55e":pct>=50?"#E8921E":"#ef4444";
-      return `<div class="srccard">
-        <div class="srccard-top">
-          <div><div class="srcname">${src.name}</div><div class="srctype">${src.type} · 오늘 ${src.rumorsToday}건</div></div>
-          <div><div class="srcpct" style="color:${col}">${pct}%</div><div class="srcpctl">적중률</div></div>
-        </div>
-        <div class="srcstats">
-          <div class="srcstat"><div class="srcsv" style="color:${col}">${src.confirmed}</div><div class="srcsl">확인됨</div></div>
-          <div class="srcstat"><div class="srcsv">${src.total-src.confirmed}</div><div class="srcsl">불일치</div></div>
-          <div class="srcstat"><div class="srcsv">${src.total}</div><div class="srcsl">누적</div></div>
-        </div>
-        <div class="srcdotl">최근 15건 이력</div>
-        <div class="srcdots">${src.recent.map(v=>`<div class="srcdot" style="background:${v?col:'var(--bg3)'}"></div>`).join('')}</div>
-        <div class="srcbar-w"><div class="srcbar" style="width:${pct}%;background:${col}"></div></div>
-      </div>`;
-    }).join('')}
-  </div>`;
-}
-
-/* ── 타임라인 탭 ── */
-function rTimeline() {
-  const g = {};
-  filtered().forEach(item=>{ const h=item.time.split(":")[0]+":00"; if(!g[h])g[h]=[]; g[h].push(item); });
-  const sorted = Object.entries(g).sort(([a],[b])=>a.localeCompare(b));
-  return `<div class="tl">
-    <div class="tldate">${new Date().toLocaleDateString('ko-KR')} — 이슈 타임라인</div>
-    ${sorted.length===0?`<div class="empty"><div class="empty-i">⏳</div><div class="empty-t">이슈 없음</div></div>`:''}
-    ${sorted.map(([hour,items])=>`<div class="tlgrp">
-      <div class="tlhour"><span>${hour}</span></div>
-      <div class="tlline">
-        <div class="tlvert"></div>
-        <div class="tldot" style="background:${items.some(i=>i.urgency===1)?'var(--rose)':'var(--amber)'}"></div>
-        ${items.map(item=>{
-          const stock=gs(item.code),src=SRC[item.type],v=vdStyle(item.verdict);
-          return `<div class="tlcard" onclick="goCard(${item.id})">
-            <div class="tltop">
-              <div style="display:flex;gap:7px;align-items:center">
-                <span style="color:${src.color};font-size:13px">${src.icon}</span>
-                ${uPill(item.urgency)}
-                <span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">${item.time}</span>
-                ${item.judgment?'<span style="font-size:11px;color:var(--sage);font-weight:700">📈</span>':''}
-              </div>
-              ${item.verdict?`<span style="font-size:12px;font-weight:800;color:${v.col}">${v.lbl}</span>`:''}
-            </div>
-            <div class="tltit">${item.title}</div>
-            <div class="tlbot">
-              <span style="font-size:12px;color:var(--ink3)">${stock?.name} · ${(item.themes||[]).slice(0,2).map(t=>`#${t}`).join(' ')}</span>
-              ${item.impactScore?`<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${impactColor(item.impactScore)}">${item.impactScore}pt</span>`:''}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`).join('')}
-  </div>`;
-}
 
 /* ── 종목 탭 (주가 연동) ── */
 function rStocks() {
@@ -3453,8 +3396,8 @@ function render() {
       <button class="tab${S.tab==='hm'?' on':''}" onclick="setTab('hm')">🌡 테마</button>
       <button class="tab${S.tab==='sk'?' on':''}" onclick="setTab('sk')">🗺 종목</button>
       <button class="tab${S.tab==='alert'?' on':''}" onclick="setTab('alert')">🔔 알림</button>
-      <button class="tab${S.tab==='src'?' on':''}" onclick="setTab('src')">🕵️ 출처</button>
-      <button class="tab${S.tab==='tl'?' on':''}" onclick="setTab('tl')">⏱ 타임라인</button>
+
+
       <button class="tab${S.tab==='board'?' on':''}" onclick="setTab('board')">💬 게시판</button>
     </div>
 
@@ -3462,8 +3405,8 @@ function render() {
     ${S.tab==='trade'  ? rTradelog()  : ''}
     ${S.tab==='feed'  ? rFeed()      : ''}
     ${S.tab==='hm'    ? rHeatmap()   : ''}
-    ${S.tab==='src'   ? rSources()   : ''}
-    ${S.tab==='tl'    ? rTimeline()  : ''}
+
+
     ${S.tab==='board'  ? rBoard()     : ''}
     ${S.tab==='sk'    ? rStocks()    : ''}
     ${S.tab==='port'  ? rPortfolio() : ''}
@@ -4065,9 +4008,10 @@ if(document.readyState === 'loading') {
 
 // ── 카드 상세 모달 (하단 시트) ──
 function showCardModal(item) {
+  if (!item || !item.title) return;
   document.getElementById('card-modal-root')?.remove();
   const stock = gs(item.code);
-  const src = SRC[item.type] || {ico:'📰', color:'#64748B'};
+  const src = SRC[item.type] || {label:'뉴스', ico:'📰', color:'#64748B'};
   const isA = S.ana[item.id], isDartF = S.dartF[item.id], isJ = S.judging[item.id];
   const isAiF = S.aiSumF && S.aiSumF[item.id];
   const v = vdStyle(item.verdict);
