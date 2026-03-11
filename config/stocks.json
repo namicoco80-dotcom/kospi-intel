@@ -1,1 +1,26 @@
-
+{
+  "_comment": "감시 종목 마스터 목록. 이 파일만 수정하면 모든 스크립트에 반영됩니다.",
+  "_version": "1.0",
+  "stocks": [
+    {"code": "005930", "name": "삼성전자",        "sector": "반도체", "dart_corp_code": "00126380"},
+    {"code": "000660", "name": "SK하이닉스",       "sector": "반도체", "dart_corp_code": "00164779"},
+    {"code": "035420", "name": "NAVER",            "sector": "IT",     "dart_corp_code": "00261443"},
+    {"code": "035720", "name": "카카오",            "sector": "IT",     "dart_corp_code": "00401731"},
+    {"code": "051910", "name": "LG화학",            "sector": "화학",   "dart_corp_code": "00118804"},
+    {"code": "006400", "name": "삼성SDI",           "sector": "2차전지","dart_corp_code": "00126362"},
+    {"code": "207940", "name": "삼성바이오로직스",  "sector": "바이오", "dart_corp_code": "01247720"},
+    {"code": "068270", "name": "셀트리온",          "sector": "바이오", "dart_corp_code": "00108675"},
+    {"code": "005380", "name": "현대차",            "sector": "자동차", "dart_corp_code": "00164742"},
+    {"code": "000270", "name": "기아",              "sector": "자동차", "dart_corp_code": "00120030"},
+    {"code": "003550", "name": "LG",               "sector": "지주",   "dart_corp_code": "00108449"},
+    {"code": "055550", "name": "신한지주",          "sector": "금융",   "dart_corp_code": "00110361"},
+    {"code": "105560", "name": "KB금융",            "sector": "금융",   "dart_corp_code": "00104205"},
+    {"code": "012330", "name": "현대모비스",        "sector": "자동차", "dart_corp_code": "00164788"},
+    {"code": "028260", "name": "삼성물산",          "sector": "지주",   "dart_corp_code": "00126464"},
+    {"code": "066570", "name": "LG전자",            "sector": "전자",   "dart_corp_code": "00401089"},
+    {"code": "096770", "name": "SK이노베이션",      "sector": "에너지", "dart_corp_code": "00631518"},
+    {"code": "034730", "name": "SK",               "sector": "지주",   "dart_corp_code": "00617460"},
+    {"code": "017670", "name": "SK텔레콤",          "sector": "통신",   "dart_corp_code": "00173262"},
+    {"code": "030200", "name": "KT",               "sector": "통신",   "dart_corp_code": "00210695"}
+  ]
+}
