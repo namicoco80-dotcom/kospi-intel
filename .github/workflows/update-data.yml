@@ -1,0 +1,53 @@
+name: KOSPI INTEL 데이터 수집
+
+on:
+  schedule:
+    - cron: '35 7 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install requests beautifulsoup4 feedparser google-generativeai
+
+      - name: 데이터 폴더 초기화
+        run: |
+          mkdir -p data/raw data/processed data/public data/logs data/backup
+          [ -f data/public/news.json ]   || echo "[]" > data/public/news.json
+          [ -f data/public/prices.json ] || echo "[]" > data/public/prices.json
+          [ -f data/public/supply.json ] || echo "[]" > data/public/supply.json
+          [ -f data/public/index.json ]  || echo "{}" > data/public/index.json
+
+      - name: 주가·수급 수집
+        run: cd scripts && python collect_prices.py
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+
+      - name: 뉴스·공시 수집
+        run: cd scripts && python collect_news.py
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: 변경사항 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/public/
+          git diff --staged --quiet && echo "변경 없음" && exit 0
+          git commit -m "📊 데이터 자동 업데이트 $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
+          git pull --rebase origin main
+          git push
