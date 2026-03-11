@@ -6679,5 +6679,150 @@ function showUpdateToast() {
   // 10초 후 자동 사라짐
   setTimeout(() => toast?.remove(), 10000);
 }</script>
+
+<!-- 디버그 버튼 -->
+<div id="debug-fab" style="position:fixed;bottom:80px;right:16px;z-index:9999">
+  <button onclick="showDebug()" style="background:#1565C0;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,0.3);cursor:pointer">🔍</button>
+</div>
+
+<div id="debug-panel" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);overflow-y:auto;padding:20px;font-family:monospace">
+  <div style="max-width:600px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="color:#fff;font-size:18px;font-weight:700">🔍 진단 결과</span>
+      <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer">닫기</button>
+    </div>
+    <div id="debug-output" style="color:#a3e635;font-size:13px;line-height:2"></div>
+    <button onclick="runDebugFetch()" style="margin-top:16px;width:100%;background:#22c55e;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">📡 뉴스 fetch 직접 테스트</button>
+    <div id="debug-fetch-output" style="color:#fbbf24;font-size:12px;line-height:1.8;margin-top:12px;white-space:pre-wrap"></div>
+  </div>
+</div>
+
+<script>
+function showDebug() {
+  const out = [];
+  const log = (emoji, msg) => out.push(emoji + ' ' + msg);
+
+  log('📋', '=== 기본 상태 ===');
+  log('📰', 'NEWS 배열 길이: ' + NEWS.length);
+  log('🔑', 'Worker URL: ' + (getWorkerUrl() || '❌ 미설정'));
+  log('📁', 'location.href: ' + location.href);
+
+  if (NEWS.length > 0) {
+    log('📰', '첫번째 뉴스 id: ' + NEWS[0].id);
+    log('📰', '첫번째 뉴스 title: ' + (NEWS[0].title||'').slice(0,40));
+    log('📰', '첫번째 뉴스 type: ' + NEWS[0].type);
+    log('📰', '첫번째 뉴스 code: ' + NEWS[0].code);
+    log('📰', '첫번째 뉴스 time: ' + NEWS[0].time);
+  } else {
+    log('❌', 'NEWS 비어있음!');
+  }
+
+  log('', '');
+  log('📋', '=== S 상태 ===');
+  log('🗂', 'S.tab: ' + S.tab);
+  log('🔍', 'S.q: ' + (S.q||'(없음)'));
+  log('📂', 'S.tf: ' + (S.tf||'전체'));
+  log('📂', 'S.sector: ' + (S.sector||'전체'));
+
+  log('', '');
+  log('📋', '=== filtered() 결과 ===');
+  try {
+    const f = filtered();
+    log('✅', 'filtered() 정상 - ' + f.length + '건');
+  } catch(e) {
+    log('❌', 'filtered() 오류: ' + e.message);
+  }
+
+  log('', '');
+  log('📋', '=== render() 테스트 ===');
+  try {
+    render();
+    log('✅', 'render() 정상');
+  } catch(e) {
+    log('❌', 'render() 오류: ' + e.message);
+  }
+
+  document.getElementById('debug-output').innerHTML = out.join('<br>');
+  document.getElementById('debug-panel').style.display = 'block';
+}
+
+async function runDebugFetch() {
+  const out = document.getElementById('debug-fetch-output');
+  out.textContent = '테스트 중...
+';
+
+  // 1. news.json 직접 fetch
+  try {
+    out.textContent += '1) news.json fetch 시도...
+';
+    const r = await fetch('./news.json?_=' + Date.now(), {cache:'no-store'});
+    out.textContent += '   HTTP: ' + r.status + ' ' + r.statusText + '
+';
+    out.textContent += '   Content-Type: ' + r.headers.get('content-type') + '
+';
+    const text = await r.text();
+    out.textContent += '   응답 크기: ' + text.length + ' bytes
+';
+    try {
+      const arr = JSON.parse(text);
+      out.textContent += '   ✅ JSON 파싱 성공: ' + (Array.isArray(arr) ? arr.length+'건 배열' : typeof arr) + '
+';
+      if (Array.isArray(arr) && arr.length > 0) {
+        out.textContent += '   첫번째 키: ' + Object.keys(arr[0]).join(', ') + '
+';
+        out.textContent += '   첫번째 title: ' + (arr[0].title||'').slice(0,50) + '
+';
+      }
+    } catch(e) {
+      out.textContent += '   ❌ JSON 파싱 실패: ' + e.message + '
+';
+      out.textContent += '   내용 앞부분: ' + text.slice(0,100) + '
+';
+    }
+  } catch(e) {
+    out.textContent += '   ❌ fetch 실패: ' + e.message + '
+';
+  }
+
+  // 2. Worker fetch
+  const workerUrl = getWorkerUrl();
+  if (workerUrl) {
+    try {
+      out.textContent += '
+2) Worker fetch 시도: ' + workerUrl + '
+';
+      const r = await fetch(workerUrl + '?action=news', {cache:'no-store'});
+      out.textContent += '   HTTP: ' + r.status + '
+';
+      const text = await r.text();
+      out.textContent += '   응답 크기: ' + text.length + ' bytes
+';
+      try {
+        const data = JSON.parse(text);
+        const items = data.news || data.items || (Array.isArray(data)?data:[]);
+        out.textContent += '   ✅ JSON 파싱 성공: ' + items.length + '건
+';
+        if (items.length > 0) out.textContent += '   첫번째 title: ' + (items[0].title||'').slice(0,50) + '
+';
+      } catch(e) {
+        out.textContent += '   ❌ JSON 파싱 실패: ' + e.message + '
+';
+        out.textContent += '   내용: ' + text.slice(0,200) + '
+';
+      }
+    } catch(e) {
+      out.textContent += '   ❌ Worker fetch 실패: ' + e.message + '
+';
+    }
+  } else {
+    out.textContent += '
+2) Worker URL 미설정 - 스킵
+';
+  }
+
+  out.textContent += '
+✅ 테스트 완료';
+}
+</script>
 </body>
 </html>
