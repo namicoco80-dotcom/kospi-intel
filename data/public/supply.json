@@ -1,1 +1,145 @@
-[]
+[
+  {
+    "code": "005930",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "000660",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "035420",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "035720",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "051910",
+    "collectedAt": "2026-03-12T08:45:00.692133+09:00",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "dart_estimate"
+  },
+  {
+    "code": "006400",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "207940",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "068270",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "005380",
+    "collectedAt": "2026-03-12T08:45:00.692133+09:00",
+    "foreign": 44700000000,
+    "institution": 0,
+    "individual": 0,
+    "source": "dart_estimate"
+  },
+  {
+    "code": "000270",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "003550",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "055550",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "105560",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "012330",
+    "collectedAt": "2026-03-12T08:45:00.692133+09:00",
+    "foreign": 79000000000,
+    "institution": 0,
+    "individual": 0,
+    "source": "dart_estimate"
+  },
+  {
+    "code": "028260",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "066570",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "096770",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "034730",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "017670",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  },
+  {
+    "code": "030200",
+    "foreign": 0,
+    "institution": 0,
+    "individual": 0,
+    "source": "unavailable"
+  }
+]
