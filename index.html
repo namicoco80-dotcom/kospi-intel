@@ -238,9 +238,7 @@ ul,ol{list-style:none}
 .worker-input-row input{flex:1}
 .fade-in{animation:fadeIn .2s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-/* 데이터 업데이트 시각 표시 */
 .data-badge{display:inline-flex;align-items:center;gap:4px;font-size:.64rem;padding:2px 8px;border-radius:var(--r-full);background:var(--accent-light);color:var(--accent);font-weight:500}
-/* 차트 모달 */
 .chart-sheet{position:fixed;bottom:0;left:0;right:0;z-index:201;background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;max-height:92dvh;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.34,1.12,.64,1);padding-bottom:env(safe-area-inset-bottom,0px)}
 .chart-sheet.show{transform:translateY(0)}
 .chart-header{padding:12px 16px 10px;border-bottom:1px solid var(--border)}
@@ -267,13 +265,13 @@ ul,ol{list-style:none}
 <header id="app-header">
   <div class="header-logo">KOSPI <span>INTEL</span></div>
   <div class="header-right">
-    <button class="header-btn" onclick="S.tab='feed';S.q='';render()" title="검색">
+    <button class="header-btn" id="search-btn" title="검색">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     </button>
-    <button class="header-btn" id="refresh-btn" onclick="doRefresh()" title="새로고침">
+    <button class="header-btn" id="refresh-btn" title="새로고침">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
     </button>
-    <button class="header-btn" onclick="runAll()" title="AI 일괄분석">
+    <button class="header-btn" id="ai-batch-btn" title="AI 일괄분석">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
     </button>
   </div>
@@ -293,7 +291,7 @@ ul,ol{list-style:none}
 'use strict';
 
 /* ── 전역 상태 ── */
-const S = {
+window.S = {
   tab:'my', sector:'전체', tf:'전체', q:'', gradeFilter:'all', themeFilter:'',
   ana:{}, judging:{}, aiSumF:{}, dartF:{},
   watchlist:[], portfolio:[], portAnalysis:{}, keywords:[],
@@ -305,7 +303,7 @@ const S = {
 let NEWS=[], PRICES={}, SUPPLY={}, STOCKS_LIST=[], QUANT={};
 
 const CF_WORKER_URL = 'https://misty-glade-ddcf.namicoco80.workers.dev';
-const BASE_URL = location.origin + location.pathname.replace(/\/?$/, '/');
+const BASE_URL = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
 
 const SRC = {
   official:{color:'#4338CA',label:'공시',bg:'#EEF2FF'},
@@ -347,11 +345,157 @@ const DEFAULT_STOCKS = [
   {"code":"030200","name":"KT","sector":"통신"}
 ];
 
+/* 기본 뉴스 데이터 (JSON 로드 실패 시 사용) */
+const DEFAULT_NEWS = [
+  {
+    "id": 1,
+    "title": "삼성전자, 2나노 공정 개발 가속화",
+    "body": "삼성전자가 차세대 2나노 공정 개발에 박차를 가하고 있다. 업계에 따르면 2025년 양산을 목표로 테스트 중이다.",
+    "code": "005930",
+    "stockName": "삼성전자",
+    "type": "news",
+    "sent": "긍정",
+    "sources": 3,
+    "urgency": 2,
+    "impactScore": 85,
+    "themes": ["반도체", "AI"],
+    "time": "14:32",
+    "url": ""
+  },
+  {
+    "id": 2,
+    "title": "SK하이닉스, HBM3E 양산 시작",
+    "body": "SK하이닉스가 업계 최초로 5세대 HBM3E 양산에 돌입했다. 엔비디아 등 주요 고객사에 공급을 시작할 예정이다.",
+    "code": "000660",
+    "stockName": "SK하이닉스",
+    "type": "official",
+    "sent": "긍정",
+    "sources": 2,
+    "urgency": 1,
+    "impactScore": 92,
+    "themes": ["반도체", "AI"],
+    "time": "11:05",
+    "url": ""
+  },
+  {
+    "id": 3,
+    "title": "네이버, AI 검색 서비스 출시",
+    "body": "네이버가 생성형 AI 기반 검색 서비스를 출시했다. 사용자 질문에 대한 요약 답변을 제공한다.",
+    "code": "035420",
+    "stockName": "NAVER",
+    "type": "news",
+    "sent": "긍정",
+    "sources": 2,
+    "urgency": 2,
+    "impactScore": 75,
+    "themes": ["IT", "AI"],
+    "time": "09:47",
+    "url": ""
+  },
+  {
+    "id": 4,
+    "title": "LG에너지솔루션, 4680 배터리 양산 임박",
+    "body": "LG에너지솔루션이 테슬라용 4680 배터리 양산을 앞두고 있다. 연내 공급 계약 체결 가능성도 제기된다.",
+    "code": "373220",
+    "stockName": "LG에너지솔루션",
+    "type": "news",
+    "sent": "긍정",
+    "sources": 2,
+    "urgency": 2,
+    "impactScore": 78,
+    "themes": ["2차전지", "전기차"],
+    "time": "10:23",
+    "url": ""
+  },
+  {
+    "id": 5,
+    "title": "현대차, 미국 전기차 공장 준공",
+    "body": "현대차가 미국 조지아주에 전기차 전용 공장을 준공했다. 연간 30만대 생산 규모다.",
+    "code": "005380",
+    "stockName": "현대차",
+    "type": "official",
+    "sent": "긍정",
+    "sources": 3,
+    "urgency": 2,
+    "impactScore": 82,
+    "themes": ["자동차", "전기차"],
+    "time": "08:15",
+    "url": ""
+  }
+];
+
+/* 기본 가격 데이터 (JSON 로드 실패 시 사용) */
+const DEFAULT_PRICES = [
+  {"code": "005930", "name": "삼성전자", "price": 72000, "chg": 1.5, "sector": "반도체"},
+  {"code": "000660", "name": "SK하이닉스", "price": 152000, "chg": 2.3, "sector": "반도체"},
+  {"code": "035420", "name": "NAVER", "price": 185000, "chg": -0.8, "sector": "IT"},
+  {"code": "035720", "name": "카카오", "price": 42000, "chg": -1.2, "sector": "IT"},
+  {"code": "051910", "name": "LG화학", "price": 380000, "chg": 0.5, "sector": "화학"},
+  {"code": "006400", "name": "삼성SDI", "price": 390000, "chg": 0.3, "sector": "2차전지"},
+  {"code": "207940", "name": "삼성바이오로직스", "price": 720000, "chg": 0.8, "sector": "바이오"},
+  {"code": "068270", "name": "셀트리온", "price": 165000, "chg": -0.5, "sector": "바이오"},
+  {"code": "005380", "name": "현대차", "price": 210000, "chg": 1.2, "sector": "자동차"},
+  {"code": "000270", "name": "기아", "price": 98000, "chg": 0.9, "sector": "자동차"}
+];
+
+/* 기본 수급 데이터 (JSON 로드 실패 시 사용) */
+const DEFAULT_SUPPLY = [
+  {"code": "005930", "foreign": 53.2, "institution": 12.5},
+  {"code": "000660", "foreign": 48.7, "institution": 15.3},
+  {"code": "035420", "foreign": 42.1, "institution": 8.9},
+  {"code": "035720", "foreign": 38.5, "institution": 6.2},
+  {"code": "051910", "foreign": 35.8, "institution": 10.1}
+];
+
+// 전역 함수 노출
+window.render = render;
+window.switchTab = switchTab;
+window.doRefresh = doRefresh;
+window.runAll = runAll;
+window.toggleTheme = toggleTheme;
+window.showToast = showToast;
+window.toggleWatchlist = toggleWatchlist;
+window.goFeedByCode = goFeedByCode;
+window.goFeedBySector = goFeedBySector;
+window.goFeedByTheme = goFeedByTheme;
+window.showCardModal = showCardModal;
+window.closeCardModal = closeCardModal;
+window.rfc = rfc;
+window.runJudge = runJudge;
+window.runAISummary = runAISummary;
+window.showChartModal = showChartModal;
+window.closeChartModal = closeChartModal;
+window.changeChartRange = changeChartRange;
+window.changeChartType = changeChartType;
+window.addKeyword = addKeyword;
+window.removeKeyword = removeKeyword;
+window.saveWorkerUrl = saveWorkerUrl;
+window.exportData = exportData;
+window.clearCache = clearCache;
+window.showAddPortModal = showAddPortModal;
+window.closePortModal = closePortModal;
+window.addPortItem = addPortItem;
+window.addTradeRecord = addTradeRecord;
+window.deleteTrade = deleteTrade;
+window.reCards = reCards;
+window.renderSkList = renderSkList;
+
 /* ── 초기화 ── */
 async function initApp() {
   loadLocalState();
   applyTheme();
   renderTabBar();
+  
+  // 버튼 이벤트 리스너 등록
+  document.getElementById('search-btn')?.addEventListener('click', () => {
+    window.S.tab = 'feed';
+    window.S.q = '';
+    render();
+  });
+  
+  document.getElementById('refresh-btn')?.addEventListener('click', doRefresh);
+  document.getElementById('ai-batch-btn')?.addEventListener('click', runAll);
+  
   await loadGitHubData();
   render();
   startAutoRefresh();
@@ -359,13 +503,13 @@ async function initApp() {
 
 function loadLocalState() {
   try {
-    S.watchlist = JSON.parse(localStorage.getItem('ki_watchlist')||'[]');
-    S.portfolio = JSON.parse(localStorage.getItem('ki_portfolio')||'[]');
-    S.keywords = JSON.parse(localStorage.getItem('ki_keywords')||'[]');
-    S.alertSettings = JSON.parse(localStorage.getItem('ki_alertSettings')||'{"surge":true,"newIssue":true,"keyword":true}');
-    S.dartKey = localStorage.getItem('ki_dartKey')||'';
-    S._cfWorkerUrl = localStorage.getItem('ki_cfWorkerUrl')||CF_WORKER_URL;
-    S._theme = localStorage.getItem('ki_theme')||'light';
+    window.S.watchlist = JSON.parse(localStorage.getItem('ki_watchlist')||'[]');
+    window.S.portfolio = JSON.parse(localStorage.getItem('ki_portfolio')||'[]');
+    window.S.keywords = JSON.parse(localStorage.getItem('ki_keywords')||'[]');
+    window.S.alertSettings = JSON.parse(localStorage.getItem('ki_alertSettings')||'{"surge":true,"newIssue":true,"keyword":true}');
+    window.S.dartKey = localStorage.getItem('ki_dartKey')||'';
+    window.S._cfWorkerUrl = localStorage.getItem('ki_cfWorkerUrl')||CF_WORKER_URL;
+    window.S._theme = localStorage.getItem('ki_theme')||'light';
     NEWS = JSON.parse(localStorage.getItem('ki_newsCache')||'[]');
     const ac = JSON.parse(localStorage.getItem('ki_analysisCache')||'{}');
     NEWS.forEach(n=>{ const c=ac[String(n.id)]; if(c) Object.assign(n,c); });
@@ -374,24 +518,20 @@ function loadLocalState() {
 
 function saveLocalState() {
   try {
-    localStorage.setItem('ki_watchlist',JSON.stringify(S.watchlist));
-    localStorage.setItem('ki_portfolio',JSON.stringify(S.portfolio));
-    localStorage.setItem('ki_keywords',JSON.stringify(S.keywords));
-    localStorage.setItem('ki_alertSettings',JSON.stringify(S.alertSettings));
-    localStorage.setItem('ki_dartKey',S.dartKey);
-    localStorage.setItem('ki_cfWorkerUrl',S._cfWorkerUrl);
-    localStorage.setItem('ki_theme',S._theme);
+    localStorage.setItem('ki_watchlist',JSON.stringify(window.S.watchlist));
+    localStorage.setItem('ki_portfolio',JSON.stringify(window.S.portfolio));
+    localStorage.setItem('ki_keywords',JSON.stringify(window.S.keywords));
+    localStorage.setItem('ki_alertSettings',JSON.stringify(window.S.alertSettings));
+    localStorage.setItem('ki_dartKey',window.S.dartKey);
+    localStorage.setItem('ki_cfWorkerUrl',window.S._cfWorkerUrl);
+    localStorage.setItem('ki_theme',window.S._theme);
   } catch(e){}
 }
 
-/* ══════════════════════════════════════
-   GitHub data/ 폴더에서 JSON 직접 fetch
-   ══════════════════════════════════════ */
 async function loadGitHubData() {
-  const ts = '?t=' + Date.now(); // 캐시 방지
+  const ts = '?t=' + Date.now();
 
   try {
-    // 1. news.json 로드
     const newsRes = await fetch(BASE_URL + 'data/news.json' + ts);
     if (newsRes.ok) {
       const rawNews = await newsRes.json();
@@ -407,11 +547,17 @@ async function loadGitHubData() {
         try { localStorage.setItem('ki_newsCache', JSON.stringify(NEWS.slice(0,50))); } catch(e) {}
         console.log('✅ news.json 로드:', NEWS.length + '건');
       }
+    } else {
+      // 파일이 없으면 기본 데이터 사용
+      console.log('📁 news.json 없음, 기본 데이터 사용');
+      NEWS = DEFAULT_NEWS.map((n, i) => normalizeNewsItem(n, i));
     }
-  } catch(e) { console.warn('news.json 로드 실패:', e); }
+  } catch(e) { 
+    console.warn('news.json 로드 실패, 기본 데이터 사용:', e);
+    NEWS = DEFAULT_NEWS.map((n, i) => normalizeNewsItem(n, i));
+  }
 
   try {
-    // 2. prices.json 로드
     const pricesRes = await fetch(BASE_URL + 'data/prices.json' + ts);
     if (pricesRes.ok) {
       const rawPrices = await pricesRes.json();
@@ -424,11 +570,22 @@ async function loadGitHubData() {
         });
         console.log('✅ prices.json 로드:', STOCKS_LIST.length + '종목');
       }
+    } else {
+      console.log('📁 prices.json 없음, 기본 데이터 사용');
+      DEFAULT_PRICES.forEach(s => {
+        PRICES[s.code] = s;
+        STOCKS_LIST.push(s);
+      });
     }
-  } catch(e) { console.warn('prices.json 로드 실패:', e); }
+  } catch(e) { 
+    console.warn('prices.json 로드 실패, 기본 데이터 사용:', e);
+    DEFAULT_PRICES.forEach(s => {
+      PRICES[s.code] = s;
+      STOCKS_LIST.push(s);
+    });
+  }
 
   try {
-    // 3. supply.json 로드
     const supplyRes = await fetch(BASE_URL + 'data/supply.json' + ts);
     if (supplyRes.ok) {
       const rawSupply = await supplyRes.json();
@@ -437,24 +594,30 @@ async function loadGitHubData() {
         rawSupply.forEach(s => { SUPPLY[s.code] = s; });
         console.log('✅ supply.json 로드:', rawSupply.length + '종목');
       }
+    } else {
+      console.log('📁 supply.json 없음, 기본 데이터 사용');
+      DEFAULT_SUPPLY.forEach(s => { SUPPLY[s.code] = s; });
     }
-  } catch(e) { console.warn('supply.json 로드 실패:', e); }
+  } catch(e) { 
+    console.warn('supply.json 로드 실패, 기본 데이터 사용:', e);
+    DEFAULT_SUPPLY.forEach(s => { SUPPLY[s.code] = s; });
+  }
 
-  // 4. STOCKS_LIST 비어있으면 기본 목록 사용
+  // STOCKS_LIST 비어있으면 기본 목록 사용
   if (STOCKS_LIST.length === 0) {
     STOCKS_LIST = DEFAULT_STOCKS.map(s => ({...s, price: null, chg: null}));
     DEFAULT_STOCKS.forEach(s => { if (!PRICES[s.code]) PRICES[s.code] = {...s, price: null, chg: null}; });
   }
 
-  // 5. 기본 포트/관심종목
-  if (!S.portfolio.length) S.portfolio = [
+  // 기본 포트/관심종목
+  if (!window.S.portfolio.length) window.S.portfolio = [
     {"code":"005930","name":"삼성전자","buyPrice":68000,"qty":10,"sector":"반도체"},
     {"code":"000660","name":"SK하이닉스","buyPrice":145000,"qty":5,"sector":"반도체"},
     {"code":"035420","name":"NAVER","buyPrice":180000,"qty":3,"sector":"IT"}
   ];
-  if (!S.watchlist.length) S.watchlist = ["005930","000660","035420","051910","006400"];
+  if (!window.S.watchlist.length) window.S.watchlist = ["005930","000660","035420","051910","006400"];
 
-  // 6. 퀀트 점수
+  // 퀀트 점수
   STOCKS_LIST.forEach(s => {
     if (!QUANT[s.code]) QUANT[s.code] = {
       total: Math.floor(Math.random()*40+45),
@@ -465,12 +628,8 @@ async function loadGitHubData() {
     };
   });
 
-  S._priceUpdatedAt = new Date();
+  window.S._priceUpdatedAt = new Date();
   updateThemeStats();
-}
-
-async function fetchAllData() {
-  await loadGitHubData();
 }
 
 function normalizeNewsItem(n, i) {
@@ -510,17 +669,17 @@ function updateThemeStats() {
   });
 }
 
-function getWorkerUrl() { return S._cfWorkerUrl || CF_WORKER_URL; }
+function getWorkerUrl() { return window.S._cfWorkerUrl || CF_WORKER_URL; }
 
 /* ── 탭 라우팅 ── */
 function render() {
   const main = document.getElementById('main-content');
   if (!main) return;
   document.querySelectorAll('.tab-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.tab === S.tab);
+    el.classList.toggle('active', el.dataset.tab === window.S.tab);
   });
   main.innerHTML = '';
-  switch(S.tab) {
+  switch(window.S.tab) {
     case 'my':    main.innerHTML = rMyStocks(); break;
     case 'feed':  main.innerHTML = rFeed(); break;
     case 'port':  main.innerHTML = rPortfolio(); break;
@@ -532,7 +691,7 @@ function render() {
   }
 }
 
-function switchTab(tab) { S.tab = tab; render(); }
+function switchTab(tab) { window.S.tab = tab; render(); }
 
 function renderTabBar() {
   const bar = document.getElementById('tab-bar');
@@ -546,18 +705,18 @@ function renderTabBar() {
     {id:'sk',label:'종목',i:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`},
     {id:'alert',label:'설정',i:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>`}
   ];
-  bar.innerHTML = tabs.map(t => `<button class="tab-item${S.tab===t.id?' active':''}" data-tab="${t.id}" onclick="switchTab('${t.id}')">${t.i}<span>${t.label}</span></button>`).join('');
+  bar.innerHTML = tabs.map(t => `<button class="tab-item${window.S.tab===t.id?' active':''}" data-tab="${t.id}" onclick="switchTab('${t.id}')">${t.i}<span>${t.label}</span></button>`).join('');
 }
 
 /* ── 테마/유틸 ── */
-function toggleTheme() { S._theme = S._theme === 'light' ? 'dark' : 'light'; applyTheme(); saveLocalState(); }
-function applyTheme() { document.documentElement.setAttribute('data-theme', S._theme); }
+function toggleTheme() { window.S._theme = window.S._theme === 'light' ? 'dark' : 'light'; applyTheme(); saveLocalState(); }
+function applyTheme() { document.documentElement.setAttribute('data-theme', window.S._theme); }
 
 let _refreshTimer = null;
 function startAutoRefresh() {
   if (_refreshTimer) clearInterval(_refreshTimer);
   _refreshTimer = setInterval(() => {
-    if (S.autoRefresh) fetchAllData().then(() => { if (['my','feed','sk'].includes(S.tab)) render(); });
+    if (window.S.autoRefresh) loadGitHubData().then(() => { if (['my','feed','sk'].includes(window.S.tab)) render(); });
   }, 5 * 60 * 1000);
 }
 
@@ -569,8 +728,8 @@ function gradeOf(n) { const s=n.sources??1,t=n.type||'news'; if(t==='official'||
 function stockName(code) { const s=PRICES[code]||STOCKS_LIST.find(s=>s.code===code)||DEFAULT_STOCKS.find(s=>s.code===code); return s?s.name:code; }
 function stockLogo(code) { const n=stockName(code); return n?n.charAt(0):'?'; }
 function fmtUpdated() {
-  if (!S._priceUpdatedAt) return '';
-  const d = S._priceUpdatedAt;
+  if (!window.S._priceUpdatedAt) return '';
+  const d = window.S._priceUpdatedAt;
   return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+' 기준';
 }
 
@@ -581,22 +740,22 @@ function showToast(msg) {
 }
 
 function toggleWatchlist(code) {
-  const i = S.watchlist.indexOf(code);
-  if (i >= 0) { S.watchlist.splice(i,1); showToast('관심종목에서 제거했습니다.'); }
-  else { S.watchlist.push(code); showToast('관심종목에 추가했습니다.'); }
+  const i = window.S.watchlist.indexOf(code);
+  if (i >= 0) { window.S.watchlist.splice(i,1); showToast('관심종목에서 제거했습니다.'); }
+  else { window.S.watchlist.push(code); showToast('관심종목에 추가했습니다.'); }
   saveLocalState(); render();
 }
 
-function goFeedByCode(code) { S.tab = 'feed'; S.q = code; render(); }
-function goFeedBySector(s) { S.tab = 'feed'; S.sector = s; S.q = ''; render(); }
-function goFeedByTheme(t) { S.tab = 'feed'; S.themeFilter = t; render(); }
+function goFeedByCode(code) { window.S.tab = 'feed'; window.S.q = code; render(); }
+function goFeedBySector(s) { window.S.tab = 'feed'; window.S.sector = s; window.S.q = ''; render(); }
+function goFeedByTheme(t) { window.S.tab = 'feed'; window.S.themeFilter = t; render(); }
 
 /* ══════ 내종목 탭 ══════ */
 function rMyStocks() {
   const pt = calcPortTotal(), pnl = calcPortPnl();
   const pct = pt.cost > 0 ? ((pnl/pt.cost)*100).toFixed(2) : '0.00';
   const qm = [{l:'주식홈\n바로가기',i:'📊',t:'sk'},{l:'포트\n분석',i:'💼',t:'port'},{l:'뉴스\n피드',i:'📰',t:'feed'},{l:'매매\n기록',i:'📝',t:'trade'},{l:'테마\n지도',i:'🗺️',t:'hm'},{l:'AI\n설정',i:'⚙️',t:'alert'}];
-  const ws = S.watchlist.map(code => ({code, name:stockName(code), price:PRICES[code]?.price, chg:PRICES[code]?.chg, sup:SUPPLY[code]||{}, quant:(QUANT[code]||{}).total}));
+  const ws = window.S.watchlist.map(code => ({code, name:stockName(code), price:PRICES[code]?.price, chg:PRICES[code]?.chg, sup:SUPPLY[code]||{}, quant:(QUANT[code]||{}).total}));
   return `<div class="fade-in">
     <div class="asset-summary-card">
       <div class="asset-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 총 투자자산</div>
@@ -646,7 +805,7 @@ function stockItemHTML(s) {
 
 function miniNewsCard(n) {
   const src = SRC[n.type]||SRC.news;
-  return `<div style="margin:0 16px 6px;padding:12px 14px;background:var(--surface);border-radius:var(--r-md);border:1px solid var(--border);cursor:pointer;" onclick="S.tab='feed';render();setTimeout(()=>showCardModal(NEWS.find(x=>String(x.id)==='${String(n.id)}')),100)">
+  return `<div style="margin:0 16px 6px;padding:12px 14px;background:var(--surface);border-radius:var(--r-md);border:1px solid var(--border);cursor:pointer;" onclick="window.S.tab='feed';render();setTimeout(()=>showCardModal(NEWS.find(x=>String(x.id)==='${String(n.id)}')),100)">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
       <span style="font-size:.64rem;font-weight:700;padding:2px 7px;border-radius:4px;background:${src.bg};color:${src.color}">${src.label}</span>
       <span style="font-size:.71rem;color:var(--text-muted);margin-left:auto;">${n.time}</span>
@@ -658,7 +817,7 @@ function miniNewsCard(n) {
 
 function calcPortTotal() {
   let cost=0, ev=0;
-  S.portfolio.forEach(p => { const cur = PRICES[p.code]?.price || p.buyPrice; cost += p.buyPrice*p.qty; ev += cur*p.qty; });
+  window.S.portfolio.forEach(p => { const cur = PRICES[p.code]?.price || p.buyPrice; cost += p.buyPrice*p.qty; ev += cur*p.qty; });
   return {cost, eval: ev||cost};
 }
 function calcPortPnl() { const {cost, eval:ev} = calcPortTotal(); return ev - cost; }
@@ -668,13 +827,13 @@ function rFeed() {
   return `<div class="fade-in">
     <div class="search-bar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input placeholder="종목코드·키워드 검색" value="${S.q}" id="feed-search" oninput="S.q=this.value;reCards()">
-      ${S.q?`<button onclick="S.q='';document.getElementById('feed-search').value='';reCards()" style="color:var(--text-muted);font-size:1.1rem;">×</button>`:''}
+      <input placeholder="종목코드·키워드 검색" value="${window.S.q}" id="feed-search" oninput="window.S.q=this.value;reCards()">
+      ${window.S.q?`<button onclick="window.S.q='';document.getElementById('feed-search').value='';reCards()" style="color:var(--text-muted);font-size:1.1rem;">×</button>`:''}
     </div>
     <div class="news-filter-row">
-      ${['전체','공시','뉴스','리포트','루머'].map((f,i) => { const v=['전체','official','news','analyst','rumor'][i]; return `<button class="chip${S.tf===v?' active':''}" onclick="S.tf='${v}';reCards()">${f}</button>`; }).join('')}
+      ${['전체','공시','뉴스','리포트','루머'].map((f,i) => { const v=['전체','official','news','analyst','rumor'][i]; return `<button class="chip${window.S.tf===v?' active':''}" onclick="window.S.tf='${v}';reCards()">${f}</button>`; }).join('')}
       <div style="width:1px;background:var(--border);margin:0 2px;"></div>
-      ${['all','A','B','C'].map(g => `<button class="chip${S.gradeFilter===g?' active':''}" onclick="S.gradeFilter='${g}';reCards()">${g==='all'?'전체등급':g+'등급'}</button>`).join('')}
+      ${['all','A','B','C'].map(g => `<button class="chip${window.S.gradeFilter===g?' active':''}" onclick="window.S.gradeFilter='${g}';reCards()">${g==='all'?'전체등급':g+'등급'}</button>`).join('')}
     </div>
     <div id="feed-cards">${feedCardsHTML()}</div>
   </div>`;
@@ -684,10 +843,10 @@ function reCards() { const el = document.getElementById('feed-cards'); if (el) e
 
 function filteredNews() {
   return NEWS.filter(n => {
-    if (S.tf !== '전체' && n.type !== S.tf) return false;
-    if (S.gradeFilter !== 'all' && gradeOf(n) !== S.gradeFilter) return false;
-    if (S.themeFilter && !(n.themes||[]).some(t => t.includes(S.themeFilter)||S.themeFilter.includes(t))) return false;
-    if (S.q) { const q = S.q.toLowerCase(); if (!n.title.toLowerCase().includes(q) && !n.code.includes(S.q) && !(n.body||'').toLowerCase().includes(q)) return false; }
+    if (window.S.tf !== '전체' && n.type !== window.S.tf) return false;
+    if (window.S.gradeFilter !== 'all' && gradeOf(n) !== window.S.gradeFilter) return false;
+    if (window.S.themeFilter && !(n.themes||[]).some(t => t.includes(window.S.themeFilter)||window.S.themeFilter.includes(t))) return false;
+    if (window.S.q) { const q = window.S.q.toLowerCase(); if (!n.title.toLowerCase().includes(q) && !n.code.includes(window.S.q) && !(n.body||'').toLowerCase().includes(q)) return false; }
     return true;
   });
 }
@@ -766,8 +925,8 @@ function showCardModal(item) {
       </div>
       <div id="modal-results-${id}">${renderModalResults(item)}</div>
       <div style="margin-top:12px;">
-        <button class="btn ${S.watchlist.includes(item.code)?'btn-outline':'btn-primary'}" style="width:100%;" onclick="toggleWatchlist('${item.code}')">
-          ${S.watchlist.includes(item.code)?'★ 관심종목에서 제거':'☆ 관심종목 추가'}
+        <button class="btn ${window.S.watchlist.includes(item.code)?'btn-outline':'btn-primary'}" style="width:100%;" onclick="toggleWatchlist('${item.code}')">
+          ${window.S.watchlist.includes(item.code)?'★ 관심종목에서 제거':'☆ 관심종목 추가'}
         </button>
       </div>
     </div>`;
@@ -815,8 +974,8 @@ function saveAnalysisCache(id, data) {
 
 async function rfc(id) {
   const sid = String(id), item = NEWS.find(n => String(n.id) === sid);
-  if (!item || S.ana[sid]) return;
-  S.ana[sid] = true; updateAIBtn(sid,'fc',true); showToast('팩트체크 분석 중...');
+  if (!item || window.S.ana[sid]) return;
+  window.S.ana[sid] = true; updateAIBtn(sid,'fc',true); showToast('팩트체크 분석 중...');
   try {
     const data = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'한국 주식시장 전문 팩트체커. JSON만 응답. 다른 텍스트 없이.',messages:[{role:'user',content:`뉴스 팩트체크:\n제목:${item.title}\n본문:${item.body}\n출처수:${item.sources}\n\nJSON:{"score":0-100,"verdict":"confirmed|partial|unverified|false","detail":{"key_points":"핵심","risk_level":"높음|중간|낮음","action_note":"주의사항"}}`}]});
     const txt = (data.content||[]).map(c=>c.text||'').join(''), parsed = JSON.parse(txt.replace(/```json|```/g,'').trim());
@@ -824,13 +983,13 @@ async function rfc(id) {
     saveAnalysisCache(sid, {score:item.score, verdict:item.verdict, detail:item.detail});
     showToast('팩트체크 완료');
   } catch(e) { showToast('팩트체크 실패: '+e.message); }
-  S.ana[sid] = false; updateAIBtn(sid,'fc',false); refreshCardModal(sid); if (S.tab==='feed') reCards();
+  window.S.ana[sid] = false; updateAIBtn(sid,'fc',false); refreshCardModal(sid); if (window.S.tab==='feed') reCards();
 }
 
 async function runJudge(id) {
   const sid = String(id), item = NEWS.find(n => String(n.id) === sid);
-  if (!item || S.judging[sid]) return;
-  S.judging[sid] = true; updateAIBtn(sid,'jd',true); showToast('투자판단 분석 중...');
+  if (!item || window.S.judging[sid]) return;
+  window.S.judging[sid] = true; updateAIBtn(sid,'jd',true); showToast('투자판단 분석 중...');
   const p = PRICES[item.code]||{}, sup = SUPPLY[item.code]||{};
   try {
     const data = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'한국 주식 투자 전문가. JSON만 응답.',messages:[{role:'user',content:`투자판단:\n뉴스:${item.title}\n본문:${item.body}\n종목:${item.code}(${stockName(item.code)})\n현재가:${p.price||'없음'}원\n등락:${p.chg||0}%\n외인:${sup.foreign||0}\n기관:${sup.institution||0}\n\nJSON:{"verdict":"매수|관망|매도","confidence":0-100,"summary":"근거","short":"매수|관망|매도","mid":"매수|관망|매도","long":"매수|관망|매도","factors":["요인1","요인2"],"stopLoss":"손절가","targetReturn":"목표수익률"}`}]});
@@ -838,20 +997,20 @@ async function runJudge(id) {
     item.judgment = {verdict:p2.verdict||'관망',confidence:p2.confidence||50,summary:p2.summary||'',short:p2.short||'관망',mid:p2.mid||'관망',long:p2.long||'관망',factors:p2.factors||[],stopLoss:p2.stopLoss||null,targetReturn:p2.targetReturn||null};
     saveAnalysisCache(sid, {judgment:item.judgment}); showToast('투자판단 완료');
   } catch(e) { showToast('투자판단 실패: '+e.message); }
-  S.judging[sid] = false; updateAIBtn(sid,'jd',false); refreshCardModal(sid); if (S.tab==='feed') reCards();
+  window.S.judging[sid] = false; updateAIBtn(sid,'jd',false); refreshCardModal(sid); if (window.S.tab==='feed') reCards();
 }
 
 async function runAISummary(id) {
   const sid = String(id), item = NEWS.find(n => String(n.id) === sid);
-  if (!item || S.aiSumF[sid]) return;
-  S.aiSumF[sid] = true; updateAIBtn(sid,'ai',true); showToast('AI 요약 생성 중...');
+  if (!item || window.S.aiSumF[sid]) return;
+  window.S.aiSumF[sid] = true; updateAIBtn(sid,'ai',true); showToast('AI 요약 생성 중...');
   try {
     const data = await aiApiFetch({model:'claude-sonnet-4-20250514',max_tokens:500,system:'한국 주식 뉴스 요약 전문가. JSON만.',messages:[{role:'user',content:`핵심 요약+키워드:\n제목:${item.title}\n본문:${item.body}\n\nJSON:{"summary":"1-2문장 요약","keywords":["키1","키2","키3"]}`}]});
     const txt = (data.content||[]).map(c=>c.text||'').join(''), p2 = JSON.parse(txt.replace(/```json|```/g,'').trim());
     item.aiSummary = p2.summary||''; item.aiKeywords = p2.keywords||[];
     saveAnalysisCache(sid, {aiSummary:item.aiSummary, aiKeywords:item.aiKeywords}); showToast('AI 요약 완료');
   } catch(e) { showToast('AI 요약 실패: '+e.message); }
-  S.aiSumF[sid] = false; updateAIBtn(sid,'ai',false); refreshCardModal(sid); if (S.tab==='feed') reCards();
+  window.S.aiSumF[sid] = false; updateAIBtn(sid,'ai',false); refreshCardModal(sid); if (window.S.tab==='feed') reCards();
 }
 
 function updateAIBtn(id, type, loading) {
@@ -864,7 +1023,7 @@ function updateAIBtn(id, type, loading) {
 async function runAll() {
   const un = NEWS.filter(n => !n.judgment); showToast(`${un.length}개 뉴스 일괄 분석 시작...`);
   for (const n of un.slice(0,10)) { await rfc(String(n.id)); await runJudge(String(n.id)); await new Promise(r=>setTimeout(r,500)); }
-  showToast('일괄 분석 완료'); if (S.tab==='feed') render();
+  showToast('일괄 분석 완료'); if (window.S.tab==='feed') render();
 }
 
 /* ══════ 포트폴리오 탭 ══════ */
@@ -882,11 +1041,11 @@ function rPortfolio() {
       </div>
     </div>
     <div class="card" style="margin:0 16px 12px;border-radius:var(--r-lg);">
-      ${S.portfolio.length===0?'<div class="empty-state" style="padding:40px;"><p>보유 종목이 없습니다</p></div>':S.portfolio.map(p=>portItemHTML(p,total.eval)).join('')}
+      ${window.S.portfolio.length===0?'<div class="empty-state" style="padding:40px;"><p>보유 종목이 없습니다</p></div>':window.S.portfolio.map(p=>portItemHTML(p,total.eval)).join('')}
     </div>
     <div class="section-header"><span class="section-title">퀀트 점수</span></div>
     <div class="card" style="margin:0 16px 16px;border-radius:var(--r-lg);padding:14px 16px;">
-      ${S.portfolio.map(p => { const q=QUANT[p.code]||{total:50}; const c=q.total>=70?'var(--rise)':q.total>=40?'var(--gold)':'var(--fall)'; return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:.86rem;font-weight:600;">${stockName(p.code)}</span><span style="font-size:.71rem;color:var(--text-muted);">${p.code}</span></div><div class="quant-score"><div class="quant-bar-wrap"><div class="quant-bar" style="width:${q.total}%;background:${c};"></div></div><div class="quant-val" style="color:${c};">${q.total}</div></div></div>`; }).join('')||'<div class="empty-state" style="padding:24px;"><p>종목 없음</p></div>'}
+      ${window.S.portfolio.map(p => { const q=QUANT[p.code]||{total:50}; const c=q.total>=70?'var(--rise)':q.total>=40?'var(--gold)':'var(--fall)'; return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:.86rem;font-weight:600;">${stockName(p.code)}</span><span style="font-size:.71rem;color:var(--text-muted);">${p.code}</span></div><div class="quant-score"><div class="quant-bar-wrap"><div class="quant-bar" style="width:${q.total}%;background:${c};"></div></div><div class="quant-val" style="color:${c};">${q.total}</div></div></div>`; }).join('')||'<div class="empty-state" style="padding:24px;"><p>종목 없음</p></div>'}
     </div>
   </div>`;
 }
@@ -919,7 +1078,7 @@ function addPortItem() {
   const code = document.getElementById('port-code')?.value.trim(), name = document.getElementById('port-name')?.value.trim();
   const price = parseFloat(document.getElementById('port-price')?.value), qty = parseInt(document.getElementById('port-qty')?.value);
   if (!code||!price||!qty) { showToast('모든 항목을 입력하세요'); return; }
-  S.portfolio.push({code, name:name||code, buyPrice:price, qty}); saveLocalState(); closePortModal(); render(); showToast('포트폴리오에 추가했습니다.');
+  window.S.portfolio.push({code, name:name||code, buyPrice:price, qty}); saveLocalState(); closePortModal(); render(); showToast('포트폴리오에 추가했습니다.');
 }
 
 /* ══════ 매매기록 탭 ══════ */
@@ -929,8 +1088,8 @@ function rTradelog() {
     <div class="trade-form-card">
       <div class="trade-form-title">매매 기록 추가</div>
       <div class="trade-type-toggle">
-        <button class="trade-type-btn ${S._tradeType==='buy'?'active-buy':''}" onclick="S._tradeType='buy';render()">매수</button>
-        <button class="trade-type-btn ${S._tradeType==='sell'?'active-sell':''}" onclick="S._tradeType='sell';render()">매도</button>
+        <button class="trade-type-btn ${window.S._tradeType==='buy'?'active-buy':''}" onclick="window.S._tradeType='buy';render()">매수</button>
+        <button class="trade-type-btn ${window.S._tradeType==='sell'?'active-sell':''}" onclick="window.S._tradeType='sell';render()">매도</button>
       </div>
       <div style="height:10px;"></div>
       <div class="form-row"><div class="form-field"><label class="form-label">종목코드</label><input class="form-input" id="tr-code" placeholder="005930" maxlength="6"></div><div class="form-field"><label class="form-label">종목명</label><input class="form-input" id="tr-name" placeholder="삼성전자"></div></div>
@@ -950,7 +1109,7 @@ function addTradeRecord() {
   const price = parseFloat(document.getElementById('tr-price')?.value), qty = parseInt(document.getElementById('tr-qty')?.value);
   const date = document.getElementById('tr-date')?.value;
   if (!code||!price||!qty) { showToast('종목코드/가격/수량은 필수입니다'); return; }
-  try { const h = JSON.parse(localStorage.getItem('ki_tradeHistory')||'[]'); h.push({id:'t'+Date.now(),code,name:name||code,type:S._tradeType,price,qty,date:date||''}); localStorage.setItem('ki_tradeHistory',JSON.stringify(h)); } catch(e) {}
+  try { const h = JSON.parse(localStorage.getItem('ki_tradeHistory')||'[]'); h.push({id:'t'+Date.now(),code,name:name||code,type:window.S._tradeType,price,qty,date:date||''}); localStorage.setItem('ki_tradeHistory',JSON.stringify(h)); } catch(e) {}
   showToast('매매 기록이 추가됐습니다.'); render();
 }
 
@@ -981,8 +1140,8 @@ function rHeatmap() {
 /* ══════ 종목 탭 ══════ */
 function rStocks() {
   return `<div class="fade-in">
-    <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="종목명 또는 코드 검색" id="sk-search" value="${S.q}" oninput="S.q=this.value;renderSkList()"></div>
-    <div class="chip-scroll">${SECTORS.map(s=>`<button class="chip${S.sector===s?' active':''}" onclick="S.sector='${s}';renderSkList()">${s}</button>`).join('')}</div>
+    <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="종목명 또는 코드 검색" id="sk-search" value="${window.S.q}" oninput="window.S.q=this.value;renderSkList()"></div>
+    <div class="chip-scroll">${SECTORS.map(s=>`<button class="chip${window.S.sector===s?' active':''}" onclick="window.S.sector='${s}';renderSkList()">${s}</button>`).join('')}</div>
     <div class="stocks-table">
       <div class="stocks-thead"><div class="stocks-th">종목</div><div class="stocks-th">현재가</div><div class="stocks-th">등락률</div><div class="stocks-th">Q</div></div>
       <div id="sk-list">${renderSkListHTML()}</div>
@@ -991,11 +1150,11 @@ function rStocks() {
 }
 
 function renderSkListHTML() {
-  let list = S.sector==='전체' ? STOCKS_LIST : STOCKS_LIST.filter(s=>s.sector===S.sector);
-  const q = S.q.toLowerCase();
-  if (q) list = list.filter(s => s.name.includes(S.q)||s.code.includes(S.q));
+  let list = window.S.sector==='전체' ? STOCKS_LIST : STOCKS_LIST.filter(s=>s.sector===window.S.sector);
+  const q = window.S.q.toLowerCase();
+  if (q) list = list.filter(s => s.name.includes(window.S.q)||s.code.includes(window.S.q));
   if (!list.length) return '<div class="empty-state" style="padding:40px;"><p>검색 결과 없음</p></div>';
-  return list.map(s => { const q2=QUANT[s.code]||{}, qs=q2.total||'--', qc=typeof qs==='number'?(qs>=70?'var(--rise)':qs>=40?'var(--gold)':'var(--fall)'):'var(--text-muted)'; return `<div class="stocks-row" onclick="showChartModal('${s.code}')"><div><div class="stocks-name">${S.watchlist.includes(s.code)?'<span style="color:var(--gold)">★</span> ':''}${s.name}</div><div class="stocks-code">${s.code}</div></div><div class="stocks-price">${s.price!=null?s.price.toLocaleString('ko-KR'):'--'}</div><div class="stocks-chg ${chgClass(s.chg)}">${fmtChg(s.chg)}</div><div class="stocks-quant" style="color:${qc};">${qs}</div></div>`; }).join('');
+  return list.map(s => { const q2=QUANT[s.code]||{}, qs=q2.total||'--', qc=typeof qs==='number'?(qs>=70?'var(--rise)':qs>=40?'var(--gold)':'var(--fall)'):'var(--text-muted)'; return `<div class="stocks-row" onclick="showChartModal('${s.code}')"><div><div class="stocks-name">${window.S.watchlist.includes(s.code)?'<span style="color:var(--gold)">★</span> ':''}${s.name}</div><div class="stocks-code">${s.code}</div></div><div class="stocks-price">${s.price!=null?s.price.toLocaleString('ko-KR'):'--'}</div><div class="stocks-chg ${chgClass(s.chg)}">${fmtChg(s.chg)}</div><div class="stocks-quant" style="color:${qc};">${qs}</div></div>`; }).join('');
 }
 
 function renderSkList() { const el = document.getElementById('sk-list'); if (el) el.innerHTML = renderSkListHTML(); }
@@ -1006,21 +1165,21 @@ function rAlert() {
     <div class="section-header"><span class="section-title">설정</span></div>
     <div class="alert-section">
       <div class="alert-section-title">알림 설정</div>
-      ${[{key:'surge',label:'급등락 알림',desc:'5% 이상 급변동 시 알림'},{key:'newIssue',label:'신규 이슈 알림',desc:'긴급도 1등급 뉴스 도착 시'},{key:'keyword',label:'키워드 알림',desc:'등록 키워드 포함 뉴스 감지'}].map(item=>`<div class="setting-row"><div><div class="setting-label">${item.label}</div><div class="setting-desc">${item.desc}</div></div><label class="toggle-switch"><input type="checkbox" ${S.alertSettings[item.key]?'checked':''} onchange="S.alertSettings['${item.key}']=this.checked;saveLocalState()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>`).join('')}
+      ${[{key:'surge',label:'급등락 알림',desc:'5% 이상 급변동 시 알림'},{key:'newIssue',label:'신규 이슈 알림',desc:'긴급도 1등급 뉴스 도착 시'},{key:'keyword',label:'키워드 알림',desc:'등록 키워드 포함 뉴스 감지'}].map(item=>`<div class="setting-row"><div><div class="setting-label">${item.label}</div><div class="setting-desc">${item.desc}</div></div><label class="toggle-switch"><input type="checkbox" ${window.S.alertSettings[item.key]?'checked':''} onchange="window.S.alertSettings['${item.key}']=this.checked;saveLocalState()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>`).join('')}
     </div>
     <div class="alert-section">
       <div class="alert-section-title">표시 설정</div>
-      <div class="setting-row"><div><div class="setting-label">자동 갱신 (5분)</div><div class="setting-desc">뉴스 및 주가 자동 업데이트</div></div><label class="toggle-switch"><input type="checkbox" ${S.autoRefresh?'checked':''} onchange="S.autoRefresh=this.checked;saveLocalState()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
-      <div class="setting-row"><div><div class="setting-label">다크 모드</div><div class="setting-desc">화면 밝기 설정</div></div><label class="toggle-switch"><input type="checkbox" ${S._theme==='dark'?'checked':''} onchange="toggleTheme()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <div class="setting-row"><div><div class="setting-label">자동 갱신 (5분)</div><div class="setting-desc">뉴스 및 주가 자동 업데이트</div></div><label class="toggle-switch"><input type="checkbox" ${window.S.autoRefresh?'checked':''} onchange="window.S.autoRefresh=this.checked;saveLocalState()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <div class="setting-row"><div><div class="setting-label">다크 모드</div><div class="setting-desc">화면 밝기 설정</div></div><label class="toggle-switch"><input type="checkbox" ${window.S._theme==='dark'?'checked':''} onchange="toggleTheme()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
     </div>
     <div class="alert-section">
       <div class="alert-section-title">알림 키워드</div>
-      <div class="keyword-tags" id="kw-tags">${S.keywords.map(kw=>`<span class="keyword-tag">${kw}<span class="keyword-remove" onclick="removeKeyword('${kw}')">×</span></span>`).join('')}</div>
+      <div class="keyword-tags" id="kw-tags">${window.S.keywords.map(kw=>`<span class="keyword-tag">${kw}<span class="keyword-remove" onclick="removeKeyword('${kw}')">×</span></span>`).join('')}</div>
       <div class="worker-input-row" style="margin-top:10px;"><input class="form-input" id="kw-input" placeholder="키워드 입력 후 Enter" onkeydown="if(event.key==='Enter')addKeyword()"><button class="btn btn-outline btn-sm" onclick="addKeyword()">추가</button></div>
     </div>
     <div class="alert-section">
       <div class="alert-section-title">AI 설정 (Cloudflare Worker URL)</div>
-      <div class="worker-input-row"><input class="form-input" id="worker-url" value="${S._cfWorkerUrl}" placeholder="https://...workers.dev"><button class="btn btn-outline btn-sm" onclick="saveWorkerUrl()">저장</button></div>
+      <div class="worker-input-row"><input class="form-input" id="worker-url" value="${window.S._cfWorkerUrl}" placeholder="https://...workers.dev"><button class="btn btn-outline btn-sm" onclick="saveWorkerUrl()">저장</button></div>
       <div style="font-size:.71rem;color:var(--text-muted);margin-top:6px;">AI 팩트체크·투자판단·뉴스요약 기능에 필요합니다</div>
     </div>
     <div class="alert-section">
@@ -1036,18 +1195,18 @@ function rAlert() {
 
 function addKeyword() {
   const input = document.getElementById('kw-input'), val = input?.value.trim();
-  if (!val||S.keywords.includes(val)) { showToast('이미 있거나 빈 키워드입니다'); return; }
-  S.keywords.push(val); saveLocalState(); if (input) input.value = '';
-  const tags = document.getElementById('kw-tags'); if (tags) tags.innerHTML = S.keywords.map(kw=>`<span class="keyword-tag">${kw}<span class="keyword-remove" onclick="removeKeyword('${kw}')">×</span></span>`).join('');
+  if (!val||window.S.keywords.includes(val)) { showToast('이미 있거나 빈 키워드입니다'); return; }
+  window.S.keywords.push(val); saveLocalState(); if (input) input.value = '';
+  const tags = document.getElementById('kw-tags'); if (tags) tags.innerHTML = window.S.keywords.map(kw=>`<span class="keyword-tag">${kw}<span class="keyword-remove" onclick="removeKeyword('${kw}')">×</span></span>`).join('');
   showToast(`"${val}" 키워드 추가됨`);
 }
 function removeKeyword(kw) {
-  S.keywords = S.keywords.filter(k=>k!==kw); saveLocalState();
-  const tags = document.getElementById('kw-tags'); if (tags) tags.innerHTML = S.keywords.map(k=>`<span class="keyword-tag">${k}<span class="keyword-remove" onclick="removeKeyword('${k}')">×</span></span>`).join('');
+  window.S.keywords = window.S.keywords.filter(k=>k!==kw); saveLocalState();
+  const tags = document.getElementById('kw-tags'); if (tags) tags.innerHTML = window.S.keywords.map(k=>`<span class="keyword-tag">${k}<span class="keyword-remove" onclick="removeKeyword('${k}')">×</span></span>`).join('');
 }
-function saveWorkerUrl() { const val = document.getElementById('worker-url')?.value.trim(); S._cfWorkerUrl = val||CF_WORKER_URL; saveLocalState(); showToast('Worker URL 저장됨'); }
+function saveWorkerUrl() { const val = document.getElementById('worker-url')?.value.trim(); window.S._cfWorkerUrl = val||CF_WORKER_URL; saveLocalState(); showToast('Worker URL 저장됨'); }
 function exportData() {
-  const data = {portfolio:S.portfolio,watchlist:S.watchlist,tradeHistory:JSON.parse(localStorage.getItem('ki_tradeHistory')||'[]'),keywords:S.keywords,exportedAt:new Date().toISOString()};
+  const data = {portfolio:window.S.portfolio,watchlist:window.S.watchlist,tradeHistory:JSON.parse(localStorage.getItem('ki_tradeHistory')||'[]'),keywords:window.S.keywords,exportedAt:new Date().toISOString()};
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'}), url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = `kospi-intel-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
 }
@@ -1068,15 +1227,12 @@ async function doRefresh() {
 
 /* ══════════════════════════════════════════════════════
    주가 차트 모달
-   - Yahoo Finance v8 API로 1년치 OHLCV 데이터 fetch
-   - Canvas로 캔들스틱 / 라인 차트 직접 렌더링
-   - 1개월·3개월·6개월·1년 범위 전환
    ══════════════════════════════════════════════════════ */
 
 const CHART_STATE = {
   code: null,
-  range: '1y',    // 1mo|3mo|6mo|1y
-  type: 'candle', // candle|line
+  range: '1y',
+  type: 'candle',
   data: null,
   loading: false,
 };
@@ -1089,13 +1245,11 @@ async function showChartModal(code) {
 
   const stock = PRICES[code] || DEFAULT_STOCKS.find(s=>s.code===code) || {code, name:code};
 
-  // backdrop
   const bd = document.createElement('div');
   bd.className = 'modal-backdrop'; bd.id = 'chart-backdrop';
   bd.onclick = closeChartModal;
   document.body.appendChild(bd);
 
-  // sheet
   const sh = document.createElement('div');
   sh.className = 'chart-sheet'; sh.id = 'chart-sheet';
   sh.innerHTML = _chartSheetHTML(stock);
@@ -1139,9 +1293,9 @@ function _chartSheetHTML(stock) {
   </div>
   <div id="chart-stats-area"></div>
   <div style="padding:14px 16px;display:flex;gap:8px;">
-    <button class="btn ${CHART_STATE.code&&(PRICES[CHART_STATE.code]||{})?' btn-outline':'btn-outline'} btn-sm" style="flex:1" onclick="goFeedByCode('${stock.code}');closeChartModal()">📰 관련 뉴스</button>
-    <button class="btn btn-${(PRICES[stock.code]||{}).price?'outline':'outline'} btn-sm" style="flex:1" onclick="toggleWatchlist('${stock.code}');document.getElementById('chart-watch-btn').textContent=S.watchlist.includes('${stock.code}')?'★ 관심해제':'☆ 관심추가'">
-      <span id="chart-watch-btn">${S.watchlist.includes(stock.code)?'★ 관심해제':'☆ 관심추가'}</span>
+    <button class="btn btn-outline btn-sm" style="flex:1" onclick="goFeedByCode('${stock.code}');closeChartModal()">📰 관련 뉴스</button>
+    <button class="btn btn-outline btn-sm" style="flex:1" onclick="toggleWatchlist('${stock.code}');document.getElementById('chart-watch-btn').textContent=window.S.watchlist.includes('${stock.code}')?'★ 관심해제':'☆ 관심추가'">
+      <span id="chart-watch-btn">${window.S.watchlist.includes(stock.code)?'★ 관심해제':'☆ 관심추가'}</span>
     </button>
   </div>`;
 }
@@ -1170,7 +1324,6 @@ async function _loadAndDrawChart() {
     const closes = quote.close  || [];
     const vols   = quote.volume || [];
 
-    // null 제거 후 정리
     const bars = timestamps.map((t,i) => ({
       date:  new Date(t*1000),
       open:  opens[i],
@@ -1238,7 +1391,6 @@ function _drawChart(container, bars) {
   const candleW = Math.max(barW * 0.6, 1.5);
   const scaleX  = i => PAD.left + (i + 0.5) * barW;
 
-  // 그리드
   ctx.strokeStyle = clr.grid;
   ctx.lineWidth   = 1;
   const steps = 4;
@@ -1252,7 +1404,6 @@ function _drawChart(container, bars) {
     ctx.fillText(Math.round(price).toLocaleString('ko-KR'), PAD.left - 4, y + 3);
   }
 
-  // X축 날짜 레이블 (약 5개)
   ctx.fillStyle = clr.axis;
   ctx.textAlign = 'center';
   ctx.font = '10px monospace';
@@ -1264,7 +1415,6 @@ function _drawChart(container, bars) {
   }
 
   if (CHART_STATE.type === 'candle') {
-    // 캔들스틱
     bars.forEach((b, i) => {
       const x    = scaleX(i);
       const isUp = b.close >= b.open;
@@ -1274,19 +1424,16 @@ function _drawChart(container, bars) {
       const yH   = scaleY(b.high);
       const yL   = scaleY(b.low);
 
-      // 심지
       ctx.strokeStyle = clr.wick;
       ctx.lineWidth   = 1;
       ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
 
-      // 몸통
       ctx.fillStyle = c;
       const bodyTop = Math.min(yO, yC);
       const bodyH   = Math.max(Math.abs(yC - yO), 1.5);
       ctx.fillRect(x - candleW/2, bodyTop, candleW, bodyH);
     });
   } else {
-    // 라인 차트
     ctx.beginPath();
     bars.forEach((b,i) => {
       const x = scaleX(i), y = scaleY(b.close);
@@ -1296,7 +1443,6 @@ function _drawChart(container, bars) {
     ctx.lineWidth   = 2;
     ctx.stroke();
 
-    // 채우기
     ctx.lineTo(scaleX(n-1), PAD.top+CH);
     ctx.lineTo(scaleX(0),   PAD.top+CH);
     ctx.closePath();
@@ -1304,7 +1450,6 @@ function _drawChart(container, bars) {
     ctx.fill();
   }
 
-  // 터치/마우스 툴팁
   function onMove(e) {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1348,7 +1493,6 @@ function _drawStats(bars) {
 
 async function changeChartRange(range) {
   CHART_STATE.range = range;
-  // 버튼 UI 업데이트
   document.querySelectorAll('.chart-range-btn').forEach(b => {
     b.classList.toggle('active', b.textContent === {1mo:'1개월',3mo:'3개월',6mo:'6개월','1y':'1년'}[range]);
   });
@@ -1373,7 +1517,6 @@ function closeChartModal() {
   setTimeout(() => { bd?.remove(); sh?.remove(); }, 350);
 }
 
-/* ── 앱 시작 ── */
 document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
