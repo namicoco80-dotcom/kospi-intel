@@ -1,4 +1,3 @@
-설정 탭 ══════ */
 function rAlert() {
   return `<div class="fade-in">
     <div class="section-header"><span class="section-title">설정</span></div>

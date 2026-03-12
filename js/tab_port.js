@@ -1,4 +1,3 @@
-포트폴리오 탭 ══════ */
 function rPortfolio() {
   const total = calcPortTotal(), pnl = calcPortPnl(), pct = total.cost>0?((pnl/total.cost)*100).toFixed(2):'0.00';
   return `<div class="fade-in">

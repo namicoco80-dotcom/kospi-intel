@@ -1,4 +1,3 @@
-내종목 탭 ══════ */
 function rMyStocks() {
   const pt = calcPortTotal(), pnl = calcPortPnl();
   const pct = pt.cost > 0 ? ((pnl/pt.cost)*100).toFixed(2) : '0.00';

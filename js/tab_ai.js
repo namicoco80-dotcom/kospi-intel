@@ -1,4 +1,3 @@
-AI 분석 ══════ */
 async function aiApiFetch(body) {
   const url = getWorkerUrl(); if (!url) throw new Error('Worker URL 없음');
   const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});

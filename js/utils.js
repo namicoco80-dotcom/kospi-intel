@@ -1,4 +1,3 @@
-테마/유틸 ── */
 function toggleTheme() { S._theme = S._theme === 'light' ? 'dark' : 'light'; applyTheme(); saveLocalState(); }
 function applyTheme() { document.documentElement.setAttribute('data-theme', S._theme); }
 

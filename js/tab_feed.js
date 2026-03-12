@@ -1,4 +1,3 @@
-뉴스 탭 ══════ */
 function rFeed() {
   return `<div class="fade-in">
     <div class="search-bar">

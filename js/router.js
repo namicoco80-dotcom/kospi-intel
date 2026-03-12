@@ -1,4 +1,3 @@
-탭 라우팅 ── */
 function render() {
   const main = document.getElementById('main-content');
   if (!main) return;

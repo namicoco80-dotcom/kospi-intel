@@ -1,4 +1,4 @@
-차트 모달
+/* 차트 모달
    - Yahoo Finance v8 API로 1년치 OHLCV 데이터 fetch
    - Canvas로 캔들스틱 / 라인 차트 직접 렌더링
    - 1개월·3개월·6개월·1년 범위 전환
