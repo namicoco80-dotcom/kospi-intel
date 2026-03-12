@@ -33,5 +33,3 @@ function renderTabBar() {
   ];
   bar.innerHTML = tabs.map(t => `<button class="tab-item${S.tab===t.id?' active':''}" data-tab="${t.id}" onclick="switchTab('${t.id}')">${t.i}<span>${t.label}</span></button>`).join('');
 }
-
-/* ──

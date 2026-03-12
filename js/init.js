@@ -161,5 +161,3 @@ function updateThemeStats() {
 }
 
 function getWorkerUrl() { return S._cfWorkerUrl || CF_WORKER_URL; }
-
-/* ──

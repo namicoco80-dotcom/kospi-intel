@@ -62,5 +62,3 @@ async function runAll() {
   for (const n of un.slice(0,10)) { await rfc(String(n.id)); await runJudge(String(n.id)); await new Promise(r=>setTimeout(r,500)); }
   showToast('일괄 분석 완료'); if (S.tab==='feed') render();
 }
-
-/* ══════

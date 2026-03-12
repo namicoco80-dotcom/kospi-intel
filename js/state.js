@@ -54,5 +54,3 @@ const DEFAULT_STOCKS = [
   {"code":"017670","name":"SK텔레콤","sector":"통신"},
   {"code":"030200","name":"KT","sector":"통신"}
 ];
-
-/* ──

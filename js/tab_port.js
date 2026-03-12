@@ -129,5 +129,3 @@ function renderSkListHTML() {
 }
 
 function renderSkList() { const el = document.getElementById('sk-list'); if (el) el.innerHTML = renderSkListHTML(); }
-
-/* ══════

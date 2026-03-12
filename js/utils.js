@@ -38,5 +38,3 @@ function toggleWatchlist(code) {
 function goFeedByCode(code) { S.tab = 'feed'; S.q = code; render(); }
 function goFeedBySector(s) { S.tab = 'feed'; S.sector = s; S.q = ''; render(); }
 function goFeedByTheme(t) { S.tab = 'feed'; S.themeFilter = t; render(); }
-
-/* ══════

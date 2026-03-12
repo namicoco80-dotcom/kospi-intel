@@ -134,5 +134,3 @@ function closeCardModal() {
   bd?.classList.remove('show'); sh?.classList.remove('show');
   setTimeout(() => { bd?.remove(); sh?.remove(); }, 350);
 }
-
-/* ══════

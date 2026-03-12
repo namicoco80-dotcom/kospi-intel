@@ -68,5 +68,3 @@ function calcPortTotal() {
   return {cost, eval: ev||cost};
 }
 function calcPortPnl() { const {cost, eval:ev} = calcPortTotal(); return ev - cost; }
-
-/* ══════
