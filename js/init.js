@@ -1,4 +1,4 @@
-초기화 ── */
+
 async function initApp() {
   loadLocalState();
   applyTheme();
