@@ -91,7 +91,7 @@ ul,ol{list-style:none}
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.asset-summary-card{margin:16px 20px 12px;padding:22px 20px 0;background:linear-gradient(135deg,#1D4ED8 0%,#3B82F6 60%,#60A5FA 100%);border-radius:var(--r-xl);box-shadow:0 8px 24px rgba(59,130,246,.35);color:#fff;overflow:hidden}
+.asset-summary-card{margin:16px 20px 12px;padding:22px 20px 0;background:linear-gradient(135deg,#1D4ED8 0%,#3B82F6 60%,#60A5FA 100%);border-radius:var(--r-xl);box-shadow:0 8px 24px rgba(59,130,246,.35);color:#fff}
 .asset-label{font-size:.79rem;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .asset-total{font-size:2.14rem;font-weight:800;letter-spacing:-1.5px;font-family:var(--font-mono);color:#fff}
 .asset-pnl{font-size:.93rem;font-weight:700;margin-top:4px;color:rgba(255,255,255,.9)}
