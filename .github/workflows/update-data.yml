@@ -2,8 +2,9 @@ name: KOSPI INTEL 데이터 수집
 
 on:
   schedule:
+    # 평일 장 마감 후 16:35 KST (07:35 UTC)
     - cron: '35 7 * * 1-5'
-  workflow_dispatch:
+  workflow_dispatch:   # 수동 실행
 
 jobs:
   collect:
@@ -14,8 +15,10 @@ jobs:
     steps:
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Python 설치
+      - name: Python 3.11 설치
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -42,15 +45,23 @@ jobs:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-  - name: 변경사항 커밋
+      - name: 오래된 파일 정리
         run: |
-          git config user.name "github-actions[bot]"
+          find data/raw  -name "*.json" -mtime +14 -delete || true
+          find data/logs -name "*.log"  -mtime +30 -delete || true
+
+      - name: 변경사항 커밋 & 푸시
+        run: |
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git add data/public/
           git diff --staged --quiet && echo "변경 없음" && exit 0
-          git stash
-          git pull origin main
-          git stash pop
-          git add data/public/
-          git commit -m "📊 데이터 자동 업데이트 $(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')"
-          git push
+
+          TIMESTAMP=$(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M KST')
+          git commit -m "📊 데이터 자동 업데이트: ${TIMESTAMP}"
+
+          # 충돌 방지: 최신 원격 반영 후 push
+          git fetch origin main
+          git merge -X ours origin/main --no-edit
+          git push origin main
