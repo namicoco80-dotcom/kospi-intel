@@ -62,6 +62,3 @@ async function doRefresh() {
   if (btn) btn.style.animation = '';
   showToast(`데이터 갱신 완료 (뉴스 ${NEWS.length}건)`);
 }
-
-/* ══════════════════════════════════════════════════════
-   주가

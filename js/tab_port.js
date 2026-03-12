@@ -36,8 +36,15 @@ function portItemHTML(p, totalEval) {
       <div class="port-item-val">${fmtPrice(ev)}</div>
       <div class="port-item-pnl ${chgClass(pnl)}">${pnl>=0?'+':''}${pnl.toLocaleString('ko-KR')}원</div>
       <div class="port-item-pnl ${chgClass(parseFloat(pct))}">(${parseFloat(pct)>=0?'+':''}${pct}%)</div>
+      <button onclick="removePortItem('${p.code}')" style="font-size:.64rem;color:var(--text-muted);margin-top:6px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">삭제</button>
     </div>
   </div>`;
+}
+
+function removePortItem(code) {
+  if (!confirm(stockName(code) + '을(를) 포트폴리오에서 삭제할까요?')) return;
+  S.portfolio = S.portfolio.filter(p => p.code !== code);
+  saveLocalState(); render(); showToast('포트폴리오에서 삭제했습니다.');
 }
 
 function showAddPortModal() {
@@ -52,7 +59,6 @@ function addPortItem() {
   S.portfolio.push({code, name:name||code, buyPrice:price, qty}); saveLocalState(); closePortModal(); render(); showToast('포트폴리오에 추가했습니다.');
 }
 
-/* ══════ 매매기록 탭 ══════ */
 function rTradelog() {
   let hist = []; try { hist = JSON.parse(localStorage.getItem('ki_tradeHistory')||'[]'); } catch(e) {}
   return `<div class="fade-in">
@@ -89,7 +95,6 @@ function deleteTrade(id) {
   render();
 }
 
-/* ══════ 테마 탭 ══════ */
 function rHeatmap() {
   const sectors = [
     {name:'반도체',heat:90},{name:'AI',heat:85},{name:'2차전지',heat:60},
@@ -108,13 +113,12 @@ function rHeatmap() {
   </div>`;
 }
 
-/* ══════ 종목 탭 ══════ */
 function rStocks() {
   return `<div class="fade-in">
     <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="종목명 또는 코드 검색" id="sk-search" value="${S.q}" oninput="S.q=this.value;renderSkList()"></div>
     <div class="chip-scroll">${SECTORS.map(s=>`<button class="chip${S.sector===s?' active':''}" onclick="S.sector='${s}';renderSkList()">${s}</button>`).join('')}</div>
     <div class="stocks-table">
-      <div class="stocks-thead"><div class="stocks-th">종목</div><div class="stocks-th">현재가</div><div class="stocks-th">등락률</div><div class="stocks-th">Q</div></div>
+      <div class="stocks-thead"><div class="stocks-th">종목</div><div class="stocks-th">현재가</div><div class="stocks-th">등락률</div><div class="stocks-th">★</div></div>
       <div id="sk-list">${renderSkListHTML()}</div>
     </div>
   </div>`;
@@ -125,7 +129,18 @@ function renderSkListHTML() {
   const q = S.q.toLowerCase();
   if (q) list = list.filter(s => s.name.includes(S.q)||s.code.includes(S.q));
   if (!list.length) return '<div class="empty-state" style="padding:40px;"><p>검색 결과 없음</p></div>';
-  return list.map(s => { const q2=QUANT[s.code]||{}, qs=q2.total||'--', qc=typeof qs==='number'?(qs>=70?'var(--rise)':qs>=40?'var(--gold)':'var(--fall)'):'var(--text-muted)'; return `<div class="stocks-row" onclick="showChartModal('${s.code}')"><div><div class="stocks-name">${S.watchlist.includes(s.code)?'<span style="color:var(--gold)">★</span> ':''}${s.name}</div><div class="stocks-code">${s.code}</div></div><div class="stocks-price">${s.price!=null?s.price.toLocaleString('ko-KR'):'--'}</div><div class="stocks-chg ${chgClass(s.chg)}">${fmtChg(s.chg)}</div><div class="stocks-quant" style="color:${qc};">${qs}</div></div>`; }).join('');
+  return list.map(s => {
+    const isWatched = S.watchlist.includes(s.code);
+    return `<div class="stocks-row">
+      <div onclick="showChartModal('${s.code}')" style="flex:1;display:flex;flex-direction:column;cursor:pointer;">
+        <div class="stocks-name">${s.name}</div>
+        <div class="stocks-code">${s.code}</div>
+      </div>
+      <div class="stocks-price" onclick="showChartModal('${s.code}')" style="cursor:pointer;">${s.price!=null?s.price.toLocaleString('ko-KR'):'--'}</div>
+      <div class="stocks-chg ${chgClass(s.chg)}" onclick="showChartModal('${s.code}')" style="cursor:pointer;">${fmtChg(s.chg)}</div>
+      <button onclick="toggleWatchlist('${s.code}')" style="font-size:1.1rem;padding:4px 8px;color:${isWatched?'var(--gold)':'var(--text-muted)'};">${isWatched?'★':'☆'}</button>
+    </div>`;
+  }).join('');
 }
 
 function renderSkList() { const el = document.getElementById('sk-list'); if (el) el.innerHTML = renderSkListHTML(); }
