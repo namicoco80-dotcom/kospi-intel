@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>KOSPI INTEL</title>
+
+<!-- 스타일 -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="app-header">
+  <div class="header-logo">KOSPI <span>INTEL</span></div>
+  <div class="header-right">
+    <button class="header-btn" onclick="S.tab='feed';S.q='';render()" title="검색">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+    <button class="header-btn" id="refresh-btn" onclick="doRefresh()" title="새로고침">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+    </button>
+    <button class="header-btn" onclick="runAll()" title="AI 일괄분석">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main-content">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;color:var(--text-muted);">
+    <div class="spinner" style="width:32px;height:32px;border-width:3px;"></div>
+    <p style="font-size:.86rem;">데이터 로딩 중...</p>
+  </div>
+</main>
+
+<nav id="tab-bar"></nav>
+<div id="toast-container"></div>
+
+<!-- ── JavaScript: 기능별 분리 ── -->
+<!-- 1. 전역 상태·상수 (모든 파일이 참조) -->
+<script src="js/state.js"></script>
+
+<!-- 2. 앱 초기화·데이터 로드 -->
+<script src="js/init.js"></script>
+
+<!-- 3. 탭 라우팅·렌더 -->
+<script src="js/router.js"></script>
+
+<!-- 4. 공통 유틸·포맷 함수 -->
+<script src="js/utils.js"></script>
+
+<!-- 5. 탭별 UI -->
+<script src="js/tab_my.js"></script>
+<script src="js/tab_feed.js"></script>
+<script src="js/tab_ai.js"></script>
+<script src="js/tab_port.js"></script>
+<script src="js/tab_etc.js"></script>
+
+<!-- 6. 차트 모달 (독립 기능) -->
+<script src="js/chart.js"></script>
+
+<!-- 7. 앱 시작 -->
+<script src="js/main.js"></script>
+
+</body>
+</html>
