@@ -96,12 +96,7 @@ async function loadGitHubData() {
     DEFAULT_STOCKS.forEach(s => { if (!PRICES[s.code]) PRICES[s.code] = {...s, price: null, chg: null}; });
   }
 
-  // 5. 기본 포트/관심종목
-  if (!S.portfolio.length) S.portfolio = [
-    {"code":"005930","name":"삼성전자","buyPrice":68000,"qty":10,"sector":"반도체"},
-    {"code":"000660","name":"SK하이닉스","buyPrice":145000,"qty":5,"sector":"반도체"},
-    {"code":"035420","name":"NAVER","buyPrice":180000,"qty":3,"sector":"IT"}
-  ];
+  // 5. 기본 관심종목 (포트폴리오 샘플 제거 - 사용자가 직접 입력)
   if (!S.watchlist.length) S.watchlist = ["005930","000660","035420","051910","006400"];
 
   // 6. 퀀트 점수
