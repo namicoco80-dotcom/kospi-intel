@@ -29,7 +29,7 @@
   },
   {
     "code": "051910",
-    "collectedAt": "2026-03-27T17:10:08.661820+09:00",
+    "collectedAt": "2026-03-30T17:56:55.965271+09:00",
     "foreign": 0,
     "institution": 0,
     "individual": 0,
@@ -62,7 +62,7 @@
     "foreign": 44700000000,
     "institution": 0,
     "individual": 0,
-    "source": "dart_estimate"
+    "source": "cache"
   },
   {
     "code": "000270",
@@ -94,7 +94,7 @@
   },
   {
     "code": "012330",
-    "collectedAt": "2026-03-27T17:10:08.661820+09:00",
+    "collectedAt": "2026-03-30T17:56:55.965271+09:00",
     "foreign": 79000000000,
     "institution": 0,
     "individual": 0,
