@@ -29,11 +29,11 @@
   },
   {
     "code": "051910",
-    "collectedAt": "2026-07-13T19:39:49.113086+09:00",
+    "collectedAt": "2026-07-15T18:31:08.968306+09:00",
     "foreign": 0,
     "institution": 0,
     "individual": 0,
-    "source": "cache"
+    "source": "dart_estimate"
   },
   {
     "code": "006400",
